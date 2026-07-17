@@ -1,17 +1,26 @@
 # Roadmap
 
-**Current milestone: M1** (M0 scaffold done 2026-07-17).
+**Current milestone: M2** (M1 engine done 2026-07-17).
 
 Each milestone has a validation gate; don't advance until it passes.
 
 ## M0 — Scaffold ✅
 Docs, conventions, `Rules` dataclass, seeded `Shoe`, hand valuation, tests.
 
-## M1 — Standard blackjack engine
+## M1 — Standard blackjack engine ✅
 Deal, hit/stand/double/split, dealer play (H17/S17), settlement with the ledger money
-model, total-dependent basic strategy for the M2 ruleset.
+model, total-dependent basic strategy (`BasicStrategyH17`), seeded simulator + CLI.
 **Gate:** hand-level unit tests with known outcomes (constructed shoes → exact
-expected settlements), including split/resplit/double-after-split edge cases.
+expected settlements), including split/split-ace/double edge cases — 58 tests pass.
+**Early signal:** 4M-hand sim gives house edge 0.629% ± 0.058% (published ≈ 0.62%)
+and per-round std dev 1.160 (published ≈ 1.15) — foreshadows the M2 gate.
+
+**Known metrics artifact for M2 to fix:** the CLI's `dealer_final` distribution counts
+the dealer's cards even in rounds where the dealer never draws (all player hands bust,
+or a natural ended the round). That deflates the observed bust rate (~23.5% vs. the
+true ~28% dealer-plays-out figure) and inflates low totals. M2's validation engine must
+compute dealer outcome stats over *completed* dealer hands (or simulate the dealer in
+isolation per up-card) to compare against published tables.
 
 ## M2 — Validation engine + match published statistics (standard blackjack)
 Build the **validation engine** (see "Validation engine" in DESIGN.md): a
