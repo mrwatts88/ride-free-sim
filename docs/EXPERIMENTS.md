@@ -2,6 +2,35 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E5 — Value of playing deviations: +0.12% ± 0.05% (perfect-information ceiling)
+
+**Date:** 2026-07-17 · **Command:** `deviations --rules ridefree --rounds 150000`
+× 2 shards (seeds 7777/8888), paired differential design (each round played twice
+from the same shoe position: fixed OptimalStrategy vs live-composition argmax).
+
+### Result
+
+- **Overall deviation value: +0.119% ± 0.046% per round (+2.6σ).** Shards +0.093 ±
+  0.065 and +0.144 ± 0.064 — consistent.
+- Only **2.1% of rounds** change any action; those rounds gain ~5–6% EV each.
+- Wong-in window (rf_ev ≥ +0.0075): **+0.20% ± 0.13%** (+1.5σ, suggestive).
+- This is the *perfect-information ceiling* — human-trackable deviation rules
+  capture some fraction of it.
+
+### Impact on the bottom line (updating E4c)
+
+- Seated 1-8 ramp: −0.37% + ~+0.07% (deviations per money wagered) ≈ **−0.30%,
+  still losing.** Deviations do not rescue seated play.
+- Wong-in at rf_ev ≥ +0.0125: +1.04% + ~0.2% ≈ **~+1.2% per played round on ~6.6%
+  of rounds** — the complete best-known Ride Free system: back-count with the RF
+  count, sit only above threshold, deviate by composition.
+- Standard blackjack still wins on raw EV (more spots at equal quality, plus its
+  own deviation set). Ride Free's edge over standard remains camouflage, not money.
+
+**Every EV source in the game is now quantified:** base edge, optimal chart, the
+count (game-derived), event signals (subsumed), bet ramps, wong-in, deviations.
+M6a's core question — can Ride Free be beaten, how, and by how much — is answered.
+
 ## E4c — Which accounting system makes money, and how much (the M6a betting verdict)
 
 **Date:** 2026-07-17 · **Method:** pure arithmetic on banked grids, cross-fitted

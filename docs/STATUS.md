@@ -45,16 +45,25 @@ tens halved, ace ≈ 3× the ten, 3/4/5/7 collapse, 8 flips negative.
 | Within-TC pair slope, Ride Free (E2+E3) | **+0.626% ± 0.094% / 0.01 p_pair** |
 | Same, standard-game control | +0.05% ± 0.24% (null) |
 
-## Immediate next step: E5 — value of playing deviations (last unquantified EV)
+## M6a is answered (E5 done): the final Ride Free verdict
 
-Perfect-information composition-conditioned play: `EVCalculator(rules, weights=live
-composition)` per round (one calculator per round — composition is frozen intra-round
-since the tracker updates between rounds). Measured via **paired differential
-simulation**: snapshot the shoe, play the round with the fixed OptimalStrategy,
-rewind, replay with the deviation strategy, record the profit difference, continue
-on the fixed strategy's timeline. Most rounds the strategies agree → difference 0 →
-tiny variance; ~300k paired rounds resolves ~±0.05%. Report overall deviation value,
-% of rounds with any changed action, and (if signal) which cells flip (5,5 case).
+**Best-known system:** back-count with the RF count, wong-in at rf_ev ≥ +0.0125,
+deviate by composition → **~+1.2% per played round on ~6.6% of rounds.** Seated
+play with realistic spreads loses (−0.30% even with deviations). Deviations are
+worth +0.12% ± 0.05% overall (perfect-information ceiling; 2.1% of rounds change).
+Standard blackjack hi-lo still beats it on raw EV (~3× the playable volume at equal
+quality); Ride Free's differentiator is camouflage.
+
+## Candidate next steps (Matt to choose)
+
+- **Practical distillation:** human-trackable versions of the RF count and the top
+  deviation rules; quantify edge lost per simplification. (The "teach a human"
+  step.)
+- **Resplit-aware EOR re-derivation:** suspected to sharpen the RF count; also
+  settles E4b's open dominance question.
+- **Bankroll/risk analysis:** variance, risk-of-ruin, hourly $ for the wong-in
+  system at real table conditions (penetration sweep, spread limits).
+- **M6c / M7:** full hi-lo certification; Rust core if sweeps grow.
 
 ## Superseded plan notes (E4, done)
 
