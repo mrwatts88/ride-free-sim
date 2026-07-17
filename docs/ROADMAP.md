@@ -1,9 +1,10 @@
 # Roadmap
 
-**Current milestone: M6a** (M5 done 2026-07-17). **Headline result so far (E2/E3,
-docs/EXPERIMENTS.md): pair-richness at fixed true count is a confirmed +6.6σ EV
-signal on Ride Free (~+0.6% per 0.01 p_pair), null in the standard-game control —
-a novel, count-orthogonal attack surface. Next: E4 ramp derivation.**
+**M6a is COMPLETE (2026-07-17).** The attack question is answered end-to-end — see
+docs/STATUS.md for the verdict and docs/EXPERIMENTS.md E1–E5 for the full arc
+(naive betting refuted → pair anomaly → game-specific EORs → RF count subsumes
+pairs → betting verdict → deviations quantified). Remaining milestones (M6b
+practical distillation, M6c hi-lo certification, M7 Rust) are parked pending need.
 
 Each milestone has a validation gate; don't advance until it passes.
 
@@ -161,7 +162,14 @@ Build the signal layer (see "Counting architecture" in DESIGN.md):
 - Standard-game EV rises monotonically with hi-lo true count, ≈ +0.6%/TC (folk
   +0.5%/TC). ✅ See docs/EXPERIMENTS.md E1.
 
-## M6a — The attack: pair & double signals, side by side
+## M6a — The attack ✅ (results in EXPERIMENTS.md E1–E5)
+Verdict: seated play loses under every system (best: RF count, −0.37% on money at
+1-8 spread); wong-in at RF count ≥ +0.0125 with composition deviations earns ~+1.2%
+per played round on ~6.6% of rounds; standard blackjack hi-lo remains the better
+raw-EV target. Key artifacts: the RF EOR table, `rf_ev_shift()` (perfect linear
+count), and the RF-L2 human count (BC 0.966). Original plan follows for the record.
+
+### (original plan)
 Matt's first interest is pairs; the doubles signal is ~2.75× more frequent. Rather
 than sequencing them, the conditional-EV harness measures both (plus hi-lo TC as
 control) in the same pass — the comparison is the deliverable.

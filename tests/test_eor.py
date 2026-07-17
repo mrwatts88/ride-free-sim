@@ -50,6 +50,23 @@ def test_eor_shift_matches_single_removal():
     assert shift == pytest.approx(RIDE_FREE_EOR[5], rel=0.10)
 
 
+def test_rf_l2_count_is_balanced_and_tracks():
+    from ridefree.counting import RF_L2_TAGS
+
+    per_deck = {r: (16 if r == 10 else 4) for r in range(1, 11)}
+    assert sum(RF_L2_TAGS[r] * per_deck[r] for r in per_deck) == 0
+    t = CompositionTracker(6)
+    assert t.rf_l2_true() == 0.0
+    # Running count = sum of DEALT tags (hi-lo convention): a dealt 5 (+2) raises
+    # it, a dealt ace (-2) cancels it exactly, a dealt ten (-1) sends it negative.
+    t.observe_card(5)
+    assert t.rf_l2_true() > 0
+    t.observe_card(1)
+    assert t.rf_l2_true() == pytest.approx(0.0)
+    t.observe_card(10)
+    assert t.rf_l2_true() < 0
+
+
 def test_fresh_shoe_shift_is_zero():
     t = CompositionTracker(6)
     assert t.rf_ev_shift() == pytest.approx(0.0, abs=1e-12)

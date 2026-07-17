@@ -20,6 +20,13 @@ from ridefree.engine import RoundResult
 # Hi-lo tags: 2-6 count +1, 7-9 neutral, ten-values and aces -1.
 HILO_TAGS = {r: (1 if 2 <= r <= 6 else (-1 if r in (TEN, ACE) else 0)) for r in RANKS}
 
+# The RF-L2 human count: level-2 quantization of the Ride Free EORs (E4a). Balanced
+# (tags x cards/deck sum to 0), betting correlation 0.966 with the exact RF EORs —
+# the same quality hi-lo achieves on standard blackjack (0.963). At level 1 the best
+# balanced count for Ride Free is hi-lo itself (BC 0.910): +-1 tags cannot express
+# the ace/ten asymmetry (ace ~3x the ten), which is exactly what level 2 buys.
+RF_L2_TAGS = {1: -2, 2: 1, 3: 1, 4: 1, 5: 2, 6: 1, 7: 0, 8: 0, 9: 0, 10: -1}
+
 # Effects of removal (fraction of EV per card removed from 52), derived analytically
 # via eor.effects_of_removal on 2026-07-17 (docs/EXPERIMENTS.md E4a) and regenerated
 # by tests/test_eor.py. Standard H17 matches Griffin's published table in sign/order;
@@ -97,10 +104,21 @@ class CompositionTracker:
 
     def hilo_true(self) -> float:
         """Running count per remaining deck (the standard true count)."""
+        return self.linear_true(HILO_TAGS)
+
+    def linear_true(self, tags: dict[int, int]) -> float:
+        """True count for any balanced tag vector: running / decks remaining.
+        (Running count of dealt cards = -sum over remaining, since a balanced
+        count sums to zero over the full shoe.)"""
         decks_left = self.cards_remaining / 52
         if decks_left <= 0:
             return 0.0
-        return self.hilo_running() / decks_left
+        running = -sum(tags[r] * self.counts[r] for r in RANKS)
+        return running / decks_left
+
+    def rf_l2_true(self) -> float:
+        """True count of the RF-L2 human count."""
+        return self.linear_true(RF_L2_TAGS)
 
     def eor_shift(self, eors: dict[int, float]) -> float:
         """First-order estimated EV shift vs a fresh shoe under an EOR vector —

@@ -23,9 +23,14 @@ profitable Ride Free mode found: wong-in at RF count ≥ +0.0125 → 6.6% of rou
 +1.04% EV** (standard offers ~3× the volume at equal quality — RF's residual value
 is camouflage, not raw EV).
 
-Key artifact: `counting.rf_ev_shift()` — the first game-specific linear count for
-Free Bet blackjack, denominated directly in predicted EV. RF EORs vs standard:
-tens halved, ace ≈ 3× the ten, 3/4/5/7 collapse, 8 flips negative.
+Key artifacts: `counting.rf_ev_shift()` — the first game-specific linear count for
+Free Bet blackjack, denominated directly in predicted EV (RF EORs vs standard:
+tens halved, ace ≈ 3× the ten, 3/4/5/7 collapse, 8 flips negative) — and
+**RF-L2**, the human-playable level-2 count (A −2, 5 +2, 2/3/4/6 +1, T −1;
+balanced; BC 0.966). Head-to-head at ~6% wong-in frequency (same seed): hi-lo
++0.63%, RF-L2 +0.72%, perfect count +0.74% per played round — the human count
+captures essentially all of it. Best balanced level-1 for this game is hi-lo
+itself (BC 0.910). Publishable write-up: `docs/ARTICLE.md`.
 
 ## Key numbers (all measured, seeds in EXPERIMENTS.md / git log)
 

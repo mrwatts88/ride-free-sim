@@ -57,6 +57,11 @@ def _bin_tc(value: float) -> int:
     return max(-6, min(6, int(round(value))))
 
 
+def _bin_tc_wide(value: float) -> int:
+    # Level-2 true counts run about twice as wide as hi-lo's.
+    return max(-10, min(10, int(round(value))))
+
+
 SIGNALS = {
     # name -> (extract from tracker, binner)
     "p_pair": (lambda t: t.p_free_split_pair(), _bin_p(0.005)),
@@ -64,6 +69,8 @@ SIGNALS = {
     "hilo_tc": (lambda t: t.hilo_true(), _bin_tc),
     # Ride-Free-optimal linear count (E4a EORs), in EV units; bins of 0.25%.
     "rf_ev": (lambda t: t.rf_ev_shift(), _bin_p(0.0025)),
+    # The RF-L2 human count (level-2 quantization of the RF EORs), true count.
+    "rf_l2_tc": (lambda t: t.rf_l2_true(), _bin_tc_wide),
 }
 
 
