@@ -76,6 +76,37 @@ Optional, off by default for speed. When enabled, every deal, action, rule grant
 (e.g. "free split granted"), dealer card, and settlement line is recorded. Any failing
 or suspicious seed re-runs in verbose mode to produce a full narrative.
 
+## Counting architecture
+
+Counting systems ("accounting systems") are first-class, pluggable, and switchable —
+never baked into the engine. A count is an **observer + advisor**:
+
+- **Observes**: every card as it is dealt (the engine already exposes the dealt
+  stream; `Shoe.remaining_composition()` gives exact per-rank remaining counts).
+- **Advises**: bet size before the deal, and optionally strategy deviations during
+  play, given its current state.
+
+Two families share this interface:
+
+1. **Linear EOR counts** (hi-lo, etc.): per-rank tag vector → running count → true
+   count. Cheap, human-executable, well-published — used to validate the counting
+   machinery itself (roadmap M5).
+2. **Composition targeting**: maintain the per-rank frequency distribution of the
+   remaining shoe and compute event probabilities directly — e.g.
+   P(next hand is a free-splittable pair), P(hard two-card 9/10/11). This is the
+   Ride Free attack (roadmap M6): free-bet value depends on *event frequency*, which
+   linear high-vs-low counts weren't designed to sense. Note pair probability rises
+   when the remaining shoe is *unbalanced* in any rank — a variance-of-composition
+   signal, not a high-vs-low signal.
+
+Design consequences:
+- The engine must emit dealt cards to observers in a fixed, deterministic order.
+- Perfect-information counts (reading true shoe composition) are legal components:
+  they establish upper bounds on attainable edge before any practical count is
+  designed.
+- Bet policy is a separate pluggable piece (flat, ramp-by-true-count,
+  ramp-by-probability) so any count composes with any ramp.
+
 ## Decision record: Rust later, not now
 
 **Decision (2026-07-17):** Build the Python reference engine first; defer the Rust

@@ -61,14 +61,51 @@ Extend the M2 validation engine with the Ride Free metric battery.
   values; the standard-blackjack battery still passes when run with the
   `STANDARD_6D_H17` preset (regression).
 
-## M5 — Experiment layer
-Counting systems ("accounting systems"), bet ramps, deviation indices, count-dependent
-free-split/free-double strategy deviations. This is where we try to beat the game.
-**Gate:** experiments reproducible from (config, seed); results with confidence
-intervals.
+## M5 — Counting infrastructure + hi-lo validation (standard blackjack)
+Build the pluggable counting framework (see "Counting architecture" in DESIGN.md):
+counts observe every dealt card and feed bet sizing and strategy deviations. Two
+families, both switchable and tweakable from day one:
 
-## M6 — Rust simulation core
+1. **Linear EOR counts** — hi-lo and friends: per-rank tags summed into a running
+   count, converted to true count.
+2. **Composition targeting** — track the full per-rank frequency distribution of the
+   remaining shoe (`Shoe.remaining_composition()` already exists for this) and compute
+   event probabilities directly: P(dealt a free-splittable pair), P(hard two-card
+   9/10/11), etc.
+
+Then **validate the machinery on known ground**: hi-lo on standard blackjack is the
+second validation rung after basic strategy, and published numbers exist for it.
+**Gate:**
+- True-count frequency distribution matches published tables (Wizard of Odds /
+  Schlesinger) for matching penetration.
+- EV as a function of true count reproduces published per-true-count edges (~+0.5%
+  per true count is the folk number; use exact published tables).
+- A standard bet ramp (e.g. 1-8 spread) reproduces the published overall player
+  advantage for matching rules/penetration/spread. This gate is demanding — published
+  figures are extremely sensitive to exact conditions, so the comparison must pin
+  rules, penetration, and ramp to the source's stated conditions.
+
+## M6 — The attack: free-bet targeting on Ride Free
+The main event, in deliberate order:
+
+1. **Perfect-information upper bound first.** Use exact composition tracking (the
+   sim knows the true remaining shoe) to bet-size on P(free split) and P(free
+   double). This bounds the attainable edge: if perfect knowledge of pair/double
+   probabilities can't beat the game, no practical count can, and we stop there.
+2. **First attack: pair probabilities.** Bet ramp driven by P(free-splittable pair)
+   from tracked rank frequencies. Measure edge vs. flat betting.
+3. **Double probabilities.** Add P(hard two-card 9/10/11) targeting; combined signal.
+4. **Practical counts.** Distill whatever wins into human-trackable systems (side
+   counts, simplified tags), and quantify the edge lost at each simplification step.
+5. **Hybrid**: EOR-style count for the base game combined with free-bet targeting.
+
+**Gate:** every experiment reproducible from (config, seed); results with confidence
+intervals sized from measured per-round variance; a clear verdict per system:
+edge, bankroll requirements, and detectability-relevant stats (bet spread used).
+
+## M7 — Rust simulation core
 PyO3 + maturin. Port the frozen engine; differential-test against the Python reference
 on seeded shoes (exact match required, not statistical). Then large parameter sweeps.
+May be pulled earlier if M5/M6 sweeps become throughput-bound.
 **Gate:** bit-identical results vs. Python reference across a large seeded corpus;
 throughput sufficient for billions of hands.
