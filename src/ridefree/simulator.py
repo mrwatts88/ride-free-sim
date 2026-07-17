@@ -83,6 +83,24 @@ def _dealer_total(cards) -> int:
     return hand_total(list(cards))
 
 
+# Safety floor: reshuffle before a round could exhaust the shoe mid-deal. A round with
+# splits, doubles, and long draws stays well under this in practice.
+_MIN_CARDS = 40
+
+
+def _needs_reshuffle(rules: Rules, shoe: Shoe, rounds_since: int) -> bool:
+    if shoe.cards_remaining < _MIN_CARDS:
+        return True
+    mode = rules.shoe_end_mode
+    if mode == "cut_card":
+        return shoe.needs_shuffle
+    if mode == "fixed_rounds":
+        return rounds_since >= rules.rounds_per_shoe
+    if mode == "csm":
+        return rounds_since >= 1  # fresh full shoe every round
+    return False
+
+
 def simulate(
     rules: Rules,
     strategy,
@@ -94,10 +112,13 @@ def simulate(
     metrics = Metrics()
     shoe = Shoe(rules.decks, rules.penetration, seed)
     shuffles = 0
+    rounds_since = 0
     for _ in range(rounds):
-        if shoe.needs_shuffle or shoe.cards_remaining < 20:
+        if _needs_reshuffle(rules, shoe, rounds_since):
             shuffles += 1
             shoe = Shoe(rules.decks, rules.penetration, seed + shuffles)
+            rounds_since = 0
         result = play_round(rules, shoe, strategy, bet=bet)
+        rounds_since += 1
         metrics.observe(result, bet)
     return metrics

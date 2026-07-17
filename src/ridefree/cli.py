@@ -7,12 +7,22 @@
 """
 
 import argparse
+import dataclasses
 
 from ridefree.cards import Shoe
 from ridefree.engine import play_round
-from ridefree.rules import STANDARD_6D_H17, STANDARD_6D_S17
+from ridefree.rules import SHOE_END_MODES, STANDARD_6D_H17, STANDARD_6D_S17
 from ridefree.simulator import simulate
 from ridefree.strategy import BasicStrategy
+
+
+def _apply_shoe_overrides(rules, args):
+    changes = {}
+    if getattr(args, "shoe_mode", None):
+        changes["shoe_end_mode"] = args.shoe_mode
+    if getattr(args, "rounds_per_shoe", None):
+        changes["rounds_per_shoe"] = args.rounds_per_shoe
+    return dataclasses.replace(rules, **changes) if changes else rules
 
 # variant -> (name, rules, published player EV, default report path)
 VARIANTS = {
@@ -37,6 +47,10 @@ def _demo(args: argparse.Namespace) -> None:
 
 def _sim(args: argparse.Namespace) -> None:
     _, rules, _, _ = VARIANTS[args.rules]
+    rules = _apply_shoe_overrides(rules, args)
+    print(f"shoe mode: {rules.shoe_end_mode}"
+          + (f" ({rules.rounds_per_shoe} rounds/shoe)"
+             if rules.shoe_end_mode == "fixed_rounds" else ""))
     m = simulate(rules, BasicStrategy(), seed=args.seed, rounds=args.rounds, bet=1.0)
     edge_pct = m.edge * 100
     err_pct = m.edge_stderr * 100
@@ -66,6 +80,7 @@ def _validate(args: argparse.Namespace) -> None:
     from ridefree.validation import format_report, run_suite, to_html
 
     name, rules, published_edge, default_html = VARIANTS[args.rules]
+    rules = _apply_shoe_overrides(rules, args)
     checks, m = run_suite(
         rules,
         seed=args.seed,
@@ -73,7 +88,7 @@ def _validate(args: argparse.Namespace) -> None:
         dealer_trials=args.dealer_trials,
         published_edge=published_edge,
     )
-    print(f"ruleset: {name}")
+    print(f"ruleset: {name}   shoe mode: {rules.shoe_end_mode}")
     print(format_report(checks, m))
 
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -95,6 +110,10 @@ def main() -> None:
 
     s = sub.add_parser("sim", help="simulate many hands and report metrics")
     s.add_argument("--rules", choices=VARIANTS, default="h17")
+    s.add_argument("--shoe-mode", choices=SHOE_END_MODES, default=None,
+                   help="override shoe-end mode (default: ruleset's cut_card)")
+    s.add_argument("--rounds-per-shoe", type=int, default=None,
+                   help="rounds per shoe for fixed_rounds mode")
     s.add_argument("--seed", type=int, default=1)
     s.add_argument("--rounds", type=int, default=100_000)
     s.set_defaults(func=_sim)
@@ -102,6 +121,10 @@ def main() -> None:
     v = sub.add_parser("validate", help="run the validation battery vs references")
     v.add_argument("--rules", choices=VARIANTS, default="h17",
                    help="ruleset/variant to validate (default: h17)")
+    v.add_argument("--shoe-mode", choices=SHOE_END_MODES, default=None,
+                   help="override shoe-end mode (csm ≈ published off-the-top figure)")
+    v.add_argument("--rounds-per-shoe", type=int, default=None,
+                   help="rounds per shoe for fixed_rounds mode")
     v.add_argument("--seed", type=int, default=1)
     v.add_argument("--rounds", type=int, default=2_000_000)
     v.add_argument("--dealer-trials", type=int, default=2_000_000)

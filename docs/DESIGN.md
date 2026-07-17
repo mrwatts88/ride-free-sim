@@ -83,6 +83,31 @@ Optional, off by default for speed. When enabled, every deal, action, rule grant
 (e.g. "free split granted"), dealer card, and settlement line is recorded. Any failing
 or suspicious seed re-runs in verbose mode to produce a full narrative.
 
+## Shoe-end modes (the cut card)
+
+The cut card is configured by `Rules.shoe_end_mode` (with `penetration` and
+`rounds_per_shoe` as the associated knobs):
+
+- **`cut_card`** — realistic fixed-depth cut card at `penetration`. The round in which
+  the cut card appears is finished, then the shoe reshuffles. Rounds-per-shoe varies
+  with composition, so this **includes the cut-card effect**: a fixed-depth cut biases
+  the dealt-round composition slightly and raises the house edge by ~0.01–0.03% versus
+  a combinatorial figure. This is the mode for real-game and counting analysis.
+- **`fixed_rounds`** — reshuffle after exactly `rounds_per_shoe` rounds. Fixed
+  rounds-per-shoe removes the cut-card effect while keeping intra-shoe depletion;
+  matches fixed-round combinatorial analyses.
+- **`csm`** — reshuffle a full shoe before every round, so each round is dealt off the
+  top of a complete shoe. No depletion at all: the direct match to a published
+  off-the-top house edge, and the "counting does nothing" baseline (approximates a
+  continuous shuffle machine).
+
+Why this matters: published house edges are combinatorial (no cut card), so `csm`
+should match them tightest; `cut_card` sits slightly above by the cut-card effect. For
+the counting/targeting phase, `penetration` is the single most important lever (deeper
+penetration → more counter advantage), so the cut card is a first-class, sweepable
+config, not a fixed default. The simulator's reshuffle decision lives in one place
+(`simulator._needs_reshuffle`).
+
 ## Counting architecture
 
 Counting systems ("accounting systems") are first-class, pluggable, and switchable —

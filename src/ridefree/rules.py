@@ -8,11 +8,27 @@ must never hard-code a rule.
 from dataclasses import dataclass
 
 
+# How a shoe is retired and reshuffled:
+#   "cut_card"     realistic fixed-depth cut card at `penetration`; finish the round
+#                  in which the cut card appears, then reshuffle. Number of rounds per
+#                  shoe varies with composition, so this INCLUDES the cut-card effect.
+#   "fixed_rounds" reshuffle after exactly `rounds_per_shoe` rounds regardless of
+#                  depth. Removes the cut-card effect (fixed rounds/shoe) but keeps
+#                  intra-shoe depletion. Matches fixed-round combinatorial analyses.
+#   "csm"          reshuffle a full shoe before every round, so every round is dealt
+#                  off the top of a complete shoe. No depletion at all — the direct
+#                  match to a published off-the-top house edge and the "counting does
+#                  nothing" baseline. Approximates a continuous shuffle machine.
+SHOE_END_MODES = ("cut_card", "fixed_rounds", "csm")
+
+
 @dataclass(frozen=True, slots=True)
 class Rules:
     # Shoe
     decks: int = 6
-    penetration: float = 0.75  # fraction of shoe dealt before reshuffle
+    penetration: float = 0.75  # fraction of shoe dealt before reshuffle (cut_card mode)
+    shoe_end_mode: str = "cut_card"
+    rounds_per_shoe: int = 40  # used by fixed_rounds mode (~75% pen equiv for 6 decks)
 
     # Dealer
     dealer_hits_soft_17: bool = True
@@ -50,6 +66,10 @@ class Rules:
             raise ValueError("penetration must be in (0, 1]")
         if self.max_hands < 1:
             raise ValueError("max_hands must be >= 1")
+        if self.shoe_end_mode not in SHOE_END_MODES:
+            raise ValueError(f"shoe_end_mode must be one of {SHOE_END_MODES}")
+        if self.rounds_per_shoe < 1:
+            raise ValueError("rounds_per_shoe must be >= 1")
         bad = {r for r in self.free_split_ranks if r not in range(1, 11)}
         if bad:
             raise ValueError(f"free_split_ranks contains invalid ranks: {sorted(bad)}")
