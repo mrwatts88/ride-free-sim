@@ -322,7 +322,26 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
             outcome, delta = "lose", -hand.wager
         else:
             outcome, delta = "push", 0.0
-        note(f"hand {idx}: {outcome} {delta:+g}")
+        if hand.free_wager > 0:
+            # Explicit ledger: a hand holding casino money settles each wager
+            # component on its own line so the payout is auditable at a glance.
+            if outcome == "win":
+                if hand.wager > 0:
+                    note(f"hand {idx}: own wager {hand.wager:g} wins +{hand.wager:g}")
+                note(f"hand {idx}: free wager {hand.free_wager:g} wins "
+                     f"+{hand.free_wager:g}")
+            elif outcome == "lose":
+                if hand.wager > 0:
+                    note(f"hand {idx}: own wager {hand.wager:g} loses -{hand.wager:g}")
+                note(f"hand {idx}: free wager {hand.free_wager:g} loses — "
+                     f"casino's money, costs player nothing")
+            else:
+                if hand.wager > 0:
+                    note(f"hand {idx}: own wager {hand.wager:g} pushes, returned")
+                note(f"hand {idx}: free wager {hand.free_wager:g} pushes — no return")
+            note(f"hand {idx}: profit {delta:+g}")
+        else:
+            note(f"hand {idx}: {outcome} {delta:+g}")
         results.append(
             HandResult(tuple(hand.cards), hand.wager, hand.free_wager, outcome, delta)
         )

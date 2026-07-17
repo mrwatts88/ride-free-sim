@@ -285,6 +285,48 @@ def test_free_bet_strategy_takes_free_actions():
     assert r.free_doubles >= 1
 
 
+def test_settlement_ledger_is_itemized_in_event_log():
+    # Free double wins: the log itemizes own vs free wager, then hand profit.
+    r = play_round(
+        RIDE_FREE,
+        StackedShoe([6, 9, 5, 8, 10]),  # 11 vs 9, free double, draw T -> 21 beats 17
+        ScriptedStrategy([Action.DOUBLE]),
+        bet=1.0,
+        log=True,
+    )
+    assert "hand 1: own wager 1 wins +1" in r.events
+    assert "hand 1: free wager 1 wins +1" in r.events
+    assert "hand 1: profit +2" in r.events
+
+
+def test_ledger_free_loss_costs_player_nothing_in_log():
+    # Free double loses: own unit lost, free button noted as costing nothing.
+    r = play_round(
+        RIDE_FREE,
+        StackedShoe([6, 9, 5, 8, 2]),  # 11 vs 9, free double, draw 2 -> 13 loses
+        ScriptedStrategy([Action.DOUBLE]),
+        bet=1.0,
+        log=True,
+    )
+    assert "hand 1: own wager 1 loses -1" in r.events
+    assert any("free wager 1 loses" in e and "costs player nothing" in e
+               for e in r.events)
+    assert "hand 1: profit -1" in r.events
+
+
+def test_plain_hands_keep_single_line_settlement():
+    # No free money on the hand -> the old one-liner, not a three-line ledger.
+    r = play_round(
+        RIDE_FREE,
+        StackedShoe([10, 7, 9, 9, 2]),  # 19 vs dealer 7,9 -> 16, draws 2 -> 18
+        ScriptedStrategy([Action.STAND]),
+        bet=1.0,
+        log=True,
+    )
+    assert "hand 1: win +1" in r.events
+    assert not any("own wager" in e for e in r.events)
+
+
 def test_free_bet_strategy_never_free_splits_fives():
     # 5,5=hard 10 vs 6: free double, never split.
     r = play_round(
