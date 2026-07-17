@@ -1,8 +1,9 @@
 # Roadmap
 
-**Current milestone: M6a** (M5 signal infrastructure done 2026-07-17; first
-reconnaissance results in docs/EXPERIMENTS.md E1 — naive event-betting refuted,
-2D count×pair analysis is next).
+**Current milestone: M6a** (M5 done 2026-07-17). **Headline result so far (E2/E3,
+docs/EXPERIMENTS.md): pair-richness at fixed true count is a confirmed +6.6σ EV
+signal on Ride Free (~+0.6% per 0.01 p_pair), null in the standard-game control —
+a novel, count-orthogonal attack surface. Next: E4 ramp derivation.**
 
 Each milestone has a validation gate; don't advance until it passes.
 

@@ -2,6 +2,45 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E3 — Replication: the pair effect is CONFIRMED (+6.6σ combined)
+
+**Date:** 2026-07-17 · **Command:** `grid --rules ridefree --row hilo_tc --col p_pair
+--rounds 3000000` × 4 shards (seeds 1111/2222/3333/4444, fresh — never used in E2),
+merged via `combine`. Raw grids: `data/e3_shard*.json`.
+
+### Result
+
+| sample | pooled within-TC pair slope (per +0.01 p_pair) |
+|---|---|
+| E3 alone (12M fresh rounds) | **+0.654% ± 0.106% (+6.2σ)** |
+| E2+E3 combined (15M) | **+0.626% ± 0.094% (+6.6σ)** |
+| individual shards | +0.537, +0.598, +0.553, +0.518 (each ±0.221) |
+
+- Positive in **all 13** TC rows of the combined sample.
+- The four independent shards agree tightly — this is not seed luck.
+- Together with E2's null standard-game control (+0.05% ± 0.24%), the effect is
+  attributable to free-split value, not composition confounds.
+
+### What it means
+
+**Pair-richness of the remaining shoe is a real, count-orthogonal EV signal on Ride
+Free, worth ≈ +0.6% per 0.01 of pair probability at fixed true count.** Across the
+observed signal range (~0.035–0.065) that is up to ~+1.5–2% of EV — pair-rich shoes
+at TC +1/+2 reach break-even-or-better territory that a pure counter would ignore,
+and the signal is invisible to count-based surveillance (r² with TC ≈ 0.5).
+
+To our knowledge there is no published literature on composition-targeted betting
+for Free Bet variants; this appears to be a novel result.
+
+### Next (E4)
+
+Pure arithmetic on the existing grids, no new simulation needed:
+1. Derive the optimal (TC × p_pair) bet ramp from the combined grid and compare its
+   overall edge/variance to the best TC-only ramp — the first candidate "accounting
+   system" verdict.
+2. Then: practical distillation (how much of the p_pair signal survives a
+   human-trackable approximation, e.g. side-counting a few ranks?).
+
 ## E2 — Does pair-richness add EV at fixed true count? (first positive evidence)
 
 **Date:** 2026-07-17 · **Command:** `grid --rules {ridefree,h17} --row hilo_tc
