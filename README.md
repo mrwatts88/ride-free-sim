@@ -34,4 +34,8 @@ Docs: [STATUS](docs/STATUS.md) · [DESIGN](docs/DESIGN.md) ·
 [ROADMAP](docs/ROADMAP.md) · [EXPERIMENTS](docs/EXPERIMENTS.md) ·
 [ARTICLE](docs/ARTICLE.md)
 
+Built in human–AI collaboration: research direction, hypotheses, and final claims
+by Matt Watts; implementation, analysis, and drafting with Claude (Anthropic).
+See the note at the end of [the article](docs/ARTICLE.md).
+
 MIT licensed. *For education and analysis. Casinos vary their rules; verify yours.*
