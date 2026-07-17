@@ -190,7 +190,10 @@ And all results are for the cut-card game at 75% penetration; deeper penetration
 helps any count, shallower kills it.
 
 Every number in this article regenerates from a seed-deterministic open simulator —
-same seeds, same results, to the digit.
+same seeds, same results, to the digit. The full source, experiment log, and banked
+data are at **[github.com/mrwatts88/ride-free-sim](https://github.com/mrwatts88/ride-free-sim)**;
+the validation suite, the EOR derivation, and every experiment here are one CLI
+command each.
 
 ---
 
