@@ -1,0 +1,73 @@
+"""Game rules as immutable data.
+
+Every parameter that affects gameplay or payout lives here. Variants (standard
+blackjack, Ride Free / Free Bet) are configurations of this one object; game logic
+must never hard-code a rule.
+"""
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True, slots=True)
+class Rules:
+    # Shoe
+    decks: int = 6
+    penetration: float = 0.75  # fraction of shoe dealt before reshuffle
+
+    # Dealer
+    dealer_hits_soft_17: bool = True
+    dealer_22_pushes: bool = False  # Free Bet family: dealer 22 pushes live hands
+    dealer_peeks_for_blackjack: bool = True
+
+    # Payouts
+    blackjack_payout: float = 1.5  # per unit wagered (3:2); 1.2 would be 6:5
+
+    # Doubling
+    double_any_two_cards: bool = True
+    double_hard_totals: frozenset[int] = frozenset()  # used when not double_any_two_cards
+    double_after_split: bool = True
+
+    # Splitting
+    max_hands: int = 4  # total hands after all splits
+    resplit_aces: bool = False
+    hit_split_aces: bool = False  # False = one card only to each split ace
+    split_by_value: bool = True  # True: K-T splits; False: matched rank only
+
+    # Surrender
+    late_surrender: bool = False
+
+    # Free Bet features (all empty/False = standard blackjack)
+    free_double_totals: frozenset[int] = frozenset()  # two-card totals, e.g. {9, 10, 11}
+    free_double_soft_allowed: bool = False  # if True, soft totals also qualify (unconfirmed at Potawatomi; standard Free Bet is hard-only)
+    free_split_ranks: frozenset[int] = frozenset()  # ranks eligible; 1=A, 10=T/J/Q/K
+    free_resplits: bool = False
+    free_double_after_split: bool = False
+
+    def __post_init__(self) -> None:
+        if self.decks < 1:
+            raise ValueError("decks must be >= 1")
+        if not 0.0 < self.penetration <= 1.0:
+            raise ValueError("penetration must be in (0, 1]")
+        if self.max_hands < 1:
+            raise ValueError("max_hands must be >= 1")
+        bad = {r for r in self.free_split_ranks if r not in range(1, 11)}
+        if bad:
+            raise ValueError(f"free_split_ranks contains invalid ranks: {sorted(bad)}")
+
+
+# M2 validation target: look up the exact Wizard of Odds house edge for precisely
+# this ruleset at milestone time (see docs/ROADMAP.md).
+STANDARD_6D_H17 = Rules()
+
+# Core features confirmed by Potawatomi's published description (free splits on
+# non-ten pairs, free double on two-card 9/10/11, BJ 3:2, dealer 22 pushes).
+# Still unconfirmed — all configurable above: decks, H17/S17 (dealer_hits_soft_17),
+# resplit limits (max_hands, resplit_aces), and free_double_soft_allowed
+# (hard-only here, per standard Free Bet). See docs/ROADMAP.md M3.
+RIDE_FREE_PLACEHOLDER = Rules(
+    dealer_22_pushes=True,
+    free_double_totals=frozenset({9, 10, 11}),
+    free_split_ranks=frozenset(range(1, 10)),  # all pairs except ten-value
+    free_resplits=True,
+    free_double_after_split=True,
+)
