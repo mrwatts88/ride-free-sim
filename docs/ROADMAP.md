@@ -1,6 +1,6 @@
 # Roadmap
 
-**Current milestone: M4** (M3 Ride Free rules done 2026-07-17).
+**Current milestone: M5** (M4 published-EV match done 2026-07-17).
 
 Each milestone has a validation gate; don't advance until it passes.
 
@@ -106,15 +106,34 @@ toggles (`decks`, `dealer_hits_soft_17`); 6-deck H17 assumed until confirmed.
 **Gate:** hand-level tests for every free-money settlement combination (free split ×
 free double × dealer 22 × dealer blackjack).
 
-## M4 — Match published Free Bet EV
-Extend the M2 validation engine with the Ride Free metric battery.
-**Gate:**
-- Simulated EV matches the published Free Bet Blackjack house edge for the matching
-  ruleset (~1.0% region for 6-deck H17; verify exact figure and ruleset at milestone
-  time).
-- Dealer 22 rate, free-split rate, and free-double rate match published/derivable
-  values; the standard-blackjack battery still passes when run with the
-  `STANDARD_6D_H17` preset (regression).
+## M4 — Match published Free Bet EV ✅
+The published WoO strategy charts are images, so instead of transcribing them we
+built `player_ev.EVCalculator` — an exact infinite-deck EV recursion over (total,
+soft, own_wager, free_wager, upcard) — and `OptimalStrategy` plays its argmax. The
+real-money vs free-hand chart distinction falls out of the funding parameterization
+(a push is worthless on a (0,1) hand); documented deviations emerged unprompted
+(hit 12v4, 13v2; free hands double soft 19–20 v 6; 5,5 free-doubles, not splits).
+
+Published references (fetched from WoO 2026-07-17): house edge 1.04% for 6-deck H17
+DAS resplit-to-4 *including aces*; no-resplit-aces costs 0.08% → Potawatomi
+(`RIDE_FREE`) target ~1.12%; dealer-22 probability 0.073536.
+
+**Gate — met (5M-round runs, seed 20260717, cut_card mode):**
+- `RIDE_FREE_WOO` house edge 0.9895% vs published 1.04% (−1.06σ). ✅
+- `RIDE_FREE` (Potawatomi) 1.0706% vs derived 1.12% (−1.04σ). ✅
+- The paired difference between the two configs is 0.081% — reproducing WoO's
+  published 0.08% resplit-aces adjustment almost exactly (same-seed runs, so most
+  noise cancels in the difference). Strong independent confirmation.
+- Dealer 22 rate 7.3538% vs WoO's 0.073536 (+0.01σ) and vs our exact calc (−0.25σ). ✅
+- Standard H17 battery passes unchanged (regression). ✅
+- New baselines frozen: free split 4.93%/5.02% of rounds (Potawatomi/WoO), free
+  double 13.62%, dealer-22 push 6.07% of rounds, Ride Free std dev ≈ 1.067.
+
+**Honest caveat:** both edges sit ~0.05% *below* published, in the same direction on
+the same seed. Statistically within gate (~1σ), but plausibly a small systematic:
+argmax-EV play may beat WoO's simplified published chart by a hair (cut-card effect
+pushes the other way). If it matters later, a csm-mode run isolates the strategy
+component from the cut-card component.
 
 ## M5 — Counting infrastructure + hi-lo validation (standard blackjack)
 Build the pluggable counting framework (see "Counting architecture" in DESIGN.md):
