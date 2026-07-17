@@ -20,6 +20,39 @@ Shoe state → hand state → legal actions → resolved payouts
 | `SettlementLedger` | Per-hand money resolution; every payout explainable                   |
 | `Simulator`        | Seeded loop over rounds; owns the shoe lifecycle                      |
 | `MetricsCollector` | Frequencies, EV, variance; separate from game logic                   |
+| `ValidationSuite`  | Compares collected metrics against published values with CIs          |
+
+## Validation engine
+
+Matching a single house-edge number is weak evidence — an engine with two offsetting
+bugs can still land on the right EV. The validation engine compares a *battery* of
+metrics from large runs against independently published values, each with a
+confidence interval, and reports every metric as pass/fail/no-reference.
+
+Metric battery (standard blackjack; exact reference values looked up at milestone
+time, never trusted from memory):
+
+- **EV / house edge** per unit of initial wager.
+- **Dealer outcome distribution**: P(final 17), P(18), P(19), P(20), P(21),
+  P(blackjack), P(bust) — overall and conditioned on each up-card (Wizard of Odds
+  publishes the full up-card table; this is the single most bug-sensitive check).
+- **Player blackjack rate** (~4.75% for 6 decks) and dealer blackjack rate.
+- **Hand-type frequencies**: pair dealt rate, split rate, resplit rate, double rate
+  under basic strategy.
+- **Round outcome distribution**: win / lose / push rates.
+- **Per-round variance / std dev** of profit (published ≈ 1.15 units for flat-bet
+  basic strategy; also needed later to size experiment confidence intervals).
+- **Ride Free additions (M4)**: dealer 22 rate, free-split rate, free-double rate,
+  frequency of hands carrying both player and free money.
+
+Rules for the suite:
+- Every check states its reference source and tolerance; tolerance derives from the
+  simulation's own CI (e.g. ±3σ), not a hand-tuned epsilon.
+- A metric with no published reference is still collected and reported, but marked
+  unvalidated — it documents engine behavior and becomes a regression baseline for
+  differential tests (M6).
+- The suite is a permanent regression harness, not a one-time gate: it reruns on
+  every engine change with fixed seeds.
 
 ## Money model
 
