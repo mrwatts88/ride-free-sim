@@ -34,4 +34,4 @@ Docs: [STATUS](docs/STATUS.md) · [DESIGN](docs/DESIGN.md) ·
 [ROADMAP](docs/ROADMAP.md) · [EXPERIMENTS](docs/EXPERIMENTS.md) ·
 [ARTICLE](docs/ARTICLE.md)
 
-*For education and analysis. Casinos vary their rules; verify yours.*
+MIT licensed. *For education and analysis. Casinos vary their rules; verify yours.*
