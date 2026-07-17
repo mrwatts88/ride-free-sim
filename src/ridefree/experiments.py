@@ -254,6 +254,60 @@ def run_conditional_ev_grid(
     )
 
 
+def _parse_bin(text: str):
+    try:
+        return int(text)
+    except ValueError:
+        return float(text)
+
+
+def load_grid_json(path: str) -> GridResult:
+    import json
+
+    with open(path) as f:
+        payload = json.load(f)
+    grid: dict = {}
+    total_rounds = 0
+    total_profit = 0.0
+    for row_text, cols in payload["grid"].items():
+        row = _parse_bin(row_text)
+        for col_text, (rounds, profit, profit_sq) in cols.items():
+            col = _parse_bin(col_text)
+            stat = grid.setdefault(row, {}).setdefault(col, BinStat())
+            stat.rounds += rounds
+            stat.profit += profit
+            stat.profit_sq += profit_sq
+            total_rounds += rounds
+            total_profit += profit
+    return GridResult(
+        rounds=total_rounds,
+        total_profit=total_profit,
+        row_name=payload["row"],
+        col_name=payload["col"],
+        grid=grid,
+    )
+
+
+def merge_grids(results: list[GridResult]) -> GridResult:
+    """Pool independently-seeded grid runs (bin stats are additive)."""
+    assert results
+    first = results[0]
+    merged = GridResult(
+        rounds=0, total_profit=0.0, row_name=first.row_name, col_name=first.col_name
+    )
+    for r in results:
+        assert (r.row_name, r.col_name) == (first.row_name, first.col_name)
+        merged.rounds += r.rounds
+        merged.total_profit += r.total_profit
+        for row, cols in r.grid.items():
+            for col, stat in cols.items():
+                target = merged.grid.setdefault(row, {}).setdefault(col, BinStat())
+                target.rounds += stat.rounds
+                target.profit += stat.profit
+                target.profit_sq += stat.profit_sq
+    return merged
+
+
 def format_grid(result: GridResult, min_cell: int = 2000) -> str:
     lines = [
         f"rounds: {result.rounds:,}   overall EV: {result.overall_ev * 100:+.3f}%",

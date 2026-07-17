@@ -174,6 +174,15 @@ def _grid(args: argparse.Namespace) -> None:
         print(f"\ngrid JSON written to {args.json}")
 
 
+def _combine(args: argparse.Namespace) -> None:
+    from ridefree.experiments import format_grid, load_grid_json, merge_grids
+
+    grids = [load_grid_json(p) for p in args.paths]
+    merged = merge_grids(grids)
+    print(f"merged {len(grids)} grid(s)")
+    print(format_grid(merged, min_cell=args.min_cell))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ridefree")
     sub = parser.add_subparsers(required=True)
@@ -235,6 +244,11 @@ def main() -> None:
     t.add_argument("--min-cell", type=int, default=2_000)
     t.add_argument("--json", default=None, help="dump raw grid stats to this path")
     t.set_defaults(func=_grid)
+
+    c = sub.add_parser("combine", help="pool grid JSON dumps and report")
+    c.add_argument("paths", nargs="+", help="grid JSON files to merge")
+    c.add_argument("--min-cell", type=int, default=2_000)
+    c.set_defaults(func=_combine)
 
     args = parser.parse_args()
     args.func(args)

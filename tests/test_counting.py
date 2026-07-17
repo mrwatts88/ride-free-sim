@@ -112,6 +112,39 @@ def test_grid_runner_smoke():
     assert sum(s.rounds for s in marg.values()) == 4_000
 
 
+def test_grid_json_roundtrip_and_merge(tmp_path):
+    import json
+
+    from ridefree.experiments import load_grid_json, merge_grids, run_conditional_ev_grid
+
+    g1 = run_conditional_ev_grid(Rules(), BasicStrategy(), seed=21, rounds=2_000)
+    g2 = run_conditional_ev_grid(Rules(), BasicStrategy(), seed=22, rounds=2_000)
+    paths = []
+    for i, g in enumerate((g1, g2)):
+        payload = {
+            "rules": "STANDARD_6D_H17", "seed": 21 + i, "rounds": g.rounds,
+            "row": g.row_name, "col": g.col_name,
+            "grid": {
+                str(r): {str(c): [s.rounds, s.profit, s.profit_sq]
+                         for c, s in cols.items()}
+                for r, cols in g.grid.items()
+            },
+        }
+        p = tmp_path / f"g{i}.json"
+        p.write_text(json.dumps(payload))
+        paths.append(str(p))
+    merged = merge_grids([load_grid_json(p) for p in paths])
+    assert merged.rounds == 4_000
+    assert merged.total_profit == pytest.approx(g1.total_profit + g2.total_profit)
+    # A row present in both merges additively.
+    common = set(g1.grid) & set(g2.grid)
+    row = next(iter(common))
+    for col in set(g1.grid[row]) & set(g2.grid[row]):
+        assert merged.grid[row][col].rounds == (
+            g1.grid[row][col].rounds + g2.grid[row][col].rounds
+        )
+
+
 def test_conditional_ev_smoke():
     result = run_conditional_ev(
         Rules(), BasicStrategy(), seed=11, rounds=5_000
