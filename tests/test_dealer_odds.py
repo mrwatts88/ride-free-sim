@@ -30,11 +30,11 @@ def test_dealer_20_stands_hardcoded():
 
 
 def test_hard_16_never_stands():
-    # From hard 16 the dealer must draw; outcome is 17-21 or bust, never 16.
+    # From hard 16 the dealer must draw; outcome is 17-22 or deeper bust, never 16.
     memo = {}
     dist = dealer_odds._distribution([10, 6], H17, memo)
     assert 16 not in dist
-    assert set(dist) <= {17, 18, 19, 20, 21, "bust"}
+    assert set(dist) <= {17, 18, 19, 20, 21, 22, "bust"}
 
 
 def test_soft_17_h17_vs_s17_differ():
@@ -59,7 +59,20 @@ def test_bust_rate_vs_six_up_is_highest():
 def test_aggregate_bust_matches_published_h17():
     # Well-known: dealer busts ~28-29% overall under H17 (up-card from full deck).
     agg = dealer_odds.aggregate_distribution(H17)
-    assert agg["bust"] == pytest.approx(0.2836, abs=0.01)
+    assert agg[22] + agg["bust"] == pytest.approx(0.2836, abs=0.01)
+
+
+def test_dealer_22_probability_near_published():
+    # WoO publishes 0.073536 for six decks H17; infinite-deck should be close.
+    assert dealer_odds.dealer_22_probability(H17) == pytest.approx(0.0735, abs=0.004)
+
+
+def test_peek_conditioning_excludes_naturals_and_normalizes():
+    dist = dealer_odds.dealer_distribution(1, H17, exclude_natural=True)
+    assert sum(dist.values()) == pytest.approx(1.0, abs=1e-9)
+    unconditioned = dealer_odds.dealer_distribution(1, H17)
+    # Removing the natural (a guaranteed 21) must lower the 21 mass.
+    assert dist[21] < unconditioned[21]
 
 
 def test_exact_matches_engine_monte_carlo():
@@ -68,7 +81,7 @@ def test_exact_matches_engine_monte_carlo():
     mc = dealer_monte_carlo(H17, seed=123, trials=600_000)
     for up in (2, 6, 10, 1):
         n = sum(mc[up].values())
-        obs = mc[up].get(22, 0) / n
+        obs = (mc[up].get(22, 0) + mc[up].get(23, 0)) / n
         ref = dealer_odds.bust_probability(up, H17)
         # ~60k trials/up-card: 4 std errors is a safe band.
         se = (ref * (1 - ref) / n) ** 0.5

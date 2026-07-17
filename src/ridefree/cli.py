@@ -11,14 +11,22 @@ import dataclasses
 
 from ridefree.cards import Shoe
 from ridefree.engine import play_round
-from ridefree.rules import RIDE_FREE, SHOE_END_MODES, STANDARD_6D_H17, STANDARD_6D_S17
+from ridefree.rules import (
+    RIDE_FREE,
+    RIDE_FREE_WOO,
+    SHOE_END_MODES,
+    STANDARD_6D_H17,
+    STANDARD_6D_S17,
+)
 from ridefree.simulator import simulate
-from ridefree.strategy import BasicStrategy, FreeBetStrategy
+from ridefree.strategy import BasicStrategy
 
 
 def _strategy_for(rules):
     if rules.free_split_ranks or rules.free_double_totals:
-        return FreeBetStrategy()
+        from ridefree.player_ev import OptimalStrategy
+
+        return OptimalStrategy()
     return BasicStrategy()
 
 
@@ -31,12 +39,15 @@ def _apply_shoe_overrides(rules, args):
     return dataclasses.replace(rules, **changes) if changes else rules
 
 # variant -> (name, rules, published player EV, default report path)
-# ridefree's published edge is None until M4: the provisional FreeBetStrategy isn't
-# the published chart yet, so its EV reports as a baseline rather than validating.
+# ridefree_woo matches the exact WoO ruleset behind the published 1.04% house edge;
+# ridefree (Potawatomi: no resplit aces) targets 1.04% + 0.08% = 1.12% per WoO's
+# rule-variation table.
 VARIANTS = {
     "h17": ("STANDARD_6D_H17", STANDARD_6D_H17, -0.0062, "validation_report.html"),
     "s17": ("STANDARD_6D_S17", STANDARD_6D_S17, -0.0040, "validation_report_s17.html"),
-    "ridefree": ("RIDE_FREE", RIDE_FREE, None, "validation_report_ridefree.html"),
+    "ridefree": ("RIDE_FREE", RIDE_FREE, -0.0112, "validation_report_ridefree.html"),
+    "ridefree_woo": ("RIDE_FREE_WOO", RIDE_FREE_WOO, -0.0104,
+                     "validation_report_ridefree_woo.html"),
 }
 
 

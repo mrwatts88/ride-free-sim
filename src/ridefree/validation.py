@@ -19,7 +19,7 @@ from ridefree.cards import ACE, TEN, deck_composition
 from ridefree.engine import play_dealer
 from ridefree.rules import Rules
 from ridefree.simulator import Metrics, simulate
-from ridefree.strategy import BasicStrategy, FreeBetStrategy
+from ridefree.strategy import BasicStrategy
 
 Z_PASS = 4.0  # |observed - reference| within this many standard errors → pass
 
@@ -96,16 +96,14 @@ def dealer_monte_carlo(rules: Rules, seed: int, trials: int) -> dict[int, dict[i
 
     shoe = InfiniteDeckShoe(seed)
     by_up: dict[int, dict[int, int]] = {up: {} for up in range(1, 11)}
-    counts: dict[int, int] = {up: 0 for up in range(1, 11)}
     per_up = trials // 10
     for up in range(1, 11):
         for _ in range(per_up):
             hole = shoe.deal()
             cards = play_dealer([up, hole], shoe, rules)
             total = hand_total(cards)
-            key = 22 if total > 21 else total
+            key = min(total, 23)  # 22 kept distinct; 23 = all deeper busts
             by_up[up][key] = by_up[up].get(key, 0) + 1
-            counts[up] += 1
     return by_up
 
 
@@ -123,25 +121,41 @@ def _dealer_checks(rules: Rules, seed: int, trials: int) -> list[Check]:
     checks: list[Check] = []
     for up in range(1, 11):
         n = sum(mc[up].values())
-        obs = mc[up].get(22, 0) / n if n else 0.0
+        obs = (mc[up].get(22, 0) + mc[up].get(23, 0)) / n if n else 0.0
         ref = dealer_odds.bust_probability(up, rules)
         label = "A" if up == ACE else str(up)
         checks.append(
             Check(f"dealer bust vs up-card {label}", obs, ref,
                   _binom_stderr(ref, n), "exact calc")
         )
-    # Aggregate over up-cards weighted by fresh-deck frequency (unconditional).
+    # Aggregates over up-cards weighted by fresh-deck frequency (unconditional).
     total_w = sum(_UP_WEIGHT.values())
-    agg_obs = sum(
-        _UP_WEIGHT[up] / total_w * (mc[up].get(22, 0) / max(sum(mc[up].values()), 1))
-        for up in range(1, 11)
-    )
     agg_n = sum(sum(mc[up].values()) for up in range(1, 11))
-    agg_ref = dealer_odds.aggregate_distribution(rules)["bust"]
+
+    def agg_rate(*keys: int) -> float:
+        return sum(
+            _UP_WEIGHT[up] / total_w
+            * (sum(mc[up].get(k, 0) for k in keys) / max(sum(mc[up].values()), 1))
+            for up in range(1, 11)
+        )
+
+    agg = dealer_odds.aggregate_distribution(rules)
     checks.append(
-        Check("dealer bust (aggregate)", agg_obs, agg_ref,
-              _binom_stderr(agg_ref, agg_n), "exact calc (∞-deck)")
+        Check("dealer bust (aggregate)", agg_rate(22, 23), agg[22] + agg["bust"],
+              _binom_stderr(agg[22] + agg["bust"], agg_n), "exact calc (∞-deck)")
     )
+    checks.append(
+        Check("dealer 22 rate (aggregate)", agg_rate(22), agg[22],
+              _binom_stderr(agg[22], agg_n), "exact calc (∞-deck)")
+    )
+    if rules.dealer_22_pushes:
+        # WoO publishes 0.073536 for six decks H17; ours is infinite-deck, so the
+        # tiny composition gap makes this advisory rather than a hard gate.
+        checks.append(
+            Check("dealer 22 rate vs published", agg_rate(22), 0.073536,
+                  _binom_stderr(0.073536, agg_n), "WoO 6-deck (ours ∞-deck)",
+                  advisory=True)
+        )
     return checks
 
 
@@ -168,7 +182,14 @@ def run_suite(
     Override / re-verify at call time — don't trust a hardcoded figure blindly.
     """
     has_free = bool(rules.free_split_ranks or rules.free_double_totals)
-    strategy = FreeBetStrategy() if has_free else BasicStrategy()
+    if has_free:
+        from ridefree.player_ev import OptimalStrategy
+
+        strategy = OptimalStrategy()
+        if published_std == 1.15:  # the 1.15 folk figure is for standard blackjack
+            published_std = None
+    else:
+        strategy = BasicStrategy()
     m = simulate(rules, strategy, seed=seed, rounds=game_rounds, bet=1.0)
     checks: list[Check] = []
 

@@ -52,6 +52,11 @@ class HandView:
     # so these exist for strategies to *choose* actions, not to request funding.
     free_split_available: bool = False
     free_double_available: bool = False
+    # The hand's funding in units of the base bet: a normal hand is (1, 0), a
+    # free-split hand (0, 1). EV-based strategies need this — on a hand carrying
+    # only free money a push is worth the same as a loss, which changes the play.
+    own_wager: float = 1.0
+    free_wager: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -119,6 +124,18 @@ def free_double_allowed(hand: _Hand, rules: Rules) -> bool:
 
 
 def legal_actions(hand: _Hand, n_hands: int, rules: Rules) -> frozenset[Action]:
+    if hand.from_split_aces and not rules.hit_split_aces:
+        # One card per split ace: stand is forced, except a freshly re-paired ace
+        # may be re-split where the rules allow it.
+        legal = {Action.STAND}
+        if (
+            len(hand.cards) == 2
+            and hand.cards[0] == hand.cards[1] == ACE
+            and rules.resplit_aces
+            and n_hands < rules.max_hands
+        ):
+            legal.add(Action.SPLIT)
+        return frozenset(legal)
     legal = {Action.HIT, Action.STAND}
     if len(hand.cards) == 2:
         total = hand_total(hand.cards)
@@ -213,7 +230,14 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
                 hand.cards.append(shoe.deal())
                 note(f"{label}: dealt {_name(hand.cards[-1])} -> {_desc(hand.cards)}")
                 if hand.from_split_aces and not rules.hit_split_aces:
-                    break  # one card to each split ace
+                    can_resplit = (
+                        hand.cards[1] == ACE
+                        and rules.resplit_aces
+                        and len(hands) < rules.max_hands
+                    )
+                    if not can_resplit:
+                        break  # one card to each split ace
+                    # else fall through: legal_actions offers {STAND, SPLIT} only
             total = hand_total(hand.cards)
             if total > 21:
                 note(f"{label}: bust")
@@ -240,6 +264,8 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
                 free_double_available=(
                     Action.DOUBLE in legal and free_double_allowed(hand, rules)
                 ),
+                own_wager=hand.wager / bet,
+                free_wager=hand.free_wager / bet,
             )
             action = strategy.choose(view, rules)
             if action not in legal:

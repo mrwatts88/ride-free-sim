@@ -5,6 +5,7 @@ blackjack, Ride Free / Free Bet) are configurations of this one object; game log
 must never hard-code a rule.
 """
 
+import dataclasses
 from dataclasses import dataclass
 
 
@@ -96,3 +97,9 @@ RIDE_FREE = Rules(
     free_resplits=True,
     free_double_after_split=True,
 )
+
+# The exact Wizard of Odds Free Bet configuration behind their published 1.04% house
+# edge (fetched 2026-07-17): identical to RIDE_FREE except aces may be re-split (to
+# 4 hands). Per WoO's rule-variation table, no-resplit-aces costs the player 0.08%,
+# so the Potawatomi RIDE_FREE preset's derived target is ~1.12%.
+RIDE_FREE_WOO = dataclasses.replace(RIDE_FREE, resplit_aces=True)

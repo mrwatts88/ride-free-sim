@@ -141,7 +141,18 @@ second validation rung after basic strategy, and published numbers exist for it.
   rules, penetration, and ramp to the source's stated conditions.
 
 ## M6 — The attack: free-bet targeting on Ride Free
-The main event, in deliberate order:
+The main event, in deliberate order.
+
+**Playing deviations (Matt, 2026-07-17):** build a deviations layer — a strategy
+overlay that can override individual decision cells, eventually count-conditioned.
+The foundation already exists: `player_ev.EVCalculator` computes exact EVs from rank
+weights, so swapping the fixed 4/13 weights for the live shoe composition yields the
+optimal action for the actual cards remaining. Motivating case: 5,5 — free-doubling
+beats free-splitting by only 0.15% off the top (WoO), because split 5s can catch
+more free splits (another 5) and free doubles (draw to 9/10/11). In a small-card-rich
+shoe that gap could flip; the deviation layer should answer exactly when.
+
+Steps:
 
 1. **Perfect-information upper bound first.** Use exact composition tracking (the
    sim knows the true remaining shoe) to bet-size on P(free split) and P(free
