@@ -1,5 +1,12 @@
 # Counting Free Bet Blackjack: Deriving the EOR count for Free Bet Blackjack
 
+
+*What 60 million simulated hands taught us about Ride Free — the Free Bet variant —
+including its effect-of-removal table, a practical level-2 count, and an honest
+answer to whether the game can be beaten.*
+
+---
+
 **A note on how this research was done.** This project was a collaboration between
 the author and Claude (Anthropic's AI system), which implemented the simulator, ran
 the statistical analyses, and drafted much of this article. The direction was
@@ -9,13 +16,7 @@ not be assumed valid for this game — demanded the controls and replications, a
 judged what survived. The final claims are mine to defend, and the repository
 exists so no reader has to take either of us on faith.
 
-*What 60 million simulated hands taught us about Ride Free — the Free Bet variant —
-including its effect-of-removal table, a practical level-2 count, and an honest
-answer to whether the game can be beaten.*
-
----
-
-Free Bet Blackjack — dealt at Potawatomi Casino as **Ride Free** — makes an
+Free Bet Blackjack — sometimes called **Ride Free** — makes an
 irresistible offer: split any pair except tens *for free*, double any hard 9, 10,
 or 11 *for free*. The casino puts up the money; you keep the winnings. The catch
 funding it all: when the dealer busts with exactly 22, every live hand pushes.
