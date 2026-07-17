@@ -1,4 +1,13 @@
-# Counting Free Bet Blackjack: Deriving the First Count for a Game Nobody Counts
+# Counting Free Bet Blackjack: Deriving the EOR count for Free Bet Blackjack
+
+**A note on how this research was done.** This project was a collaboration between
+the author and Claude (Anthropic's AI system), which implemented the simulator, ran
+the statistical analyses, and drafted much of this article. The direction was
+human: I posed the research questions, supplied the hypotheses that drove the two
+key turns — that pair frequency might be exploitable, and that hi-lo's tags could
+not be assumed valid for this game — demanded the controls and replications, and
+judged what survived. The final claims are mine to defend, and the repository
+exists so no reader has to take either of us on faith.
 
 *What 60 million simulated hands taught us about Ride Free — the Free Bet variant —
 including its effect-of-removal table, a practical level-2 count, and an honest
@@ -194,15 +203,6 @@ same seeds, same results, to the digit. The full source, experiment log, and ban
 data are at **[github.com/mrwatts88/ride-free-sim](https://github.com/mrwatts88/ride-free-sim)**;
 the validation suite, the EOR derivation, and every experiment here are one CLI
 command each.
-
-**A note on how this research was done.** This project was a collaboration between
-the author and Claude (Anthropic's AI system), which implemented the simulator, ran
-the statistical analyses, and drafted much of this article. The direction was
-human: I posed the research questions, supplied the hypotheses that drove the two
-key turns — that pair frequency might be exploitable, and that hi-lo's tags could
-not be assumed valid for this game — demanded the controls and replications, and
-judged what survived. The final claims are mine to defend, and the repository
-exists so no reader has to take either of us on faith.
 
 ---
 
