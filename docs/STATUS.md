@@ -11,14 +11,21 @@ variant), first matching published EVs exactly, then beating the game with
 with validation gates met (see ROADMAP.md). We are in **M6a, the attack phase**, and
 have one confirmed discovery.
 
-## Headline discovery (E2/E3, confirmed)
+## Where the attack stands (E1–E4c, see EXPERIMENTS.md)
 
-**Pair-richness of the remaining shoe is a count-orthogonal EV signal on Ride Free:
-+0.63% ± 0.09% EV per +0.01 of pair probability at fixed hi-lo true count (+6.6σ,
-15M rounds, all 13 TC bands positive, clean null in the standard-game control).**
-Across the observed signal range (~0.035–0.065) that's up to ~+1.5–2% EV — pair-rich
-TC+1/+2 shoes reach ≈ break-even, territory invisible to pure counters. Apparently
-novel (no published literature found on composition-targeted betting for Free Bet).
+The arc so far: naive event-betting refuted (E1) → pair-richness beyond hi-lo
+confirmed at +6.6σ (E2/E3) → **hi-lo shown to be the wrong count for this game;
+game-specific EORs derived and validated against Griffin (E4a)** → the pair effect
+is fully subsumed by the derived RF count (E4b, null at −0.6σ) → betting verdict
+(E4c): **RF count is the best system but seated play still loses (−0.37% on money
+at 1-8 spread); standard blackjack hi-lo next door wins (+0.23%). The only
+profitable Ride Free mode found: wong-in at RF count ≥ +0.0125 → 6.6% of rounds at
++1.04% EV** (standard offers ~3× the volume at equal quality — RF's residual value
+is camouflage, not raw EV).
+
+Key artifact: `counting.rf_ev_shift()` — the first game-specific linear count for
+Free Bet blackjack, denominated directly in predicted EV. RF EORs vs standard:
+tens halved, ace ≈ 3× the ten, 3/4/5/7 collapse, 8 flips negative.
 
 ## Key numbers (all measured, seeds in EXPERIMENTS.md / git log)
 
@@ -38,7 +45,18 @@ novel (no published literature found on composition-targeted betting for Free Be
 | Within-TC pair slope, Ride Free (E2+E3) | **+0.626% ± 0.094% / 0.01 p_pair** |
 | Same, standard-game control | +0.05% ± 0.24% (null) |
 
-## Immediate next step: E4 (agreed with Matt, not yet started)
+## Immediate next step: E5 — value of playing deviations (last unquantified EV)
+
+Perfect-information composition-conditioned play: `EVCalculator(rules, weights=live
+composition)` per round (one calculator per round — composition is frozen intra-round
+since the tracker updates between rounds). Measured via **paired differential
+simulation**: snapshot the shoe, play the round with the fixed OptimalStrategy,
+rewind, replay with the deviation strategy, record the profit difference, continue
+on the fixed strategy's timeline. Most rounds the strategies agree → difference 0 →
+tiny variance; ~300k paired rounds resolves ~±0.05%. Report overall deviation value,
+% of rounds with any changed action, and (if signal) which cells flip (5,5 case).
+
+## Superseded plan notes (E4, done)
 
 Matt's insight driving it: **classical hi-lo tags are standard-blackjack EORs; Ride
 Free's effects of removal must differ** (5s/6s feed free doubles; dealer-22 push is

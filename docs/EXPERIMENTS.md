@@ -2,6 +2,39 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E4c — Which accounting system makes money, and how much (the M6a betting verdict)
+
+**Date:** 2026-07-17 · **Method:** pure arithmetic on banked grids, cross-fitted
+(bet thresholds selected on one dataset, profit evaluated on independent seeds).
+1-8 spread, min bet 1 every round. Standard-game row is same-data-selected (mild
+optimism) — its positive region (TC ≥ +1) is textbook anyway.
+
+| system | units/100 rounds | edge on money | rounds at max bet |
+|---|---|---|---|
+| Ride Free, hi-lo only | −0.73 | −0.51% | 6.3% |
+| Ride Free, hi-lo × pairs (2D) | −0.67 | −0.40% | 9.4% |
+| **Ride Free, RF count** | **−0.64** | **−0.37%** | 10.5% |
+| **Standard, plain hi-lo** | **+0.79** | **+0.23%** | 35.9% |
+
+**Verdicts:**
+1. The RF count is the best Ride Free system — beats hi-lo+pairs while being one
+   number instead of two (consistent with E4b: it subsumes the pair signal).
+2. **Seated play with realistic spreads does NOT beat Ride Free.** Every system
+   loses; the ~1.1% waiting cost and rarity of good shoes (10% bettable vs 36%
+   standard) dominate. Standard blackjack next door is beatable with plain hi-lo.
+3. **Wong-in is the one profitable Ride Free mode found so far** (back-count, sit
+   only when the RF count clears threshold):
+   - ≥ +0.0075 predicted shift: 14.5% of rounds, **+0.48% EV**
+   - ≥ +0.0125: 6.6% of rounds, **+1.04% EV**
+   - Standard comparison: TC ≥ +2 → 19.8% of rounds at +1.09%.
+   Standard offers ~3× the playable volume at equal quality; Ride Free wong-in is
+   real but second-best — its value would be camouflage (rare, hunch-looking bets)
+   rather than raw EV.
+
+**Remaining unquantified EV source:** playing deviations (composition-conditioned
+strategy changes). That's E5. Also parked: resplit-aware EOR re-derivation (suspected
+to sharpen the RF count somewhat; the E4b dominance question stays open until then).
+
 ## E4b — The pair effect is fully explained by the RF count (null at −0.6σ)
 
 **Date:** 2026-07-17 · **Command:** `grid --rules ridefree --row rf_ev --col p_pair
