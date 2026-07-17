@@ -2,6 +2,42 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E4b — The pair effect is fully explained by the RF count (null at −0.6σ)
+
+**Date:** 2026-07-17 · **Command:** `grid --rules ridefree --row rf_ev --col p_pair
+--rounds 3000000` × 2 shards (seeds 5555/6666), merged. Raw: `data/e4b_shard*.json`.
+
+### Result
+
+**Pooled within-RF-count pair slope: −0.079% ± 0.129% (−0.6σ). Null.** (Shards:
+−0.18 ± 0.19 and −0.16 ± 0.19.) Compare E2/E3: +0.63% ± 0.09% at fixed *hi-lo*.
+
+**Interpretation — the honest revision of the E2/E3 claim:** the pair signal's
+predictive power was real *relative to hi-lo*, but it was carrying linear
+composition information that hi-lo mis-weights (mostly ten-depletion and the ace/ten
+asymmetry — non-ten pair probability rises as tens depart, and the RF count prices
+tens/aces correctly where hi-lo can't). Once the count axis is derived from the
+game's own EORs, pairs add nothing measurable. The genuinely quadratic
+(concentration) component of p_pair carries no material EV. The E2/E3 "discovery"
+matures into: **Ride Free needs its own count, and that count subsumes the pair
+signal.** Matt's pairs intuition was the thread that exposed hi-lo's inadequacy.
+
+### The RF count itself works
+
+Row marginal is monotone; realized-EV-on-predicted-shift slope ≈ 0.75 (predicted
+1.0 — attenuated), EV crossing zero near predicted shift ≈ +0.012 (~3% of rounds
+beyond it, reaching +0.7%+).
+
+### Open question for E4c (flagged, unresolved)
+
+Eyeballed conditional-EV spread does not yet show the RF count *dominating* hi-lo as
+theory requires of an optimal linear count — suspect the EOR derivation's no-resplit
+approximation (free resplits are worth ~0.3% and concentrate in exactly the shoes
+the count must price) and binning artifacts. E4c must (1) run the ramp arithmetic
+consistently on the banked grids (hi-lo grids: E2/E3; rf_ev grids: E4b) and
+(2) if the RF count fails to beat hi-lo, re-derive EORs with resplit value modeled
+before concluding anything.
+
 ## E4a — Ride Free effects of removal: hi-lo is the wrong count for this game
 
 **Date:** 2026-07-17 · **Method:** `eor.effects_of_removal` — analytic EOR via the
