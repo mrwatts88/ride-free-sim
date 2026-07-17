@@ -46,11 +46,23 @@ soft 19 vs 6), so the same strategy plays both correctly. Run either via
 - Per-round std dev ~1.15–1.16 (advisory; published "~1.15" is a rounded figure).
 - Pair / split / double frequencies collected as baselines.
 
-Note: both house edges sit slightly *above* the published figures (H17 +0.02%,
-S17 +0.07%). Two small, expected contributors: (1) total-dependent basic strategy
-leaves a hair vs composition-dependent optimal, and (2) the **cut-card effect** — our
-sim reshuffles at a fixed penetration depth, which published *combinatorial* figures
-do not model. Adding a fixed-rounds "no cut card" mode would isolate (2).
+Note: the `cut_card` house edges sit slightly *above* the published figures. Adding
+the shoe-end modes (see DESIGN.md) let us check why. H17, 8M hands each, seed 20260717:
+
+| shoe mode      | house edge | 1 s.e. |
+| -------------- | ---------- | ------ |
+| cut_card       | 0.694%     | ±0.041% |
+| fixed_rounds   | 0.661%     | ±0.041% |
+| csm (off top)  | 0.624%     | ±0.041% |
+| published      | ~0.62%     | —      |
+
+`csm` reproduces the published combinatorial figure almost exactly (0.1σ) — a clean
+independent validation of the off-the-top EV. The ordering cut_card > fixed_rounds >
+csm matches theory (cut-card effect + depletion). **But the gaps (~0.03–0.07%) are
+each ~1 s.e. of the pairwise difference at 8M hands, so the cut-card effect is a
+visible trend, not yet statistically resolved.** Pinning it down needs ~10× more hands
+or common-random-numbers variance reduction (replay identical shoes through each mode
+so noise cancels) — a candidate task for the M5+ optimization/experiment work.
 
 **Methodology notes for reuse at M4:**
 - The aggregate dealer check uses the *unconditional* dealer Monte Carlo (plays out
