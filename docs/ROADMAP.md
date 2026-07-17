@@ -32,13 +32,25 @@ millions of hands and compares each metric to a reference with a confidence inte
 writes a theme-aware HTML file. The dealer state machine is validated by a three-way
 agreement: hand-computed micro-cases → exact calc → real-engine Monte Carlo.
 
-**Gate — met (5M-hand run, seed 20260717):**
-- House edge 0.6397% ± 0.052% vs published 0.62% (+0.38σ). ✅
-- Dealer bust per up-card (all ten) vs exact calc, every cell within noise; aggregate
-  28.536% vs 28.542% exact (−0.30σ). ✅
-- Player natural rate 4.7552% vs fresh-shoe exact 4.7489% (+0.66σ). ✅
-- Per-round std dev 1.160 (advisory; published "~1.15" is a rounded figure).
+Two rulesets are validated so the check isn't a one-off: `STANDARD_6D_H17` and
+`STANDARD_6D_S17`. `BasicStrategy` adapts to the soft-17 rule (11 vs A, soft 18 vs 2,
+soft 19 vs 6), so the same strategy plays both correctly. Run either via
+`validate --rules {h17,s17}`.
+
+**Gate — met (5M-hand runs, seed 20260717):**
+- House edge: H17 0.6397% ± 0.052% vs published 0.62% (+0.38σ); S17 0.4710% vs
+  published ~0.40% (+1.38σ). Both pass. ✅
+- Dealer bust per up-card (all ten) vs exact calc, every cell within noise, under both
+  rules; aggregate H17 28.536% vs 28.542% (−0.30σ), S17 28.153% vs 28.159% (−0.30σ). ✅
+- Player natural rate 4.751–4.755% vs fresh-shoe exact 4.7489%. ✅
+- Per-round std dev ~1.15–1.16 (advisory; published "~1.15" is a rounded figure).
 - Pair / split / double frequencies collected as baselines.
+
+Note: both house edges sit slightly *above* the published figures (H17 +0.02%,
+S17 +0.07%). Two small, expected contributors: (1) total-dependent basic strategy
+leaves a hair vs composition-dependent optimal, and (2) the **cut-card effect** — our
+sim reshuffles at a fixed penetration depth, which published *combinatorial* figures
+do not model. Adding a fixed-rounds "no cut card" mode would isolate (2).
 
 **Methodology notes for reuse at M4:**
 - The aggregate dealer check uses the *unconditional* dealer Monte Carlo (plays out

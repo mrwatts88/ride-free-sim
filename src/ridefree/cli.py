@@ -2,20 +2,28 @@
 
     uv run python -m ridefree.cli demo --seed 7 --hands 5
     uv run python -m ridefree.cli sim --rounds 200000 --seed 1
+    uv run python -m ridefree.cli validate --rules h17 --rounds 5000000
+    uv run python -m ridefree.cli validate --rules s17 --rounds 5000000
 """
 
 import argparse
 
 from ridefree.cards import Shoe
 from ridefree.engine import play_round
-from ridefree.rules import STANDARD_6D_H17
+from ridefree.rules import STANDARD_6D_H17, STANDARD_6D_S17
 from ridefree.simulator import simulate
-from ridefree.strategy import BasicStrategyH17
+from ridefree.strategy import BasicStrategy
+
+# variant -> (name, rules, published player EV, default report path)
+VARIANTS = {
+    "h17": ("STANDARD_6D_H17", STANDARD_6D_H17, -0.0062, "validation_report.html"),
+    "s17": ("STANDARD_6D_S17", STANDARD_6D_S17, -0.0040, "validation_report_s17.html"),
+}
 
 
 def _demo(args: argparse.Namespace) -> None:
-    rules = STANDARD_6D_H17
-    strategy = BasicStrategyH17()
+    _, rules, _, _ = VARIANTS[args.rules]
+    strategy = BasicStrategy()
     shoe = Shoe(rules.decks, rules.penetration, args.seed)
     for n in range(1, args.hands + 1):
         if shoe.needs_shuffle or shoe.cards_remaining < 20:
@@ -28,10 +36,8 @@ def _demo(args: argparse.Namespace) -> None:
 
 
 def _sim(args: argparse.Namespace) -> None:
-    rules = STANDARD_6D_H17
-    m = simulate(
-        rules, BasicStrategyH17(), seed=args.seed, rounds=args.rounds, bet=1.0
-    )
+    _, rules, _, _ = VARIANTS[args.rules]
+    m = simulate(rules, BasicStrategy(), seed=args.seed, rounds=args.rounds, bet=1.0)
     edge_pct = m.edge * 100
     err_pct = m.edge_stderr * 100
     print(f"rounds:            {m.rounds:,}")
@@ -59,17 +65,20 @@ def _validate(args: argparse.Namespace) -> None:
 
     from ridefree.validation import format_report, run_suite, to_html
 
+    name, rules, published_edge, default_html = VARIANTS[args.rules]
     checks, m = run_suite(
-        STANDARD_6D_H17,
+        rules,
         seed=args.seed,
         game_rounds=args.rounds,
         dealer_trials=args.dealer_trials,
+        published_edge=published_edge,
     )
+    print(f"ruleset: {name}")
     print(format_report(checks, m))
 
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    html = to_html(checks, m, ruleset_name="STANDARD_6D_H17", generated_at=stamp)
-    out = Path(args.html)
+    html = to_html(checks, m, ruleset_name=name, generated_at=stamp)
+    out = Path(args.html or default_html)
     out.write_text(html)
     print(f"\nHTML report written to {out}")
 
@@ -79,21 +88,25 @@ def main() -> None:
     sub = parser.add_subparsers(required=True)
 
     d = sub.add_parser("demo", help="narrate a few hands")
+    d.add_argument("--rules", choices=VARIANTS, default="h17")
     d.add_argument("--seed", type=int, default=1)
     d.add_argument("--hands", type=int, default=5)
     d.set_defaults(func=_demo)
 
     s = sub.add_parser("sim", help="simulate many hands and report metrics")
+    s.add_argument("--rules", choices=VARIANTS, default="h17")
     s.add_argument("--seed", type=int, default=1)
     s.add_argument("--rounds", type=int, default=100_000)
     s.set_defaults(func=_sim)
 
     v = sub.add_parser("validate", help="run the validation battery vs references")
+    v.add_argument("--rules", choices=VARIANTS, default="h17",
+                   help="ruleset/variant to validate (default: h17)")
     v.add_argument("--seed", type=int, default=1)
     v.add_argument("--rounds", type=int, default=2_000_000)
     v.add_argument("--dealer-trials", type=int, default=2_000_000)
-    v.add_argument("--html", default="validation_report.html",
-                   help="path for the HTML report (default: validation_report.html)")
+    v.add_argument("--html", default=None,
+                   help="path for the HTML report (default: per-variant filename)")
     v.set_defaults(func=_validate)
 
     args = parser.parse_args()

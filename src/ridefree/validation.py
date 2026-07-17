@@ -19,7 +19,7 @@ from ridefree.cards import ACE, TEN, deck_composition
 from ridefree.engine import play_dealer
 from ridefree.rules import Rules
 from ridefree.simulator import Metrics, simulate
-from ridefree.strategy import BasicStrategyH17
+from ridefree.strategy import BasicStrategy
 
 Z_PASS = 4.0  # |observed - reference| within this many standard errors → pass
 
@@ -166,7 +166,7 @@ def run_suite(
     default is the Wizard of Odds ~0.62% house edge for 6-deck H17 basic strategy.
     Override / re-verify at call time — don't trust a hardcoded figure blindly.
     """
-    m = simulate(rules, BasicStrategyH17(), seed=seed, rounds=game_rounds, bet=1.0)
+    m = simulate(rules, BasicStrategy(), seed=seed, rounds=game_rounds, bet=1.0)
     checks: list[Check] = []
 
     # 1. Dealer distribution: real engine vs exact calculator, per up-card + aggregate.

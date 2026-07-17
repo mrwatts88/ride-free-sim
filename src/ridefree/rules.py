@@ -55,9 +55,10 @@ class Rules:
             raise ValueError(f"free_split_ranks contains invalid ranks: {sorted(bad)}")
 
 
-# M2 validation target: look up the exact Wizard of Odds house edge for precisely
-# this ruleset at milestone time (see docs/ROADMAP.md).
+# M2 validation targets: look up the exact Wizard of Odds house edge for precisely
+# these rulesets at milestone time (see docs/ROADMAP.md).
 STANDARD_6D_H17 = Rules()
+STANDARD_6D_S17 = Rules(dealer_hits_soft_17=False)  # ~0.40% house edge published
 
 # Potawatomi Ride Free, per the published rules: free splits on non-ten pairs with
 # free resplits to 4 hands; aces split once only, one card each; free double on hard
