@@ -183,6 +183,22 @@ def _combine(args: argparse.Namespace) -> None:
     print(format_grid(merged, min_cell=args.min_cell))
 
 
+def _deviations(args: argparse.Namespace) -> None:
+    from ridefree.experiments import run_deviation_value
+
+    name, rules, _, _ = VARIANTS[args.rules]
+    print(f"ruleset: {name}")
+    r = run_deviation_value(rules, seed=args.seed, rounds=args.rounds)
+    print(f"rounds:               {r.rounds:,} (paired)")
+    print(f"base EV:              {100 * r.base_profit / r.rounds:+.3f}%")
+    print(f"deviation value:      {100 * r.deviation_value:+.4f}% ± "
+          f"{100 * r.deviation_se:.4f}% per round")
+    print(f"rounds changed:       {100 * r.rounds_changed / r.rounds:.2f}%")
+    print(f"wong-in window value: {100 * r.window_value:+.4f}% ± "
+          f"{100 * r.window_se:.4f}% per round "
+          f"({r.window_rounds:,} rounds in window)")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ridefree")
     sub = parser.add_subparsers(required=True)
@@ -249,6 +265,14 @@ def main() -> None:
     c.add_argument("paths", nargs="+", help="grid JSON files to merge")
     c.add_argument("--min-cell", type=int, default=2_000)
     c.set_defaults(func=_combine)
+
+    dv = sub.add_parser(
+        "deviations", help="paired differential value of composition-conditioned play"
+    )
+    dv.add_argument("--rules", choices=VARIANTS, default="ridefree")
+    dv.add_argument("--seed", type=int, default=1)
+    dv.add_argument("--rounds", type=int, default=150_000)
+    dv.set_defaults(func=_deviations)
 
     args = parser.parse_args()
     args.func(args)

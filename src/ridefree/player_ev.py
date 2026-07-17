@@ -227,6 +227,23 @@ def game_ev(rules: Rules, weights: dict | None = None) -> float:
     return ev
 
 
+def choose_with_calc(calc: EVCalculator, view: HandView) -> Action:
+    """Argmax-EV over the engine's legal actions, using the given calculator."""
+    own, free = view.own_wager, view.free_wager
+    if len(view.cards) == 2:
+        c1, c2 = view.cards
+        evs = calc.two_card_evs(
+            c1, c2, view.dealer_up, own, free,
+            is_split=view.is_split_hand,
+            allow_split=Action.SPLIT in view.legal,
+        )
+        legal_evs = {a: v for a, v in evs.items() if a in view.legal}
+        return max(legal_evs, key=legal_evs.get)  # type: ignore[arg-type]
+    stand = calc.ev_final(view.total, own, free, view.dealer_up)
+    hit = calc.ev_hit(view.total, view.soft, own, free, view.dealer_up)
+    return Action.HIT if hit > stand else Action.STAND
+
+
 class OptimalStrategy:
     """Plays argmax-EV per the exact calculator, restricted to the engine's legal
     actions. Total-dependent by construction (infinite-deck EVs depend only on
@@ -243,26 +260,32 @@ class OptimalStrategy:
         return calc
 
     def choose(self, view: HandView, rules: Rules) -> Action:
-        calc = self._calc(rules)
-        own, free = view.own_wager, view.free_wager
-        if len(view.cards) == 2:
-            c1, c2 = view.cards
-            key = (
-                rules, min(c1, c2), max(c1, c2), view.dealer_up,
-                own, free, view.is_split_hand, view.legal,
-            )
-            cached = self._decisions.get(key)
-            if cached is not None:
-                return cached
-            evs = calc.two_card_evs(
-                c1, c2, view.dealer_up, own, free,
-                is_split=view.is_split_hand,
-                allow_split=Action.SPLIT in view.legal,
-            )
-            legal_evs = {a: v for a, v in evs.items() if a in view.legal}
-            action = max(legal_evs, key=legal_evs.get)  # type: ignore[arg-type]
-            self._decisions[key] = action
-            return action
-        stand = calc.ev_final(view.total, own, free, view.dealer_up)
-        hit = calc.ev_hit(view.total, view.soft, own, free, view.dealer_up)
-        return Action.HIT if hit > stand else Action.STAND
+        key = (
+            rules, view.cards if len(view.cards) == 2 else (view.total, view.soft),
+            view.dealer_up, view.own_wager, view.free_wager,
+            view.is_split_hand, view.legal,
+        )
+        cached = self._decisions.get(key)
+        if cached is not None:
+            return cached
+        action = choose_with_calc(self._calc(rules), view)
+        self._decisions[key] = action
+        return action
+
+
+class CompositionStrategy:
+    """Perfect-information playing deviations: argmax-EV with the LIVE remaining
+    shoe composition as the deck model. Call `set_composition` once per round
+    (composition is frozen intra-round — the tracker updates between rounds); all
+    decisions in the round share one calculator and its memo."""
+
+    def __init__(self) -> None:
+        self._calc: EVCalculator | None = None
+
+    def set_composition(self, rules: Rules, counts: dict[int, int]) -> None:
+        weights = {r: max(counts[r], 0) for r in counts}
+        self._calc = EVCalculator(rules, weights)
+
+    def choose(self, view: HandView, rules: Rules) -> Action:
+        assert self._calc is not None, "set_composition must be called each round"
+        return choose_with_calc(self._calc, view)

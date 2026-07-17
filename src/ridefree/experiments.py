@@ -256,6 +256,99 @@ def run_conditional_ev_grid(
     )
 
 
+@dataclass
+class DeviationResult:
+    rounds: int
+    base_profit: float
+    diff_sum: float
+    diff_sq: float
+    rounds_changed: int  # rounds where the two strategies' profits differ
+    window_rounds: int = 0  # rounds inside the wong-in window (rf_ev >= threshold)
+    window_diff: float = 0.0
+    window_diff_sq: float = 0.0
+
+    @property
+    def deviation_value(self) -> float:
+        """Mean EV gained per round by composition-conditioned play."""
+        return self.diff_sum / self.rounds if self.rounds else 0.0
+
+    @property
+    def deviation_se(self) -> float:
+        if self.rounds < 2:
+            return 0.0
+        m = self.deviation_value
+        var = max(self.diff_sq / self.rounds - m * m, 0.0)
+        return math.sqrt(var / self.rounds)
+
+    @property
+    def window_value(self) -> float:
+        return self.window_diff / self.window_rounds if self.window_rounds else 0.0
+
+    @property
+    def window_se(self) -> float:
+        if self.window_rounds < 2:
+            return 0.0
+        m = self.window_value
+        var = max(self.window_diff_sq / self.window_rounds - m * m, 0.0)
+        return math.sqrt(var / self.window_rounds)
+
+
+def run_deviation_value(
+    rules: Rules,
+    *,
+    seed: int,
+    rounds: int,
+    bet: float = 1.0,
+    window_threshold: float = 0.0075,
+) -> DeviationResult:
+    """Paired differential simulation of composition-conditioned play.
+
+    Each round is played twice from the same shoe position — once with the fixed
+    OptimalStrategy, once with CompositionStrategy (live-composition argmax) — and
+    the profit difference recorded. The fixed strategy's timeline is canonical
+    (its cards advance the shoe and feed the tracker). Most rounds the strategies
+    agree, so the difference is exactly 0 and its variance is tiny — resolving
+    deviation values far below what independent runs could.
+    """
+    from ridefree.player_ev import CompositionStrategy, OptimalStrategy
+
+    base = OptimalStrategy()
+    dev = CompositionStrategy()
+    shoe = Shoe(rules.decks, rules.penetration, seed)
+    tracker = CompositionTracker(rules.decks)
+    shuffles = 0
+    rounds_since = 0
+    result = DeviationResult(0, 0.0, 0.0, 0.0, 0)
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shuffles += 1
+            shoe = Shoe(rules.decks, rules.penetration, seed + shuffles)
+            tracker.new_shoe()
+            rounds_since = 0
+        in_window = tracker.rf_ev_shift() >= window_threshold
+        start = shoe.snapshot()
+        r_base = play_round(rules, shoe, base, bet=bet)
+        end = shoe.snapshot()
+        shoe.restore(start)
+        dev.set_composition(rules, tracker.counts)
+        r_dev = play_round(rules, shoe, dev, bet=bet)
+        shoe.restore(end)  # canonical timeline: the fixed strategy's cards
+        tracker.observe_round(r_base)
+        rounds_since += 1
+        d = r_dev.profit - r_base.profit
+        result.rounds += 1
+        result.base_profit += r_base.profit
+        result.diff_sum += d
+        result.diff_sq += d * d
+        if d != 0.0:
+            result.rounds_changed += 1
+        if in_window:
+            result.window_rounds += 1
+            result.window_diff += d
+            result.window_diff_sq += d * d
+    return result
+
+
 def _parse_bin(text: str):
     try:
         return int(text)

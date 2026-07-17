@@ -50,6 +50,15 @@ class Shoe:
         self._pos += 1
         return card
 
+    def snapshot(self) -> int:
+        """Current deal position, for paired differential replay."""
+        return self._pos
+
+    def restore(self, pos: int) -> None:
+        """Rewind (or fast-forward) to a snapshot position. The card order is
+        immutable, so replaying from a snapshot deals the identical sequence."""
+        self._pos = pos
+
     @property
     def cards_dealt(self) -> int:
         return self._pos
