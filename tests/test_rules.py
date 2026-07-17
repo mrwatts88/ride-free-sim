@@ -2,7 +2,7 @@ import dataclasses
 
 import pytest
 
-from ridefree.rules import RIDE_FREE_PLACEHOLDER, STANDARD_6D_H17, Rules
+from ridefree.rules import RIDE_FREE, STANDARD_6D_H17, Rules
 
 
 def test_standard_preset_is_plain_blackjack():
@@ -16,12 +16,17 @@ def test_standard_preset_is_plain_blackjack():
 
 
 def test_ride_free_preset_features():
-    r = RIDE_FREE_PLACEHOLDER
+    r = RIDE_FREE
     assert r.dealer_22_pushes
     assert r.free_double_totals == frozenset({9, 10, 11})
-    assert not r.free_double_soft_allowed  # toggle; hard-only until confirmed
+    assert not r.free_double_soft_allowed  # hard totals only; soft doubles cost own money
+    assert r.free_double_after_split
     assert 10 not in r.free_split_ranks  # no free splits on ten-value pairs
     assert r.free_split_ranks == frozenset(range(1, 10))
+    assert r.free_resplits
+    assert r.max_hands == 4
+    assert not r.resplit_aces  # aces split once only
+    assert not r.hit_split_aces  # one card to each split ace
     assert r.blackjack_payout == 1.5
 
 

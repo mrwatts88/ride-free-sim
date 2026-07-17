@@ -59,14 +59,18 @@ class Rules:
 # this ruleset at milestone time (see docs/ROADMAP.md).
 STANDARD_6D_H17 = Rules()
 
-# Core features confirmed by Potawatomi's published description (free splits on
-# non-ten pairs, free double on two-card 9/10/11, BJ 3:2, dealer 22 pushes).
-# Still unconfirmed — all configurable above: decks, H17/S17 (dealer_hits_soft_17),
-# resplit limits (max_hands, resplit_aces), and free_double_soft_allowed
-# (hard-only here, per standard Free Bet). See docs/ROADMAP.md M3.
-RIDE_FREE_PLACEHOLDER = Rules(
+# Potawatomi Ride Free, per the published rules: free splits on non-ten pairs with
+# free resplits to 4 hands; aces split once only, one card each; free double on hard
+# two-card 9/10/11 only (soft/other totals may double with own money), including
+# after splits; BJ 3:2; dealer 22 pushes. Still unconfirmed: decks and H17/S17
+# (dealer_hits_soft_17) — 6-deck H17 assumed. See docs/ROADMAP.md M3.
+RIDE_FREE = Rules(
     dealer_22_pushes=True,
+    max_hands=4,
+    resplit_aces=False,
+    hit_split_aces=False,
     free_double_totals=frozenset({9, 10, 11}),
+    free_double_soft_allowed=False,
     free_split_ranks=frozenset(range(1, 10)),  # all pairs except ten-value
     free_resplits=True,
     free_double_after_split=True,

@@ -27,15 +27,16 @@ aces, one card to split aces.
 ## M3 — Ride Free rules
 Add as pure configuration: free doubles on hard 9/10/11, free splits on all pairs
 except tens, dealer 22 pushes all non-blackjack live hands. Free-bet basic strategy.
-**Confirmed from Potawatomi's published description (2026-07-17):** free splits on any
-pair except 10-value cards, free doubles on any two-card total of 9/10/11, blackjack
-pays 3:2, all hands push against dealer 22.
-**Still open (Matt / rack card):** decks, H17 vs. S17, resplit limits and free
-re-splits, free double after (free) split, and whether free doubles are hard-only —
-the copy says "any two-card hand total of 9, 10, or 11", but standard Free Bet
-excludes soft totals (e.g. A-8). All of these are `Rules` toggles already
-(`dealer_hits_soft_17`, `max_hands`, `resplit_aces`, `free_double_soft_allowed`);
-assume standard Free Bet values until confirmed.
+**Confirmed from Potawatomi's published rules (2026-07-17), encoded in the
+`RIDE_FREE` preset:**
+- Free splits on any pair except 10-value cards; free resplits up to 4 hands.
+- Aces: split once only, one card to each split ace.
+- Free doubles on **hard** two-card 9/10/11 only, including after splits; soft hands
+  and other totals may double with the player's own money.
+- Blackjack pays 3:2; all live hands push against dealer 22.
+
+**Still open (Matt / rack card):** number of decks and H17 vs. S17 — both are `Rules`
+toggles (`decks`, `dealer_hits_soft_17`); 6-deck H17 assumed until confirmed.
 **Gate:** hand-level tests for every free-money settlement combination (free split ×
 free double × dealer 22 × dealer blackjack).
 
