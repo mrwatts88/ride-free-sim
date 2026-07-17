@@ -1,6 +1,6 @@
 # Roadmap
 
-**Current milestone: M3** (M2 validation engine done 2026-07-17).
+**Current milestone: M4** (M3 Ride Free rules done 2026-07-17).
 
 Each milestone has a validation gate; don't advance until it passes.
 
@@ -73,9 +73,26 @@ so noise cancels) — a candidate task for the M5+ optimization/experiment work.
 - References computed independently (exact calc, fresh-shoe combinatorics) are trusted
   as hard gates; rounded published folk numbers (std dev) are advisory.
 
-## M3 — Ride Free rules
-Add as pure configuration: free doubles on hard 9/10/11, free splits on all pairs
-except tens, dealer 22 pushes all non-blackjack live hands. Free-bet basic strategy.
+## M3 — Ride Free rules ✅
+Implemented as pure configuration in the shared engine — no variant-forked code paths.
+The engine auto-funds free actions (free strictly dominates paying): a free split puts
+the casino's button on the new hand (`wager=0, free_wager=bet`), a free double adds a
+free button (`free_wager += bet`). Settlement was already ledger-general from M1: win
+pays `wager + free_wager`, loss costs `wager` only, push returns nothing extra. Paid
+doubles use `wager += bet` (not `*= 2`) so doubling a free-split hand costs one unit.
+`HandView` exposes `free_split_available` / `free_double_available` to strategies.
+
+`FreeBetStrategy` is **provisional**: takes every free double, free-splits all
+eligible pairs except 5,5, falls back to standard basic strategy otherwise. It lacks
+the published chart's hit/stand deviations (dealer-22-push devalues standing), so its
+EV is NOT comparable to published figures — that's M4.
+
+**Gate — met:** hand-level tests for every free-money settlement combination
+(free split / free resplit buttons / free double / free-double-after-free-split /
+paid-double-on-free-hand / dealer 22 × each / dealer blackjack / player natural /
+busts) — 107 tests pass. 2M-round sim: free doubles 13.6% of rounds, free splits
+4.9%, dealer 22 = 8.1% of dealer-completed hands, std dev 1.086 — all coherent with
+theory. Provisional edge 1.336% ± 0.077% (expected worse than published ~1.04%).
 **Confirmed from Potawatomi's published rules (2026-07-17), encoded in the
 `RIDE_FREE` preset:**
 - Free splits on any pair except 10-value cards; free resplits up to 4 hands.

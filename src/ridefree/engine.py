@@ -47,6 +47,11 @@ class HandView:
     dealer_up: int
     is_split_hand: bool
     legal: frozenset[Action]
+    # Free Bet: True when the corresponding legal action would be casino-funded.
+    # The engine grants free funding automatically (it strictly dominates paying),
+    # so these exist for strategies to *choose* actions, not to request funding.
+    free_split_available: bool = False
+    free_double_available: bool = False
 
 
 @dataclass(frozen=True)
@@ -69,6 +74,9 @@ class RoundResult:
     was_pair: bool = False  # initial two cards were a pair
     did_split: bool = False
     did_double: bool = False
+    free_splits: int = 0  # casino-funded splits granted this round
+    free_doubles: int = 0  # casino-funded doubles granted this round
+    dealer_22_push: bool = False  # dealer drew to 22 and pushed the live hands
 
 
 def _name(card: int) -> str:
@@ -80,17 +88,34 @@ def _desc(cards: list[int]) -> str:
 
 
 def _check_supported(rules: Rules) -> None:
-    if (
-        rules.free_double_totals
-        or rules.free_split_ranks
-        or rules.free_resplits
-        or rules.free_double_after_split
-    ):
-        raise NotImplementedError("Free Bet features arrive in M3")
     if rules.late_surrender:
         raise NotImplementedError("surrender is not implemented")
     if not rules.dealer_peeks_for_blackjack:
         raise NotImplementedError("no-peek (ENHC) play is not implemented")
+
+
+def free_split_allowed(hand: _Hand, rules: Rules) -> bool:
+    """Would splitting this (already split-legal) hand be casino-funded?"""
+    if len(hand.cards) != 2 or hand.cards[0] != hand.cards[1]:
+        return False
+    if hand.cards[0] not in rules.free_split_ranks:
+        return False
+    return not hand.is_split or rules.free_resplits
+
+
+def free_double_allowed(hand: _Hand, rules: Rules) -> bool:
+    """Would doubling this (already double-legal) hand be casino-funded?
+
+    Eligibility is on the two-card hard count (aces as 1): a soft hand like A-8
+    reads as 9 but only qualifies when `free_double_soft_allowed` is on.
+    """
+    if len(hand.cards) != 2 or not rules.free_double_totals:
+        return False
+    if hand.is_split and not rules.free_double_after_split:
+        return False
+    if is_soft(hand.cards) and not rules.free_double_soft_allowed:
+        return False
+    return sum(hand.cards) in rules.free_double_totals
 
 
 def legal_actions(hand: _Hand, n_hands: int, rules: Rules) -> frozenset[Action]:
@@ -177,6 +202,8 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
         )
 
     hands = [player]
+    free_splits = 0
+    free_doubles = 0
     i = 0
     while i < len(hands):
         hand = hands[i]
@@ -207,6 +234,12 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
                 dealer_up=up,
                 is_split_hand=hand.is_split,
                 legal=legal,
+                free_split_available=(
+                    Action.SPLIT in legal and free_split_allowed(hand, rules)
+                ),
+                free_double_available=(
+                    Action.DOUBLE in legal and free_double_allowed(hand, rules)
+                ),
             )
             action = strategy.choose(view, rules)
             if action not in legal:
@@ -222,22 +255,37 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
                 note(f"{label}: hit -> {_desc(hand.cards)}")
                 continue
             if action is Action.DOUBLE:
-                hand.wager *= 2
+                # Free funding strictly dominates paying (same upside, no added
+                # downside), so the engine grants it whenever the rules allow.
+                if free_double_allowed(hand, rules):
+                    hand.free_wager += bet
+                    free_doubles += 1
+                    note(f"{label}: FREE double granted")
+                else:
+                    hand.wager += bet  # += not *=: a free-split hand has wager 0
                 hand.doubled = True
                 hand.cards.append(shoe.deal())
                 note(f"{label}: double -> {_desc(hand.cards)}")
                 break
             # SPLIT: current hand keeps one card and continues; the new hand is
             # played after it and receives its second card when reached.
+            free_split = free_split_allowed(hand, rules)
             rank = hand.cards[0]
             moved = hand.cards.pop()
             hand.is_split = True
-            new_hand = _Hand(cards=[moved], wager=bet, is_split=True)
+            if free_split:
+                # The casino funds the new hand's stake: a "free bet" button that
+                # pays winnings 1:1 but was never the player's money.
+                new_hand = _Hand(cards=[moved], wager=0.0, free_wager=bet, is_split=True)
+                free_splits += 1
+                note(f"{label}: FREE split {_name(rank)}s granted ({len(hands) + 1} hands)")
+            else:
+                new_hand = _Hand(cards=[moved], wager=bet, is_split=True)
+                note(f"{label}: split {_name(rank)}s ({len(hands) + 1} hands)")
             if rank == ACE:
                 hand.from_split_aces = True
                 new_hand.from_split_aces = True
             hands.insert(i + 1, new_hand)
-            note(f"{label}: split {_name(rank)}s ({len(hands)} hands)")
         i += 1
 
     any_live = any(hand_total(h.cards) <= 21 for h in hands)
@@ -245,11 +293,17 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
         note(f"dealer reveals {_name(hole)} -> {_desc(dealer_cards)}")
         before = len(dealer_cards)
         play_dealer(dealer_cards, shoe, rules)
-        for card in dealer_cards[before:]:
-            note(f"dealer draws {_name(card)} -> {_name(card)}")
+        for idx in range(before, len(dealer_cards)):
+            note(
+                f"dealer draws {_name(dealer_cards[idx])} -> "
+                f"{_desc(dealer_cards[: idx + 1])}"
+            )
         if hand_total(dealer_cards) > 21:
             note("dealer busts")
     dealer_total = hand_total(dealer_cards)
+    dealer_22 = any_live and dealer_total == 22 and rules.dealer_22_pushes
+    if dealer_22:
+        note("dealer 22 — live hands push")
 
     results = []
     profit = 0.0
@@ -278,4 +332,5 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
         profit, tuple(results), tuple(dealer_cards), tuple(events),
         dealer_played_out=any_live, player_natural=False, was_pair=was_pair,
         did_split=len(hands) > 1, did_double=any(h.doubled for h in hands),
+        free_splits=free_splits, free_doubles=free_doubles, dealer_22_push=dealer_22,
     )

@@ -19,7 +19,7 @@ from ridefree.cards import ACE, TEN, deck_composition
 from ridefree.engine import play_dealer
 from ridefree.rules import Rules
 from ridefree.simulator import Metrics, simulate
-from ridefree.strategy import BasicStrategy
+from ridefree.strategy import BasicStrategy, FreeBetStrategy
 
 Z_PASS = 4.0  # |observed - reference| within this many standard errors → pass
 
@@ -164,9 +164,12 @@ def run_suite(
 
     `published_edge` is the player EV (negative = house edge) for the exact ruleset;
     default is the Wizard of Odds ~0.62% house edge for 6-deck H17 basic strategy.
+    Pass None when no published figure applies (the edge reports as BASELINE).
     Override / re-verify at call time — don't trust a hardcoded figure blindly.
     """
-    m = simulate(rules, BasicStrategy(), seed=seed, rounds=game_rounds, bet=1.0)
+    has_free = bool(rules.free_split_ranks or rules.free_double_totals)
+    strategy = FreeBetStrategy() if has_free else BasicStrategy()
+    m = simulate(rules, strategy, seed=seed, rounds=game_rounds, bet=1.0)
     checks: list[Check] = []
 
     # 1. Dealer distribution: real engine vs exact calculator, per up-card + aggregate.
@@ -195,11 +198,18 @@ def run_suite(
     )
 
     # 6. Frequencies with no strict published reference — baselines / regression anchors.
-    for name, count in (
+    freq = [
         ("pair dealt rate", m.pairs_dealt),
         ("split rate", m.splits),
         ("double rate", m.doubles),
-    ):
+    ]
+    if has_free:
+        freq += [
+            ("free split rate", m.free_splits),
+            ("free double rate", m.free_doubles),
+            ("dealer 22 push rate", m.dealer_22_pushes),
+        ]
+    for name, count in freq:
         checks.append(
             Check(name, count / m.rounds if m.rounds else 0.0, None, 0.0, "baseline")
         )

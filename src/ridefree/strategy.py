@@ -107,3 +107,25 @@ class BasicStrategy:
 
 # Back-compat alias; the strategy now adapts to H17/S17 via the rules object.
 BasicStrategyH17 = BasicStrategy
+
+
+class FreeBetStrategy(BasicStrategy):
+    """PROVISIONAL free-bet strategy for M3 plumbing — not yet the published chart.
+
+    Rules of thumb encoded here:
+    - Always take a free double (pure upside; the engine funds it).
+    - Free-split every eligible pair except 5,5 (a pair of 5s is hard 10 — the free
+      double is the better free money).
+    - Otherwise fall back to standard basic strategy.
+
+    M4 replaces the fallback with the published Free Bet chart (hit/stand deviations
+    exist because dealer 22 pushing devalues standing) and validates the whole thing
+    against the published house edge. Do not treat this class's EV as meaningful.
+    """
+
+    def choose(self, view: HandView, rules: Rules) -> Action:
+        if view.free_split_available and view.pair_rank != 5:
+            return Action.SPLIT
+        if view.free_double_available:
+            return Action.DOUBLE
+        return super().choose(view, rules)

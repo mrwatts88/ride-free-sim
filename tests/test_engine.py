@@ -169,6 +169,12 @@ def test_illegal_action_raises():
         run([5, 9, 6, 8, 10], [Action.SPLIT])
 
 
-def test_free_bet_rules_not_yet_supported():
+def test_surrender_still_unsupported():
     with pytest.raises(NotImplementedError):
-        run([10, 7, 9, 9], [Action.STAND], rules=Rules(free_resplits=True))
+        run([10, 7, 9, 9], [Action.STAND], rules=Rules(late_surrender=True))
+
+
+def test_free_bet_rules_now_play():
+    # Free rules no longer raise (M3); a plain stand-off settles normally.
+    r = run([10, 7, 9, 9, 2], [Action.STAND], rules=Rules(free_resplits=True))
+    assert r.hands[0].outcome == "win"

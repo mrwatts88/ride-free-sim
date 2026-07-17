@@ -11,9 +11,15 @@ import dataclasses
 
 from ridefree.cards import Shoe
 from ridefree.engine import play_round
-from ridefree.rules import SHOE_END_MODES, STANDARD_6D_H17, STANDARD_6D_S17
+from ridefree.rules import RIDE_FREE, SHOE_END_MODES, STANDARD_6D_H17, STANDARD_6D_S17
 from ridefree.simulator import simulate
-from ridefree.strategy import BasicStrategy
+from ridefree.strategy import BasicStrategy, FreeBetStrategy
+
+
+def _strategy_for(rules):
+    if rules.free_split_ranks or rules.free_double_totals:
+        return FreeBetStrategy()
+    return BasicStrategy()
 
 
 def _apply_shoe_overrides(rules, args):
@@ -25,15 +31,18 @@ def _apply_shoe_overrides(rules, args):
     return dataclasses.replace(rules, **changes) if changes else rules
 
 # variant -> (name, rules, published player EV, default report path)
+# ridefree's published edge is None until M4: the provisional FreeBetStrategy isn't
+# the published chart yet, so its EV reports as a baseline rather than validating.
 VARIANTS = {
     "h17": ("STANDARD_6D_H17", STANDARD_6D_H17, -0.0062, "validation_report.html"),
     "s17": ("STANDARD_6D_S17", STANDARD_6D_S17, -0.0040, "validation_report_s17.html"),
+    "ridefree": ("RIDE_FREE", RIDE_FREE, None, "validation_report_ridefree.html"),
 }
 
 
 def _demo(args: argparse.Namespace) -> None:
     _, rules, _, _ = VARIANTS[args.rules]
-    strategy = BasicStrategy()
+    strategy = _strategy_for(rules)
     shoe = Shoe(rules.decks, rules.penetration, args.seed)
     for n in range(1, args.hands + 1):
         if shoe.needs_shuffle or shoe.cards_remaining < 20:
@@ -51,7 +60,7 @@ def _sim(args: argparse.Namespace) -> None:
     print(f"shoe mode: {rules.shoe_end_mode}"
           + (f" ({rules.rounds_per_shoe} rounds/shoe)"
              if rules.shoe_end_mode == "fixed_rounds" else ""))
-    m = simulate(rules, BasicStrategy(), seed=args.seed, rounds=args.rounds, bet=1.0)
+    m = simulate(rules, _strategy_for(rules), seed=args.seed, rounds=args.rounds, bet=1.0)
     edge_pct = m.edge * 100
     err_pct = m.edge_stderr * 100
     print(f"rounds:            {m.rounds:,}")
@@ -61,6 +70,13 @@ def _sim(args: argparse.Namespace) -> None:
     print(f"player naturals:   {m.player_naturals:,} "
           f"({100 * m.player_naturals / m.rounds:.2f}% of rounds)")
     print(f"per-round std dev: {m.profit_std:.3f} units")
+    if m.free_splits or m.free_doubles or m.dealer_22_pushes:
+        print(f"free splits:       {m.free_splits:,} "
+              f"({100 * m.free_splits / m.rounds:.2f}% of rounds)")
+        print(f"free doubles:      {m.free_doubles:,} "
+              f"({100 * m.free_doubles / m.rounds:.2f}% of rounds)")
+        print(f"dealer 22 pushes:  {m.dealer_22_pushes:,} "
+              f"({100 * m.dealer_22_pushes / m.rounds:.2f}% of rounds)")
     total = sum(m.outcomes.values())
     print("outcomes (per hand):")
     for k in ("blackjack", "win", "push", "lose"):

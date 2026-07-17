@@ -24,6 +24,9 @@ class Metrics:
     pairs_dealt: int = 0
     splits: int = 0
     doubles: int = 0
+    free_splits: int = 0
+    free_doubles: int = 0
+    dealer_22_pushes: int = 0
     # Dealer final total counted ONLY over hands the dealer actually played out
     # (excludes naturals and all-player-bust rounds), so it matches published tables.
     dealer_final: dict[int, int] = field(default_factory=dict)  # total (22=bust) -> n
@@ -43,6 +46,10 @@ class Metrics:
             self.splits += 1
         if result.did_double:
             self.doubles += 1
+        self.free_splits += result.free_splits
+        self.free_doubles += result.free_doubles
+        if result.dealer_22_push:
+            self.dealer_22_pushes += 1
         for h in result.hands:
             self.hands += 1
             self.outcomes[h.outcome] = self.outcomes.get(h.outcome, 0) + 1
