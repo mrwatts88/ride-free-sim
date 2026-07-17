@@ -79,6 +79,39 @@ def test_free_double_probability_fresh_deck():
     assert poor.p_free_double_hand() < t.p_free_double_hand()
 
 
+def test_weighted_slope_recovers_linear_ev():
+    from ridefree.experiments import BinStat, _weighted_slope
+
+    # Construct bins whose EV rises exactly 1% per +0.01 of signal.
+    cols = {}
+    for x in (0.04, 0.05, 0.06, 0.07):
+        stat = BinStat()
+        ev = (x - 0.05) * 1.0  # slope 1.0 per unit => 1% per 0.01... in units
+        for _ in range(1000):
+            stat.add(ev)
+        cols[x] = stat
+    slope, se = _weighted_slope(cols)
+    assert slope == pytest.approx(0.01, rel=1e-6)  # per +0.01 of signal
+    assert se == pytest.approx(0.0, abs=1e-9)  # zero variance bins
+
+
+def test_grid_runner_smoke():
+    from ridefree.experiments import run_conditional_ev_grid
+
+    result = run_conditional_ev_grid(
+        Rules(), BasicStrategy(), seed=13, rounds=4_000,
+        row_signal="hilo_tc", col_signal="p_pair",
+    )
+    assert result.rounds == 4_000
+    total = sum(
+        s.rounds for cols in result.grid.values() for s in cols.values()
+    )
+    assert total == 4_000
+    # Marginals over rows equal the grid totals.
+    marg = result.row_marginals()
+    assert sum(s.rounds for s in marg.values()) == 4_000
+
+
 def test_conditional_ev_smoke():
     result = run_conditional_ev(
         Rules(), BasicStrategy(), seed=11, rounds=5_000

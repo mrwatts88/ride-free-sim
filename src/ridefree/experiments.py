@@ -134,6 +134,156 @@ def run_conditional_ev(
     )
 
 
+@dataclass
+class RowSummary:
+    row: object
+    rounds: int
+    ev: float
+    slope: float | None  # EV change per +0.01 of the column signal, at fixed row
+    slope_se: float | None
+
+
+@dataclass
+class GridResult:
+    rounds: int
+    total_profit: float
+    row_name: str
+    col_name: str
+    grid: dict = field(default_factory=dict)  # row_bin -> {col_bin -> BinStat}
+
+    @property
+    def overall_ev(self) -> float:
+        return self.total_profit / self.rounds if self.rounds else 0.0
+
+    def row_marginals(self) -> dict:
+        out = {}
+        for row, cols in self.grid.items():
+            stat = BinStat()
+            for cell in cols.values():
+                stat.rounds += cell.rounds
+                stat.profit += cell.profit
+                stat.profit_sq += cell.profit_sq
+            out[row] = stat
+        return out
+
+    def row_summaries(self, min_cell: int = 2000) -> list[RowSummary]:
+        summaries = []
+        for row in sorted(self.grid):
+            cols = {c: s for c, s in self.grid[row].items() if s.rounds >= min_cell}
+            marginal = BinStat()
+            for cell in self.grid[row].values():
+                marginal.rounds += cell.rounds
+                marginal.profit += cell.profit
+                marginal.profit_sq += cell.profit_sq
+            slope, slope_se = _weighted_slope(cols)
+            summaries.append(
+                RowSummary(row, marginal.rounds, marginal.ev, slope, slope_se)
+            )
+        return summaries
+
+    def pooled_slope(self, min_cell: int = 2000) -> tuple[float, float] | None:
+        """Inverse-variance weighted mean of within-row slopes: the column
+        signal's EV effect at fixed row signal."""
+        num = den = 0.0
+        for s in self.row_summaries(min_cell):
+            if s.slope is None or not s.slope_se:
+                continue
+            w = 1.0 / (s.slope_se**2)
+            num += w * s.slope
+            den += w
+        if den == 0:
+            return None
+        return num / den, math.sqrt(1.0 / den)
+
+
+def _weighted_slope(cols: dict, scale: float = 0.01):
+    """Rounds-weighted least-squares slope of EV on the column bin value, scaled to
+    EV-per-+`scale` of signal. Returns (slope, se) or (None, None)."""
+    if len(cols) < 2:
+        return None, None
+    total = sum(s.rounds for s in cols.values())
+    xbar = sum(c * s.rounds for c, s in cols.items()) / total
+    denom = sum(s.rounds * (c - xbar) ** 2 for c, s in cols.items())
+    if denom <= 0:
+        return None, None
+    slope = sum(s.rounds * (c - xbar) * s.ev for c, s in cols.items()) / denom
+    var = sum(
+        (s.rounds * (c - xbar) / denom) ** 2 * s.stderr**2 for c, s in cols.items()
+    )
+    return slope * scale, math.sqrt(var) * scale
+
+
+def run_conditional_ev_grid(
+    rules: Rules,
+    strategy,
+    *,
+    seed: int,
+    rounds: int,
+    row_signal: str = "hilo_tc",
+    col_signal: str = "p_pair",
+    bet: float = 1.0,
+) -> GridResult:
+    """One pass, binning each round's profit by (row signal, column signal)."""
+    row_extract, row_bin = SIGNALS[row_signal]
+    col_extract, col_bin = SIGNALS[col_signal]
+    grid: dict = {}
+    shoe = Shoe(rules.decks, rules.penetration, seed)
+    tracker = CompositionTracker(rules.decks)
+    shuffles = 0
+    rounds_since = 0
+    total_profit = 0.0
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shuffles += 1
+            shoe = Shoe(rules.decks, rules.penetration, seed + shuffles)
+            tracker.new_shoe()
+            rounds_since = 0
+        row = row_bin(row_extract(tracker))
+        col = col_bin(col_extract(tracker))
+        result = play_round(rules, shoe, strategy, bet=bet)
+        rounds_since += 1
+        tracker.observe_round(result)
+        total_profit += result.profit
+        grid.setdefault(row, {}).setdefault(col, BinStat()).add(result.profit)
+    return GridResult(
+        rounds=rounds,
+        total_profit=total_profit,
+        row_name=row_signal,
+        col_name=col_signal,
+        grid=grid,
+    )
+
+
+def format_grid(result: GridResult, min_cell: int = 2000) -> str:
+    lines = [
+        f"rounds: {result.rounds:,}   overall EV: {result.overall_ev * 100:+.3f}%",
+        f"rows: {result.row_name}   cols: {result.col_name}   "
+        f"(slope = EV change per +0.01 of {result.col_name}, within the row)",
+        "",
+        f"  {'row':>5s} {'rounds':>10s} {'EV':>9s} {'slope/0.01':>11s} {'±1se':>8s}",
+    ]
+    for s in result.row_summaries(min_cell):
+        label = f"{s.row:+d}" if isinstance(s.row, int) else f"{s.row:.3f}"
+        if s.slope is None:
+            slope_txt, se_txt = "n/a", ""
+        else:
+            slope_txt = f"{s.slope * 100:+10.3f}%"
+            se_txt = f"{(s.slope_se or 0) * 100:7.3f}%"
+        lines.append(
+            f"  {label:>5s} {s.rounds:>10,d} {s.ev * 100:+8.3f}% {slope_txt:>11s} {se_txt:>8s}"
+        )
+    pooled = result.pooled_slope(min_cell)
+    lines.append("")
+    if pooled:
+        slope, se = pooled
+        z = slope / se if se else 0.0
+        lines.append(
+            f"pooled within-row slope: {slope * 100:+.4f}% ± {se * 100:.4f}% "
+            f"per +0.01 {result.col_name}  ({z:+.1f}σ)"
+        )
+    return "\n".join(lines)
+
+
 def format_experiment(result: ExperimentResult, min_rounds: int = 1000) -> str:
     lines = [
         f"rounds: {result.rounds:,}   overall EV: {result.overall_ev * 100:+.3f}%",

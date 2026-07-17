@@ -137,6 +137,43 @@ def _signals(args: argparse.Namespace) -> None:
     print(format_experiment(result, min_rounds=args.min_rounds))
 
 
+def _grid(args: argparse.Namespace) -> None:
+    import json
+
+    from ridefree.experiments import format_grid, run_conditional_ev_grid
+
+    name, rules, _, _ = VARIANTS[args.rules]
+    rules = _apply_shoe_overrides(rules, args)
+    print(f"ruleset: {name}   shoe mode: {rules.shoe_end_mode}")
+    result = run_conditional_ev_grid(
+        rules,
+        _strategy_for(rules),
+        seed=args.seed,
+        rounds=args.rounds,
+        row_signal=args.row,
+        col_signal=args.col,
+    )
+    print(format_grid(result, min_cell=args.min_cell))
+    if args.json:
+        payload = {
+            "rules": name,
+            "seed": args.seed,
+            "rounds": result.rounds,
+            "row": result.row_name,
+            "col": result.col_name,
+            "grid": {
+                str(row): {
+                    str(col): [s.rounds, s.profit, s.profit_sq]
+                    for col, s in cols.items()
+                }
+                for row, cols in result.grid.items()
+            },
+        }
+        with open(args.json, "w") as f:
+            json.dump(payload, f)
+        print(f"\ngrid JSON written to {args.json}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ridefree")
     sub = parser.add_subparsers(required=True)
@@ -182,6 +219,22 @@ def main() -> None:
     g.add_argument("--min-rounds", type=int, default=2_000,
                    help="hide bins with fewer rounds than this")
     g.set_defaults(func=_signals)
+
+    t = sub.add_parser(
+        "grid", help="2D conditional EV: rows x cols with within-row slopes"
+    )
+    t.add_argument("--rules", choices=VARIANTS, default="ridefree")
+    t.add_argument("--row", choices=("hilo_tc", "p_pair", "p_free_double"),
+                   default="hilo_tc")
+    t.add_argument("--col", choices=("hilo_tc", "p_pair", "p_free_double"),
+                   default="p_pair")
+    t.add_argument("--shoe-mode", choices=SHOE_END_MODES, default=None)
+    t.add_argument("--rounds-per-shoe", type=int, default=None)
+    t.add_argument("--seed", type=int, default=1)
+    t.add_argument("--rounds", type=int, default=4_000_000)
+    t.add_argument("--min-cell", type=int, default=2_000)
+    t.add_argument("--json", default=None, help="dump raw grid stats to this path")
+    t.set_defaults(func=_grid)
 
     args = parser.parse_args()
     args.func(args)
