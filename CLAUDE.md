@@ -4,8 +4,11 @@ A deterministic simulator for **Ride Free** blackjack (Potawatomi Casino's Free 
 variant: free splits, free doubles, dealer 22 pushes). Goal: first reproduce published
 house edges exactly, then search for betting/counting systems that beat the game.
 
-See `docs/DESIGN.md` for architecture and `docs/ROADMAP.md` for milestones and
-validation gates. Current milestone is tracked at the top of the roadmap.
+**Start every session by reading `docs/STATUS.md`** — current state, key measured
+numbers, the specified next step, and operational notes (throughput limits, sharding
+pattern, seed hygiene). Update it at every checkpoint. Architecture is in
+`docs/DESIGN.md`, milestones/gates in `docs/ROADMAP.md`, the experiment log in
+`docs/EXPERIMENTS.md`.
 
 ## Working rules (non-negotiable)
 
