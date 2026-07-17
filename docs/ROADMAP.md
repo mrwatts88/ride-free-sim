@@ -1,6 +1,8 @@
 # Roadmap
 
-**Current milestone: M5** (M4 published-EV match done 2026-07-17).
+**Current milestone: M6a** (M5 signal infrastructure done 2026-07-17; first
+reconnaissance results in docs/EXPERIMENTS.md E1 — naive event-betting refuted,
+2D count×pair analysis is next).
 
 Each milestone has a validation gate; don't advance until it passes.
 
@@ -152,9 +154,11 @@ Build the signal layer (see "Counting architecture" in DESIGN.md):
   then *derivable* from the curve (E[profit] = Σ P(bin)·bet(bin)·EV(bin)) — simulate
   once, evaluate ramps analytically, verify only the winner by simulation.
 
-**Gate (sanity, not certification):**
-- Tracker counts exactly equal `shoe.remaining_composition()` at every point.
-- Standard-game EV rises with hi-lo true count, roughly the folk +0.5%/TC slope.
+**Gate (sanity, not certification) — met 2026-07-17:**
+- Tracker counts exactly equal `shoe.remaining_composition()` at every point
+  (invariant test). ✅
+- Standard-game EV rises monotonically with hi-lo true count, ≈ +0.6%/TC (folk
+  +0.5%/TC). ✅ See docs/EXPERIMENTS.md E1.
 
 ## M6a — The attack: pair & double signals, side by side
 Matt's first interest is pairs; the doubles signal is ~2.75× more frequent. Rather
