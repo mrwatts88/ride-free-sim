@@ -21,6 +21,8 @@ published effect-of-removal table for Free Bet blackjack and the **RF-L2** count
 
 ## Quickstart
 
+Requires [uv](https://docs.astral.sh/uv/) (Python 3.12+ is fetched automatically).
+
 ```bash
 uv run pytest -q                                       # 149 tests
 uv run python -m ridefree.cli demo --rules ridefree --seed 44 --hands 6
