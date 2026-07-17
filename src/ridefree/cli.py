@@ -125,6 +125,18 @@ def _validate(args: argparse.Namespace) -> None:
     print(f"\nHTML report written to {out}")
 
 
+def _signals(args: argparse.Namespace) -> None:
+    from ridefree.experiments import format_experiment, run_conditional_ev
+
+    name, rules, _, _ = VARIANTS[args.rules]
+    rules = _apply_shoe_overrides(rules, args)
+    print(f"ruleset: {name}   shoe mode: {rules.shoe_end_mode}")
+    result = run_conditional_ev(
+        rules, _strategy_for(rules), seed=args.seed, rounds=args.rounds
+    )
+    print(format_experiment(result, min_rounds=args.min_rounds))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ridefree")
     sub = parser.add_subparsers(required=True)
@@ -158,6 +170,18 @@ def main() -> None:
     v.add_argument("--html", default=None,
                    help="path for the HTML report (default: per-variant filename)")
     v.set_defaults(func=_validate)
+
+    g = sub.add_parser(
+        "signals", help="EV-vs-signal curves (pair P, free-double P, hi-lo TC)"
+    )
+    g.add_argument("--rules", choices=VARIANTS, default="ridefree")
+    g.add_argument("--shoe-mode", choices=SHOE_END_MODES, default=None)
+    g.add_argument("--rounds-per-shoe", type=int, default=None)
+    g.add_argument("--seed", type=int, default=1)
+    g.add_argument("--rounds", type=int, default=1_000_000)
+    g.add_argument("--min-rounds", type=int, default=2_000,
+                   help="hide bins with fewer rounds than this")
+    g.set_defaults(func=_signals)
 
     args = parser.parse_args()
     args.func(args)

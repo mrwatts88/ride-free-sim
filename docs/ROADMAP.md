@@ -135,58 +135,62 @@ argmax-EV play may beat WoO's simplified published chart by a hair (cut-card eff
 pushes the other way). If it matters later, a csm-mode run isolates the strategy
 component from the cut-card component.
 
-## M5 — Counting infrastructure + hi-lo validation (standard blackjack)
-Build the pluggable counting framework (see "Counting architecture" in DESIGN.md):
-counts observe every dealt card and feed bet sizing and strategy deviations. Two
-families, both switchable and tweakable from day one:
+## M5 — Signal infrastructure + conditional-EV harness (slimmed)
+*Restructured 2026-07-17 (Matt + Claude): the attack comes first; full hi-lo
+certification against published tables is deferred to M6c, where it belongs — we
+only need hi-lo as a sanity-checked control for now.*
 
-1. **Linear EOR counts** — hi-lo and friends: per-rank tags summed into a running
-   count, converted to true count.
-2. **Composition targeting** — track the full per-rank frequency distribution of the
-   remaining shoe (`Shoe.remaining_composition()` already exists for this) and compute
-   event probabilities directly: P(dealt a free-splittable pair), P(hard two-card
-   9/10/11), etc.
+Build the signal layer (see "Counting architecture" in DESIGN.md):
+- **CompositionTracker**: perfect-information per-rank counts of the remaining shoe,
+  maintained from observed cards (every card in a round is exposed at settlement).
+  Both counting families derive from it: event probabilities directly (P(free-split
+  pair), P(free-double hand)), and any linear count (hi-lo running count is a dot
+  product with the tag vector).
+- **Conditional-EV harness**: one simulation pass, binning each round's profit by
+  each pre-deal signal → EV-vs-signal curves with CIs, plus pairwise signal
+  correlations. This is the primary scientific object: any bet ramp's performance is
+  then *derivable* from the curve (E[profit] = Σ P(bin)·bet(bin)·EV(bin)) — simulate
+  once, evaluate ramps analytically, verify only the winner by simulation.
 
-Then **validate the machinery on known ground**: hi-lo on standard blackjack is the
-second validation rung after basic strategy, and published numbers exist for it.
-**Gate:**
-- True-count frequency distribution matches published tables (Wizard of Odds /
-  Schlesinger) for matching penetration.
-- EV as a function of true count reproduces published per-true-count edges (~+0.5%
-  per true count is the folk number; use exact published tables).
-- A standard bet ramp (e.g. 1-8 spread) reproduces the published overall player
-  advantage for matching rules/penetration/spread. This gate is demanding — published
-  figures are extremely sensitive to exact conditions, so the comparison must pin
-  rules, penetration, and ramp to the source's stated conditions.
+**Gate (sanity, not certification):**
+- Tracker counts exactly equal `shoe.remaining_composition()` at every point.
+- Standard-game EV rises with hi-lo true count, roughly the folk +0.5%/TC slope.
 
-## M6 — The attack: free-bet targeting on Ride Free
-The main event, in deliberate order.
+## M6a — The attack: pair & double signals, side by side
+Matt's first interest is pairs; the doubles signal is ~2.75× more frequent. Rather
+than sequencing them, the conditional-EV harness measures both (plus hi-lo TC as
+control) in the same pass — the comparison is the deliverable.
+
+**The open question this answers:** free-double abundance comes from small/mid cards
+remaining, which is exactly a bad (negative-count) shoe for the base game — the two
+effects plausibly fight. Pair abundance (rank concentration) has no obvious base-EV
+anti-correlation. Which signal survives contact with the base game is genuinely
+unknown; measure corr(signal, hilo_tc) and EV-vs-signal to find out.
+
+Steps: (1) perfect-information conditional-EV curves for both signals — if perfect
+knowledge shows no exploitable EV variation, no practical count can work and we stop;
+(2) derive optimal ramps from the curves, verify the best by simulation vs flat;
+(3) distill winners into human-trackable counts, quantifying edge lost per
+simplification; (4) hybrids with a base-game count.
 
 **Playing deviations (Matt, 2026-07-17):** build a deviations layer — a strategy
-overlay that can override individual decision cells, eventually count-conditioned.
-The foundation already exists: `player_ev.EVCalculator` computes exact EVs from rank
-weights, so swapping the fixed 4/13 weights for the live shoe composition yields the
-optimal action for the actual cards remaining. Motivating case: 5,5 — free-doubling
-beats free-splitting by only 0.15% off the top (WoO), because split 5s can catch
-more free splits (another 5) and free doubles (draw to 9/10/11). In a small-card-rich
-shoe that gap could flip; the deviation layer should answer exactly when.
-
-Steps:
-
-1. **Perfect-information upper bound first.** Use exact composition tracking (the
-   sim knows the true remaining shoe) to bet-size on P(free split) and P(free
-   double). This bounds the attainable edge: if perfect knowledge of pair/double
-   probabilities can't beat the game, no practical count can, and we stop there.
-2. **First attack: pair probabilities.** Bet ramp driven by P(free-splittable pair)
-   from tracked rank frequencies. Measure edge vs. flat betting.
-3. **Double probabilities.** Add P(hard two-card 9/10/11) targeting; combined signal.
-4. **Practical counts.** Distill whatever wins into human-trackable systems (side
-   counts, simplified tags), and quantify the edge lost at each simplification step.
-5. **Hybrid**: EOR-style count for the base game combined with free-bet targeting.
+overlay overriding individual decision cells, eventually count-conditioned. The
+foundation exists: `player_ev.EVCalculator` computes exact EVs from rank weights, so
+swapping the fixed 4/13 weights for the live composition yields the optimal action
+for the actual cards remaining. Motivating case: 5,5 — free-doubling beats
+free-splitting by only 0.15% off the top (WoO), because split 5s can catch more free
+splits and free doubles; in a small-card-rich shoe that gap could flip.
 
 **Gate:** every experiment reproducible from (config, seed); results with confidence
 intervals sized from measured per-round variance; a clear verdict per system:
 edge, bankroll requirements, and detectability-relevant stats (bet spread used).
+
+## M6c — Full hi-lo certification (deferred from M5)
+When counting results approach publication grade: true-count frequency distribution
+and EV-per-TC vs published tables (Wizard of Odds / Schlesinger), and a standard
+bet ramp reproducing the published overall advantage for pinned
+rules/penetration/spread. Demanding — published figures are extremely sensitive to
+exact conditions.
 
 ## M7 — Rust simulation core
 PyO3 + maturin. Port the frozen engine; differential-test against the Python reference
