@@ -9,10 +9,15 @@ validation gates. Current milestone is tracked at the top of the roadmap.
 
 ## Working rules (non-negotiable)
 
-1. **Rules are data.** Every game parameter — decks, H17/S17, blackjack payout,
-   dealer-22 behavior, free-double totals, free-split pairs, resplit/split-ace rules,
-   max hands — lives in the immutable `Rules` object (`src/ridefree/rules.py`).
-   Variants are configurations. Never scatter rule conditionals through game logic.
+1. **Rules are data — one engine for all variants.** Every game parameter — decks,
+   H17/S17, blackjack payout, dealer-22 behavior, free-double totals, free-split
+   pairs, resplit/split-ace rules, max hands — lives in the immutable `Rules` object
+   (`src/ridefree/rules.py`). Variants are configurations. Never scatter rule
+   conditionals through game logic, and **never fork variant-specific code paths**:
+   the entire reason standard blackjack is in this repo is that validating the shared
+   engine against its published numbers is what makes the Ride Free results
+   trustworthy. Code that only runs for one variant gets no validation transfer, so
+   keep it to the minimum the `Rules` object genuinely requires.
 
 2. **The engine asks, strategy answers.** Playing decisions come from pluggable
    strategy objects given the hand state and the legal actions. Never bake a playing

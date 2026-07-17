@@ -1,6 +1,13 @@
 # Design
 
-Deterministic domain model, no UI/DB/threading/ML. Data flow:
+Deterministic domain model, no UI/DB/threading/ML. **One engine serves every variant**
+— standard blackjack and Ride Free are `Rules` presets over identical code. This is a
+validation strategy, not just tidiness: the standard-blackjack battery (M2) validates
+the same deal/split/double/settlement machinery Ride Free runs on, so its evidence
+transfers. Variant-forked code paths would break that transfer and are prohibited
+beyond the conditionals the `Rules` object itself drives.
+
+Data flow:
 
 ```
 Shoe state → hand state → legal actions → resolved payouts
