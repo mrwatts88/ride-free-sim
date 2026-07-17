@@ -20,32 +20,29 @@ def test_distribution_sums_to_one():
         assert sum(dist.values()) == pytest.approx(1.0, abs=1e-9)
 
 
+def _dist(cards, rules):
+    return dealer_odds._distribution(
+        cards, rules, {}, dealer_odds._WEIGHT, dealer_odds._TOTAL_WEIGHT
+    )
+
+
 def test_dealer_20_stands_hardcoded():
     # Starting from a made 20 (T,T): dealer always stands on 20, never draws.
-    from ridefree.hand import hand_total  # noqa: F401
-
-    memo = {}
-    dist = dealer_odds._distribution([10, 10], H17, memo)
-    assert dist == {20: 1.0}
+    assert _dist([10, 10], H17) == {20: 1.0}
 
 
 def test_hard_16_never_stands():
     # From hard 16 the dealer must draw; outcome is 17-22 or deeper bust, never 16.
-    memo = {}
-    dist = dealer_odds._distribution([10, 6], H17, memo)
+    dist = _dist([10, 6], H17)
     assert 16 not in dist
     assert set(dist) <= {17, 18, 19, 20, 21, 22, "bust"}
 
 
 def test_soft_17_h17_vs_s17_differ():
     # Under S17 the dealer stands on soft 17 (A,6) -> always 17.
-    memo_s = {}
-    d_s = dealer_odds._distribution([1, 6], S17, memo_s)
-    assert d_s == {17: 1.0}
+    assert _dist([1, 6], S17) == {17: 1.0}
     # Under H17 the dealer hits soft 17, so it is NOT a certain 17.
-    memo_h = {}
-    d_h = dealer_odds._distribution([1, 6], H17, memo_h)
-    assert d_h.get(17, 0.0) < 1.0
+    assert _dist([1, 6], H17).get(17, 0.0) < 1.0
 
 
 def test_bust_rate_vs_six_up_is_highest():

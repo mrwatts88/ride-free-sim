@@ -20,6 +20,21 @@ from ridefree.engine import RoundResult
 # Hi-lo tags: 2-6 count +1, 7-9 neutral, ten-values and aces -1.
 HILO_TAGS = {r: (1 if 2 <= r <= 6 else (-1 if r in (TEN, ACE) else 0)) for r in RANKS}
 
+# Effects of removal (fraction of EV per card removed from 52), derived analytically
+# via eor.effects_of_removal on 2026-07-17 (docs/EXPERIMENTS.md E4a) and regenerated
+# by tests/test_eor.py. Standard H17 matches Griffin's published table in sign/order;
+# Ride Free differs sharply: tens half as valuable (dealer 22 is made of tens), aces
+# ~3x more important than tens, 3/4/5/7 collapse (they feed free doubles), 8 flips
+# negative (8,8 free split). Classical hi-lo is mis-tuned for Ride Free.
+STANDARD_H17_EOR = {
+    1: -0.0052017, 2: 0.0039827, 3: 0.0048520, 4: 0.0065485, 5: 0.0080104,
+    6: 0.0048199, 7: 0.0028417, 8: -0.0001621, 9: -0.0022227, 10: -0.0053536,
+}
+RIDE_FREE_EOR = {
+    1: -0.0064175, 2: 0.0040448, 3: 0.0020117, 4: 0.0032373, 5: 0.0052581,
+    6: 0.0039695, 7: 0.0009727, 8: -0.0010960, 9: -0.0013008, 10: -0.0022672,
+}
+
 # Unordered two-card combos (no aces, no tens) forming each hard total 9/10/11.
 FREE_DOUBLE_COMBOS = tuple(
     (a, b)
@@ -86,3 +101,15 @@ class CompositionTracker:
         if decks_left <= 0:
             return 0.0
         return self.hilo_running() / decks_left
+
+    def eor_shift(self, eors: dict[int, float]) -> float:
+        """First-order estimated EV shift vs a fresh shoe under an EOR vector —
+        the *perfect linear count* for the game the EORs were derived from,
+        expressed directly in EV units (0.005 = +0.5%)."""
+        from ridefree.eor import eor_ev_shift
+
+        return eor_ev_shift(eors, self.counts, self.cards_remaining)
+
+    def rf_ev_shift(self) -> float:
+        """Ride-Free-optimal linear signal (EV units)."""
+        return self.eor_shift(RIDE_FREE_EOR)

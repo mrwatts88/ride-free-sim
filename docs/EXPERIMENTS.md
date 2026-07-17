@@ -2,6 +2,52 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E4a — Ride Free effects of removal: hi-lo is the wrong count for this game
+
+**Date:** 2026-07-17 · **Method:** `eor.effects_of_removal` — analytic EOR via the
+weights-parameterized `EVCalculator` (`game_ev` with one card removed per 52).
+Motivated by Matt: classical hi-lo tags are standard-blackjack EORs; Ride Free's
+must differ. **Validation first:** our standard-game EORs reproduce Griffin's
+published table (Theory of Blackjack p.44) in sign, rank order, and approximate
+magnitude (e.g. ours S17: 5 → +0.80 vs Griffin +0.69; A → −0.58 vs −0.61; 8 ≈ 0).
+
+### The derived EORs (% per card removed from 52)
+
+| rank | standard H17 | Ride Free | change |
+|---|---|---|---|
+| A | −0.52 | **−0.64** | aces MORE valuable (A,A free split + naturals) |
+| 2 | +0.40 | +0.40 | unchanged |
+| 3 | +0.49 | **+0.20** | collapses (feeds 3-6/3-7/3-8 free doubles, 3,3 split) |
+| 4 | +0.66 | **+0.32** | halves |
+| 5 | +0.80 | **+0.53** | still max, but slashed (4-5/5-6/5-5 combos) |
+| 6 | +0.48 | +0.40 | mild |
+| 7 | +0.28 | **+0.10** | nearly neutral |
+| 8 | −0.02 | **−0.11** | flips negative (8,8 free split) |
+| 9 | −0.22 | −0.13 | less negative |
+| T | −0.54 | **−0.23** | HALVED — dealer 22 is made of tens; T,T not free-splittable |
+
+Headline structure: **the Ride Free ace is ~3× as important as the ten** (hi-lo
+weights them equally), and the small-card tags hi-lo leans on (3,4,5) lose half or
+more of their value. Classical hi-lo is measurably mis-tuned here — consistent with
+the blunted EV slope observed in E1 (+0.45%/TC vs +0.6%/TC standard).
+
+### The RF count
+
+`counting.rf_ev_shift()` = first-order EOR expansion, the *perfect linear count*
+for Ride Free expressed directly in EV units:
+EV(shoe) ≈ EV(fresh) − 51·Σ EOR_r·(n_r/N − c_r/52). Hardcoded EOR vectors carry a
+regeneration test. Known level-bias caveat: `game_ev` sits ~0.17%/0.39% below
+simulated truth (infinite-deck + no-resplit approximations) — fine for EORs
+(derivatives), not for absolute edge claims; the simulator remains the authority
+on levels.
+
+### Next: E4b (running)
+
+Grid with rf_ev as the row axis: (1) its EV slope should beat hi-lo's +0.45%/TC
+equivalent (calibration: slope of realized EV on predicted shift ≈ 1 would mean the
+linear model is well-calibrated); (2) the purified pair claim — pair slope at fixed
+RF count.
+
 ## E3 — Replication: the pair effect is CONFIRMED (+6.6σ combined)
 
 **Date:** 2026-07-17 · **Command:** `grid --rules ridefree --row hilo_tc --col p_pair

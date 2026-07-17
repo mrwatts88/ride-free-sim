@@ -233,10 +233,10 @@ def main() -> None:
         "grid", help="2D conditional EV: rows x cols with within-row slopes"
     )
     t.add_argument("--rules", choices=VARIANTS, default="ridefree")
-    t.add_argument("--row", choices=("hilo_tc", "p_pair", "p_free_double"),
-                   default="hilo_tc")
-    t.add_argument("--col", choices=("hilo_tc", "p_pair", "p_free_double"),
-                   default="p_pair")
+    from ridefree.experiments import SIGNALS
+
+    t.add_argument("--row", choices=tuple(SIGNALS), default="hilo_tc")
+    t.add_argument("--col", choices=tuple(SIGNALS), default="p_pair")
     t.add_argument("--shoe-mode", choices=SHOE_END_MODES, default=None)
     t.add_argument("--rounds-per-shoe", type=int, default=None)
     t.add_argument("--seed", type=int, default=1)

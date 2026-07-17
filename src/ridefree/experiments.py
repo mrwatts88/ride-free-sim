@@ -62,6 +62,8 @@ SIGNALS = {
     "p_pair": (lambda t: t.p_free_split_pair(), _bin_p(0.005)),
     "p_free_double": (lambda t: t.p_free_double_hand(), _bin_p(0.01)),
     "hilo_tc": (lambda t: t.hilo_true(), _bin_tc),
+    # Ride-Free-optimal linear count (E4a EORs), in EV units; bins of 0.25%.
+    "rf_ev": (lambda t: t.rf_ev_shift(), _bin_p(0.0025)),
 }
 
 

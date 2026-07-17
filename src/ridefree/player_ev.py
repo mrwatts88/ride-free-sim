@@ -55,18 +55,29 @@ def _two_card_state(c1: int, c2: int) -> tuple[int, bool]:
 
 class EVCalculator:
     """Exact EVs for one rules object; memoized, so construction is cheap and the
-    first few thousand lookups warm a small cache."""
+    first few thousand lookups warm a small cache.
 
-    def __init__(self, rules: Rules) -> None:
+    `weights` overrides the infinite-deck rank frequencies (default ten-weight 4/13)
+    for both player draws and dealer draws — the lever for effects-of-removal and,
+    later, live-composition deviations."""
+
+    def __init__(self, rules: Rules, weights: dict | None = None) -> None:
         self.rules = rules
+        if weights is None:
+            weights = {r: (4 if r == TEN else 1) for r in _RANKS}
+        self._w = dict(weights)
+        self._tw = sum(self._w.values())
         self._dealer: dict[int, dict] = {}
         self._memo: dict = {}
+
+    def _p(self, rank: int) -> float:
+        return self._w[rank] / self._tw
 
     def _dealer_dist(self, up: int) -> dict:
         if up not in self._dealer:
             exclude = self.rules.dealer_peeks_for_blackjack and up in (ACE, TEN)
             self._dealer[up] = dealer_distribution(
-                up, self.rules, exclude_natural=exclude
+                up, self.rules, exclude_natural=exclude, weights=self._w
             )
         return self._dealer[up]
 
@@ -94,7 +105,7 @@ class EVCalculator:
         ev = 0.0
         for r in _RANKS:
             t, s = _draw(total, soft, r)
-            ev += _W[r] / _TW * self.ev_play_on(t, s, own, free, up)
+            ev += self._p(r) * self.ev_play_on(t, s, own, free, up)
         return ev
 
     def ev_play_on(self, total: int, soft: bool, own: float, free: float, up: int) -> float:
@@ -126,7 +137,7 @@ class EVCalculator:
         total0, soft0 = _draw(0, False, card)
         ev = 0.0
         for r in _RANKS:
-            p = _W[r] / _TW
+            p = self._p(r)
             if card == ACE and not rules.hit_split_aces:
                 t, _ = _draw(total0, soft0, r)
                 ev += p * self.ev_final(t, own, free, up)
@@ -169,7 +180,7 @@ class EVCalculator:
             dbl = 0.0
             for r in _RANKS:
                 t, _ = _draw(total, soft, r)
-                dbl += _W[r] / _TW * self.ev_final(t, o2, f2, up)
+                dbl += self._p(r) * self.ev_final(t, o2, f2, up)
             evs[Action.DOUBLE] = dbl
         if allow_split and c1 == c2:
             free_split = c1 in rules.free_split_ranks and (
@@ -181,6 +192,39 @@ class EVCalculator:
             ) + self._post_split_hand_ev(c1, new_own, new_free, up)
         self._memo[key] = evs
         return evs
+
+
+def game_ev(rules: Rules, weights: dict | None = None) -> float:
+    """Full-round EV per unit initial bet under i.i.d. rank draws at `weights`.
+
+    Sums over all (player two-card hand, dealer up-card) deals: player naturals paid
+    at the blackjack rate unless the dealer also has one; dealer naturals (found on
+    the peek) take exactly the initial bet; everything else plays best-action per
+    two_card_evs, whose dealer distribution is already conditioned on no dealer
+    natural for A/T up-cards — consistent with weighting by (1 - P(dealer BJ)).
+    """
+    calc = EVCalculator(rules, weights)
+    p = calc._p
+    ev = 0.0
+    for up in _RANKS:
+        p_up = p(up)
+        if rules.dealer_peeks_for_blackjack and up == ACE:
+            p_dealer_bj = p(TEN)
+        elif rules.dealer_peeks_for_blackjack and up == TEN:
+            p_dealer_bj = p(ACE)
+        else:
+            p_dealer_bj = 0.0
+        for c1 in _RANKS:
+            for c2 in _RANKS:
+                if c2 < c1:
+                    continue
+                p_hand = (1 if c1 == c2 else 2) * p(c1) * p(c2)
+                if {c1, c2} == {ACE, TEN}:  # player natural: push vs dealer BJ
+                    ev += p_up * p_hand * (1 - p_dealer_bj) * rules.blackjack_payout
+                    continue
+                best = max(calc.two_card_evs(c1, c2, up).values())
+                ev += p_up * p_hand * (p_dealer_bj * -1.0 + (1 - p_dealer_bj) * best)
+    return ev
 
 
 class OptimalStrategy:

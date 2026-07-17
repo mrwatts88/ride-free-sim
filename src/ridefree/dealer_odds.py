@@ -29,7 +29,9 @@ _TOTAL_WEIGHT = 13
 OUTCOMES = (17, 18, 19, 20, 21, 22, "bust")  # "bust" = 23+
 
 
-def _distribution(cards: list[int], rules: Rules, memo: dict) -> dict:
+def _distribution(
+    cards: list[int], rules: Rules, memo: dict, weights: dict, total_weight: float
+) -> dict:
     total = hand_total(cards)
     if total > 21:
         return {22: 1.0} if total == 22 else {"bust": 1.0}
@@ -41,16 +43,21 @@ def _distribution(cards: list[int], rules: Rules, memo: dict) -> dict:
         memo[key] = result
         return result
     out: dict = {}
-    for rank, weight in _WEIGHT.items():
-        p = weight / _TOTAL_WEIGHT
-        for outcome, prob in _distribution(cards + [rank], rules, memo).items():
+    for rank, weight in weights.items():
+        p = weight / total_weight
+        for outcome, prob in _distribution(
+            cards + [rank], rules, memo, weights, total_weight
+        ).items():
             out[outcome] = out.get(outcome, 0.0) + p * prob
     memo[key] = out
     return out
 
 
 def dealer_distribution(
-    up_card: int, rules: Rules, exclude_natural: bool = False
+    up_card: int,
+    rules: Rules,
+    exclude_natural: bool = False,
+    weights: dict | None = None,
 ) -> dict:
     """P(final outcome) for the dealer starting from `up_card`, over all hole cards.
 
@@ -58,19 +65,28 @@ def dealer_distribution(
     the distribution renormalized — the correct conditioning for a peek game, where
     the round only continues when the dealer does NOT have blackjack. Otherwise
     naturals fold into the 21 bucket.
+
+    `weights` overrides the default infinite-deck rank weights (any positive
+    per-rank weights; draws are i.i.d. at those frequencies) — used for effects of
+    removal and, later, live-composition deviations.
     """
+    if weights is None:
+        weights = _WEIGHT
+    total_weight = sum(weights.values())
     memo: dict = {}
     dist: dict = {o: 0.0 for o in OUTCOMES}
     kept_weight = 0.0
-    for hole, weight in _WEIGHT.items():
+    for hole, weight in weights.items():
         if exclude_natural and is_blackjack([up_card, hole]):
             continue
         kept_weight += weight
-        p = weight / _TOTAL_WEIGHT
-        for outcome, prob in _distribution([up_card, hole], rules, memo).items():
+        p = weight / total_weight
+        for outcome, prob in _distribution(
+            [up_card, hole], rules, memo, weights, total_weight
+        ).items():
             dist[outcome] += p * prob
     if exclude_natural and kept_weight:
-        scale = _TOTAL_WEIGHT / kept_weight
+        scale = total_weight / kept_weight
         dist = {o: p * scale for o, p in dist.items()}
     return dist
 
