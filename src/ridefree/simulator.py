@@ -20,8 +20,14 @@ class Metrics:
     total_profit: float = 0.0
     _sum_sq: float = 0.0  # sum of per-round profit^2, for variance
     outcomes: dict[str, int] = field(default_factory=dict)
-    player_blackjacks: int = 0
+    player_naturals: int = 0  # true count, even when both-BJ makes it a push
+    pairs_dealt: int = 0
+    splits: int = 0
+    doubles: int = 0
+    # Dealer final total counted ONLY over hands the dealer actually played out
+    # (excludes naturals and all-player-bust rounds), so it matches published tables.
     dealer_final: dict[int, int] = field(default_factory=dict)  # total (22=bust) -> n
+    dealer_completed: int = 0
     total_initial_wager: float = 0.0
 
     def observe(self, result: RoundResult, bet: float) -> None:
@@ -29,14 +35,22 @@ class Metrics:
         self.total_profit += result.profit
         self._sum_sq += result.profit * result.profit
         self.total_initial_wager += bet
+        if result.player_natural:
+            self.player_naturals += 1
+        if result.was_pair:
+            self.pairs_dealt += 1
+        if result.did_split:
+            self.splits += 1
+        if result.did_double:
+            self.doubles += 1
         for h in result.hands:
             self.hands += 1
             self.outcomes[h.outcome] = self.outcomes.get(h.outcome, 0) + 1
-            if h.outcome == "blackjack":
-                self.player_blackjacks += 1
-        dealer_total = _dealer_total(result.dealer_cards)
-        key = 22 if dealer_total > 21 else dealer_total
-        self.dealer_final[key] = self.dealer_final.get(key, 0) + 1
+        if result.dealer_played_out:
+            dealer_total = _dealer_total(result.dealer_cards)
+            key = 22 if dealer_total > 21 else dealer_total
+            self.dealer_final[key] = self.dealer_final.get(key, 0) + 1
+            self.dealer_completed += 1
 
     @property
     def edge(self) -> float:

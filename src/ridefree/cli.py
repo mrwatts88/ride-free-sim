@@ -38,19 +38,40 @@ def _sim(args: argparse.Namespace) -> None:
     print(f"hands:             {m.hands:,}")
     print(f"player edge:       {edge_pct:+.3f}%  (±{err_pct:.3f}% = 1 std err)")
     print(f"house edge:        {-edge_pct:.3f}%")
-    print(f"player blackjacks: {m.player_blackjacks:,} "
-          f"({100 * m.player_blackjacks / m.hands:.2f}% of hands)")
+    print(f"player naturals:   {m.player_naturals:,} "
+          f"({100 * m.player_naturals / m.rounds:.2f}% of rounds)")
     print(f"per-round std dev: {m.profit_std:.3f} units")
     total = sum(m.outcomes.values())
-    print("outcomes:")
+    print("outcomes (per hand):")
     for k in ("blackjack", "win", "push", "lose"):
         v = m.outcomes.get(k, 0)
         print(f"  {k:10s} {100 * v / total:5.2f}%")
     dealer_total = sum(m.dealer_final.values())
-    print("dealer final:")
+    print(f"dealer final (completed hands only, n={dealer_total:,}):")
     for k in sorted(m.dealer_final):
         label = "bust" if k == 22 else str(k)
         print(f"  {label:5s} {100 * m.dealer_final[k] / dealer_total:5.2f}%")
+
+
+def _validate(args: argparse.Namespace) -> None:
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    from ridefree.validation import format_report, run_suite, to_html
+
+    checks, m = run_suite(
+        STANDARD_6D_H17,
+        seed=args.seed,
+        game_rounds=args.rounds,
+        dealer_trials=args.dealer_trials,
+    )
+    print(format_report(checks, m))
+
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    html = to_html(checks, m, ruleset_name="STANDARD_6D_H17", generated_at=stamp)
+    out = Path(args.html)
+    out.write_text(html)
+    print(f"\nHTML report written to {out}")
 
 
 def main() -> None:
@@ -66,6 +87,14 @@ def main() -> None:
     s.add_argument("--seed", type=int, default=1)
     s.add_argument("--rounds", type=int, default=100_000)
     s.set_defaults(func=_sim)
+
+    v = sub.add_parser("validate", help="run the validation battery vs references")
+    v.add_argument("--seed", type=int, default=1)
+    v.add_argument("--rounds", type=int, default=2_000_000)
+    v.add_argument("--dealer-trials", type=int, default=2_000_000)
+    v.add_argument("--html", default="validation_report.html",
+                   help="path for the HTML report (default: validation_report.html)")
+    v.set_defaults(func=_validate)
 
     args = parser.parse_args()
     args.func(args)

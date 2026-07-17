@@ -64,6 +64,11 @@ class RoundResult:
     hands: tuple[HandResult, ...]
     dealer_cards: tuple[int, ...]
     events: tuple[str, ...]
+    dealer_played_out: bool = True  # False when a natural ended it before dealer drew
+    player_natural: bool = False  # initial hand was a two-card 21 (before push classing)
+    was_pair: bool = False  # initial two cards were a pair
+    did_split: bool = False
+    did_double: bool = False
 
 
 def _name(card: int) -> str:
@@ -110,6 +115,25 @@ def legal_actions(hand: _Hand, n_hands: int, rules: Rules) -> frozenset[Action]:
     return frozenset(legal)
 
 
+def dealer_should_hit(cards, rules: Rules) -> bool:
+    """The dealer's drawing rule, in one place (H17/S17)."""
+    total = hand_total(cards)
+    if total < 17:
+        return True
+    return total == 17 and is_soft(cards) and rules.dealer_hits_soft_17
+
+
+def play_dealer(cards: list[int], shoe, rules: Rules) -> list[int]:
+    """Draw for the dealer until standing. Mutates and returns `cards`.
+
+    Single source of truth for dealer play, shared by play_round and the validation
+    harness so the exact odds calculator is checked against the real state machine.
+    """
+    while dealer_should_hit(cards, rules):
+        cards.append(shoe.deal())
+    return cards
+
+
 def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False) -> RoundResult:
     _check_supported(rules)
     events: list[str] = []
@@ -128,6 +152,7 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
     note(f"player dealt {_desc(player.cards)}, dealer shows {_name(up)}")
 
     player_bj = is_blackjack(player.cards)
+    was_pair = player.cards[0] == player.cards[1]
     if (
         rules.dealer_peeks_for_blackjack
         and up in (ACE, TEN)
@@ -138,12 +163,18 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
         profit = 0.0 if player_bj else -bet
         note(f"hand 1: {outcome} {profit:+g}")
         hand_result = HandResult(tuple(player.cards), bet, 0.0, outcome, profit)
-        return RoundResult(profit, (hand_result,), tuple(dealer_cards), tuple(events))
+        return RoundResult(
+            profit, (hand_result,), tuple(dealer_cards), tuple(events),
+            dealer_played_out=False, player_natural=player_bj, was_pair=was_pair,
+        )
     if player_bj:
         profit = bet * rules.blackjack_payout
         note(f"player blackjack {profit:+g}")
         hand_result = HandResult(tuple(player.cards), bet, 0.0, "blackjack", profit)
-        return RoundResult(profit, (hand_result,), tuple(dealer_cards), tuple(events))
+        return RoundResult(
+            profit, (hand_result,), tuple(dealer_cards), tuple(events),
+            dealer_played_out=False, player_natural=True, was_pair=was_pair,
+        )
 
     hands = [player]
     i = 0
@@ -212,16 +243,10 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
     any_live = any(hand_total(h.cards) <= 21 for h in hands)
     if any_live:
         note(f"dealer reveals {_name(hole)} -> {_desc(dealer_cards)}")
-        while True:
-            dealer_total = hand_total(dealer_cards)
-            dealer_soft = is_soft(dealer_cards)
-            if dealer_total < 17 or (
-                dealer_total == 17 and dealer_soft and rules.dealer_hits_soft_17
-            ):
-                dealer_cards.append(shoe.deal())
-                note(f"dealer draws {_name(dealer_cards[-1])} -> {_desc(dealer_cards)}")
-            else:
-                break
+        before = len(dealer_cards)
+        play_dealer(dealer_cards, shoe, rules)
+        for card in dealer_cards[before:]:
+            note(f"dealer draws {_name(card)} -> {_name(card)}")
         if hand_total(dealer_cards) > 21:
             note("dealer busts")
     dealer_total = hand_total(dealer_cards)
@@ -249,4 +274,8 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
         )
         profit += delta
     note(f"round profit {profit:+g}")
-    return RoundResult(profit, tuple(results), tuple(dealer_cards), tuple(events))
+    return RoundResult(
+        profit, tuple(results), tuple(dealer_cards), tuple(events),
+        dealer_played_out=any_live, player_natural=False, was_pair=was_pair,
+        did_split=len(hands) > 1, did_double=any(h.doubled for h in hands),
+    )
