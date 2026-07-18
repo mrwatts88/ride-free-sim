@@ -6,8 +6,9 @@ seven, pays 40:1) and the Panda 8 (player wins with a three-card eight, pays
 to be countable for over a decade, and both were written off as impractical.
 This is the full re-derivation with exact methods: the perfect-play ceiling,
 optimal counts derived from first principles, a verified playable two-count
-system, and a ledger that lands in a very different place than the prior art
-did — because the structure of baccarat quietly removes every practical
+system — with a measured proof that it sits at the human frontier of the
+game — and a ledger that lands in a very different place than the prior art
+did, because the structure of baccarat quietly removes every practical
 objection that made the original verdicts negative.*
 
 ---
@@ -139,13 +140,46 @@ analytically from the first-order model — nothing fit to simulation data):
 
 Three findings. First, the linear family is nearly the whole game here —
 unlike 21+3's quadratic suit signal, ~90% of this ceiling is reachable with
-running counts; the last ~10% is nonlinear residue not worth chasing. Second,
-the published Panda count is already at the integer frontier — our sharpened
-tags tied it (79.1% vs 78.4%), so the playable system simply adopts the
-published set for that leg. Third, and decisively: **the Panda cannot ride
-the Dragon count.** Triggering Panda bets when the Dragon count is high loses
-4.7% per bet — the correlation between the two signals is far too weak. Two
-counts or no Panda.
+running counts (and the next section *proves* the rest is out of reach, not
+merely unclaimed). Second, the published Panda count is already at the
+integer frontier — our sharpened tags tied it (79.1% vs 78.4%), so the
+playable system simply adopts the published set for that leg. Third, and
+decisively: **the Panda cannot ride the Dragon count.** Triggering Panda
+bets when the Dragon count is high loses 4.7% per bet — the correlation
+between the two signals is far too weak. Two counts or no Panda.
+
+## How far could any human system go?
+
+Before settling for ~90%, we asked the question 21+3 taught us to ask: is
+there a *higher-order* statistic — the analogue of quad-Q's sum of squared
+suit excesses — hiding above the linear counts? This is measurable, not a
+matter of taste. Differentiating the exact EV twice gives the full
+per-depth quadratic model (level, gradient, and the 10×10 Hessian, all
+analytic); scoring "bet when the order-k model is positive" against the
+exact ceiling on the same shoes:
+
+| model | Dragon 7 | Panda 8 |
+|---|---|---|
+| linear class (the counts above) | ~90–92% | ~83% |
+| + the exact quadratic | 95.3% | 83.6% |
+| exact (computer) | 100% | 100% |
+
+For the Dragon, the *entire second order* is worth three to five points —
+about +$3/hour at a $100 unit — and the Hessian is a shapeless smear of
+cross-products with none of the symmetry that made quad-Q memorizable. For
+the Panda the result is starker: the exact quadratic adds essentially
+nothing over the best linear count. The missing ~16% of the Panda ceiling
+lives in extreme late-shoe compositions where every low-order model fails
+at once (honest methods note: the tangent-linear model actually scores
+*below* the static count there — Taylor expansions around the balanced shoe
+are the wrong tool exactly where the money is, which is itself the
+evidence). That residue is deep combinatorics, reachable only by running
+the full enumeration: a phone, not a pencil.
+
+So the two-count card is not a practical compromise short of some better
+system — **it is the human frontier of this game**, measured. Everything
+above it requires a device, and even a full quadratic tracker (55 running
+cross-products) would buy under $5/hour.
 
 That would be a real objection at a blackjack table, where counts live in
 your head. At baccarat it costs nothing: **scorekeeping on paper is expected
@@ -249,7 +283,7 @@ side pressing if it looks.
 Every number regenerates from the repository:
 
 ```
-uv run pytest -q                                        # 213 tests, incl. gates
+uv run pytest -q                                        # 214 tests, incl. gates
 uv run python -m ridefree.cli bacexact                  # exact table vs published
 uv run python -m ridefree.cli bac --shoe-mode csm --rounds 2000000 \
     --seed 7500000001 --dragon7 1 --panda8 1            # settlement gate
@@ -257,10 +291,12 @@ uv run python -m ridefree.cli bacev    --rounds 100000 --seed 7700000001 \
     --penetration 0.966                                 # exact ceiling (E13)
 uv run python -m ridefree.cli bactrack --rounds 100000 --seed 8700000001 \
     --penetration 0.966                                 # count systems (E14/E14b)
+uv run python -m ridefree.cli bacorder --rounds 100000 --seed 8800000001 \
+    --penetration 0.966                                 # order bounds (E15)
 uv run python data/e14_verdict.py                       # the ledger
 ```
 
-The experiment log (`docs/EXPERIMENTS.md`, E13–E14b) records every run with
+The experiment log (`docs/EXPERIMENTS.md`, E13–E15) records every run with
 its seed; shoe seeds derive through `cards.shoe_seeds()` so no two runs share
 shoes. The tableau is the universal one; everything that varies by casino is
 data in `BaccaratRules`.
