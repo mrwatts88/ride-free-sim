@@ -65,6 +65,7 @@ RAMPS = {
     "playall 1-20": ((-99, 1), (1, 4), (2, 8), (3, 14), (4, 20)),
     "crouch, jump 10u at +2": ((-99, 1), (2, 10), (3, 15), (4, 20)),
     "crouch, jump 10u at +1": ((-99, 1), (1, 10), (2, 12), (3, 16), (4, 20)),
+    "crouch +2, leave tc<=-2": ((-1, 1), (2, 10), (3, 15), (4, 20)),
 }
 
 # Arms: which banked curve carries the playing skill.
