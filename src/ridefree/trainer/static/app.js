@@ -274,7 +274,7 @@ async function submitQuiz() {
 }
 
 async function endSession() {
-  const summary = await api("/api/session/end");
+  const summary = await api("/api/session/end", {});
   if (!summary) return;
   state = { phase: "none" };
   renderSummary(summary);
