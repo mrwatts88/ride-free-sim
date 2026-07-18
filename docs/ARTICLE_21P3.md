@@ -31,8 +31,9 @@ or straight flush, and takes everything else.
 Off a fresh six-deck shoe the arithmetic is fully knowable: of the
 C(312,3) = 5,013,320 possible triples, 10,368 are straight flushes, 26,312 are
 trips, 155,520 are straights, and 292,896 are flushes. Total win probability
-9.676%, expected value **−3.2386%** — a published Wizard of Odds figure our
-engine had to reproduce, twice over, before any attack work began (more below).
+9.676%, expected value **−3.2386%** — a figure published by Michael
+Shackleford (Wizard of Odds) that our engine had to reproduce, twice over,
+before any attack work began (more below).
 
 Why should this be countable at all? Because 60% of the winning mass is
 flushes, and flush probability is *convex* in the suit composition: a shoe

@@ -57,8 +57,8 @@ ladder, and ended up cross-validating against the published record three
 separate times:
 
 - **Exact combinatorics:** a first-principles enumeration over ordered
-  six-card sequences must equal the Wizard of Odds eight-deck combination
-  table integer-for-integer. It does: banker 2,292,252,566,437,888 / player
+  six-card sequences must equal Michael Shackleford's Wizard of Odds
+  eight-deck combination table integer-for-integer. It does: banker 2,292,252,566,437,888 / player
   2,230,518,282,592,256 / tie 475,627,426,473,216 of 4,998,398,275,503,360,
   and every published edge — classic banker −1.0579%, player −1.2351%, tie
   −14.3596%, EZ banker −1.0183%, Dragon −7.6113%, Panda −10.1876% —

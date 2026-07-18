@@ -33,7 +33,7 @@ irresistible offer: split any pair except tens *for free*, double any hard 9, 10
 or 11 *for free*. The casino puts up the money; you keep the winnings. The catch
 funding it all: when the dealer busts with exactly 22, every live hand pushes.
 
-The Wizard of Odds pegs the base house edge around 1.04% (six decks, H17, resplit
+Michael Shackleford's Wizard of Odds pegs the base house edge around 1.04% (six decks, H17, resplit
 aces) — roughly a 6:5 game in cost. But nobody, as far as we could find, has
 published an answer to the counter's question: **what happens to this game when the
 composition of the shoe changes?** Every card counting system in the literature —

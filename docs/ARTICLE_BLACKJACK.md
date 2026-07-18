@@ -50,14 +50,18 @@ Details and idealizations: EXPERIMENTS.md E16.
 Composition-perfect play — an oracle strictly better than any index card —
 recovers, per round: **+0.06% at TC −1, +0.13% at −2, +0.24% at −4**, against
 deficits of −1.1%, −1.5%, −2.7%. That is 8–9% of the hole, uniformly, rising
-to only ~22% at TC −8. Every player asymmetry (3:2 naturals, doubles, splits,
-the right to stand) is a ten/ace asymmetry, and small-card shoes shrink the
-option value itself; perfect knowledge of a bad shoe mostly tells you
-precisely how bad it is. Consequently the perfect-camouflage play — flat bet,
-every round, forever — **loses $15.58/h at $25 units even played with
-composition-perfect skill it loses $11.72/h.** There is no skill route out of
-negative counts; there is only not having money on the table when they
-happen. The holy grail is closed, by measurement, on our own game.
+to only ~22% at TC −8. (This is our measured, shoe-game echo of Peter
+Griffin's classic "gain from perfect play" analysis in *The Theory of
+Blackjack* — the same book whose EOR table our E4a derivation had to
+reproduce before any of this was trusted.) Every player asymmetry (3:2
+naturals, doubles, splits, the right to stand) is a ten/ace asymmetry, and
+small-card shoes shrink the option value itself; perfect knowledge of a bad
+shoe mostly tells you precisely how bad it is. Consequently the
+perfect-camouflage play — flat bet, every round, forever — **loses $15.58/h
+at $25 units, and even played with composition-perfect skill it loses
+$11.72/h.** There is no skill route out of negative counts; there is only
+not having money on the table when they happen. The holy grail is closed, by
+measurement, on our own game.
 
 ## Answer 2: the price list
 
@@ -212,7 +216,8 @@ small, bank toward the baccarat stake, shift weight if sweat ever appears.
 ## Provenance
 
 Engine validated against published house edges before any of this (0.646%
-measured vs 0.62% published, cut-card mode, H17; four batteries). E16 data:
+measured vs 0.62% published — Michael Shackleford's Wizard of Odds figures,
+as everywhere in this repo — cut-card mode, H17; four batteries). E16 data:
 148M banked rounds, seeds 8.9e9–13.3e9 step 1e8, `data/e16_*.json`; harness
 gates in `tests/test_e16.py` (222 tests green); ledger
 `data/e16_ledger.py <game> <pen> <unit$> <rounds/h>`; live verification runs
