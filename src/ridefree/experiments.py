@@ -273,6 +273,11 @@ class DeviationResult:
     window_rounds: int = 0  # rounds inside the wong-in window (rf_ev >= threshold)
     window_diff: float = 0.0
     window_diff_sq: float = 0.0
+    # E16: paired profit difference binned by pre-deal hi-lo TC (only rounds
+    # actually replayed — every round unless window_only skipped it). The
+    # paired variance is tiny, so this resolves per-TC deviation value far
+    # beyond what independent arm-vs-arm curves could.
+    by_tc: dict = field(default_factory=dict)  # tc bin -> BinStat of the diff
 
     @property
     def deviation_value(self) -> float:
@@ -356,6 +361,7 @@ def run_deviation_value(
             tracker.new_shoe()
             rounds_since = 0
         in_window = tracker.rf_ev_shift() >= window_threshold
+        tc_bin = max(-8, min(8, int(round(tracker.hilo_true()))))
         if window_only and not in_window:
             r_base = play_round(rules, shoe, base, bet=bet)
             tracker.observe_round(r_base)
@@ -379,6 +385,7 @@ def run_deviation_value(
         result.base_profit += r_base.profit
         result.diff_sum += d
         result.diff_sq += d * d
+        result.by_tc.setdefault(tc_bin, BinStat()).add(d)
         if d != 0.0:
             result.rounds_changed += 1
         if base.actions != dev.actions:
@@ -1698,4 +1705,359 @@ def format_bac_order(res: BacOrderResult) -> str:
                      f"{100 * p8 / res.ceiling_p8:8.2f}%")
     lines.append(f"  (ceilings this run: d7 {100 * res.ceiling_d7 / res.rounds:+.4f}"
                  f"u/100, p8 {100 * res.ceiling_p8 / res.rounds:+.4f}u/100)")
+    return "\n".join(lines)
+
+
+# --- E16: standard-game hi-lo TC curve + configurable bet ramps --------------
+#
+# The cover-ledger design (docs/EXPERIMENTS.md E16): one flat-bet pass banks
+# per-true-count bins of round profit (mean AND second moment, so variance is
+# free) plus the insurance attribution; every betting pattern is then ledger
+# arithmetic over the banked bins (data/e16_ledger.py), and only chosen
+# operating points get a live verification run via run_ramp. Rounds are always
+# PLAYED at bet=1 and profit scaled by the round's bet: profit is exactly
+# linear in the initial bet (every wager, insurance included, derives from
+# it), so scaling is exact and the card stream is identical across ramps —
+# common random numbers for free. A bet of 0 is a sit-out round: the hand is
+# still played out (cards must flow for the count to move — the table-with-
+# other-players model), it just carries no money.
+
+
+def _bin_tc8(value: float) -> int:
+    """Integer TC bins clamped to ±8 (ramps are flat beyond; the tails pool)."""
+    return max(-8, min(8, int(round(value))))
+
+
+E16_ARMS = ("basic", "ins", "full")
+
+
+def _arm_strategy(rules: Rules, arm: str):
+    """The three E16 playing arms: pure chart / +composition insurance /
+    +composition deviations (each layer is the exact ceiling of its human
+    approximation — indexes are distillations of these)."""
+    from ridefree.player_ev import CompositionPlayer, OptimalStrategy
+
+    if arm == "basic":
+        return OptimalStrategy()
+    if arm == "ins":
+        return CompositionPlayer(rules.decks, insurance=True, deviations=False)
+    if arm == "full":
+        return CompositionPlayer(rules.decks, insurance=True, deviations=True)
+    raise ValueError(f"unknown arm {arm!r}; expected one of {E16_ARMS}")
+
+
+@dataclass
+class TcBin:
+    rounds: int = 0
+    profit: float = 0.0
+    profit_sq: float = 0.0
+    tc_sum: float = 0.0  # exact (unbinned) TC, for within-bin means
+    ins_rounds: int = 0
+    ins_profit: float = 0.0
+
+    def add(self, profit: float, tc: float, result) -> None:
+        self.rounds += 1
+        self.profit += profit
+        self.profit_sq += profit * profit
+        self.tc_sum += tc
+        if result.insurance_stake:
+            self.ins_rounds += 1
+            self.ins_profit += result.insurance_profit
+
+    @property
+    def ev(self) -> float:
+        return self.profit / self.rounds if self.rounds else 0.0
+
+    @property
+    def var(self) -> float:
+        if not self.rounds:
+            return 0.0
+        m = self.ev
+        return max(self.profit_sq / self.rounds - m * m, 0.0)
+
+    @property
+    def stderr(self) -> float:
+        return math.sqrt(self.var / self.rounds) if self.rounds >= 2 else 0.0
+
+
+@dataclass
+class TcCurveResult:
+    rules_name: str
+    arm: str
+    penetration: float
+    rounds: int = 0
+    total_profit: float = 0.0
+    bins: dict[int, TcBin] = field(default_factory=dict)
+
+    @property
+    def overall_ev(self) -> float:
+        return self.total_profit / self.rounds if self.rounds else 0.0
+
+
+def run_tc_curve(
+    rules: Rules, arm: str, *, seed: int, rounds: int, rules_name: str = ""
+) -> TcCurveResult:
+    """Flat-bet pass binning per-round profit by pre-deal hi-lo true count."""
+    strategy = _arm_strategy(rules, arm)
+    on_round = getattr(strategy, "observe_round", None)
+    on_shuffle = getattr(strategy, "new_shoe", None)
+    res = TcCurveResult(rules_name=rules_name, arm=arm, penetration=rules.penetration)
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    tracker = CompositionTracker(rules.decks)
+    rounds_since = 0
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            tracker.new_shoe()
+            rounds_since = 0
+            if on_shuffle is not None:
+                on_shuffle()
+        tc = tracker.hilo_true()
+        result = play_round(rules, shoe, strategy, bet=1.0)
+        rounds_since += 1
+        tracker.observe_round(result)
+        if on_round is not None:
+            on_round(result)
+        res.rounds += 1
+        res.total_profit += result.profit
+        res.bins.setdefault(_bin_tc8(tc), TcBin()).add(result.profit, tc, result)
+    return res
+
+
+def tc_curve_to_json(res: TcCurveResult, seed: int) -> dict:
+    return {
+        "kind": "tc_curve",
+        "rules": res.rules_name,
+        "arm": res.arm,
+        "penetration": res.penetration,
+        "seed": seed,
+        "rounds": res.rounds,
+        "total_profit": res.total_profit,
+        "bins": {
+            str(k): [b.rounds, b.profit, b.profit_sq, b.tc_sum,
+                     b.ins_rounds, b.ins_profit]
+            for k, b in res.bins.items()
+        },
+    }
+
+
+def load_tc_curve_json(path: str) -> TcCurveResult:
+    import json
+
+    with open(path) as f:
+        payload = json.load(f)
+    if payload.get("kind") != "tc_curve":
+        raise ValueError(f"{path} is not a tc_curve dump")
+    res = TcCurveResult(
+        rules_name=payload["rules"],
+        arm=payload["arm"],
+        penetration=payload["penetration"],
+        rounds=payload["rounds"],
+        total_profit=payload["total_profit"],
+    )
+    for key, (n, p, p2, tcs, ir, ip) in payload["bins"].items():
+        res.bins[int(key)] = TcBin(
+            rounds=n, profit=p, profit_sq=p2, tc_sum=tcs,
+            ins_rounds=ir, ins_profit=ip,
+        )
+    return res
+
+
+def merge_tc_curves(results: list[TcCurveResult]) -> TcCurveResult:
+    """Pool independently-seeded curve runs (bin stats are additive)."""
+    assert results
+    first = results[0]
+    merged = TcCurveResult(
+        rules_name=first.rules_name, arm=first.arm, penetration=first.penetration
+    )
+    for r in results:
+        assert (r.rules_name, r.arm, r.penetration) == (
+            first.rules_name, first.arm, first.penetration
+        ), "cannot pool curves from different games/arms"
+        merged.rounds += r.rounds
+        merged.total_profit += r.total_profit
+        for k, b in r.bins.items():
+            t = merged.bins.setdefault(k, TcBin())
+            t.rounds += b.rounds
+            t.profit += b.profit
+            t.profit_sq += b.profit_sq
+            t.tc_sum += b.tc_sum
+            t.ins_rounds += b.ins_rounds
+            t.ins_profit += b.ins_profit
+    return merged
+
+
+def format_tc_curve(res: TcCurveResult, min_rounds: int = 1000) -> str:
+    lines = [
+        f"rules: {res.rules_name}   arm: {res.arm}   "
+        f"penetration: {res.penetration:.2f}",
+        f"rounds: {res.rounds:,}   overall EV: {100 * res.overall_ev:+.4f}%",
+        "",
+        f"  {'tc':>4s} {'rounds':>11s} {'freq':>8s} {'EV':>9s} {'±1se':>8s} "
+        f"{'sd':>6s} {'mean tc':>8s} {'ins/round':>10s}",
+    ]
+    for k in sorted(res.bins):
+        b = res.bins[k]
+        if b.rounds < min_rounds:
+            continue
+        ins = 100 * b.ins_profit / b.rounds if b.rounds else 0.0
+        lines.append(
+            f"  {k:+4d} {b.rounds:>11,d} {100 * b.rounds / res.rounds:7.3f}% "
+            f"{100 * b.ev:+8.3f}% {100 * b.stderr:7.3f}% "
+            f"{math.sqrt(b.var):6.3f} {b.tc_sum / b.rounds:+8.2f} {ins:+9.4f}%"
+        )
+    return "\n".join(lines)
+
+
+# --- E16: configurable bet ramp, simulated live (the verification arm) -------
+
+
+def parse_ramp(spec: str) -> tuple[tuple[float, float], ...]:
+    """Parse 'min_tc:units,min_tc:units,...' into a sorted step function.
+
+    The bet at true count tc is the units of the highest min_tc <= tc; below
+    the lowest step the bet is 0 (wong-out / sit-out). A flat bet is '-99:1'.
+    Example 1-8 spread with exit: '-99:0,-1:1,1:2,2:4,3:6,4:8'.
+    """
+    steps = []
+    for part in spec.split(","):
+        lo, _, units = part.partition(":")
+        steps.append((float(lo), float(units)))
+    steps.sort()
+    return tuple(steps)
+
+
+def ramp_bet(ramp: tuple[tuple[float, float], ...], tc: float) -> float:
+    bet = 0.0
+    for lo, units in ramp:
+        if tc >= lo:
+            bet = units
+        else:
+            break
+    return bet
+
+
+@dataclass
+class RampResult:
+    rules_name: str
+    arm: str
+    penetration: float
+    ramp: tuple = ()
+    rounds: int = 0
+    rounds_bet: int = 0  # rounds with a nonzero bet
+    bet_sum: float = 0.0  # total units staked (initial bets)
+    profit: float = 0.0  # bet-scaled units
+    profit_sq: float = 0.0
+    ins_profit: float = 0.0  # bet-scaled, inside profit
+    # corr(bet, tc) accumulators over ALL observed rounds
+    s_bet: float = 0.0
+    ss_bet: float = 0.0
+    s_tc: float = 0.0
+    ss_tc: float = 0.0
+    x_bet_tc: float = 0.0
+
+    @property
+    def ev_per_round(self) -> float:
+        return self.profit / self.rounds if self.rounds else 0.0
+
+    @property
+    def std_per_round(self) -> float:
+        if self.rounds < 2:
+            return 0.0
+        m = self.ev_per_round
+        return math.sqrt(max(self.profit_sq / self.rounds - m * m, 0.0))
+
+    @property
+    def ev_stderr(self) -> float:
+        return self.std_per_round / math.sqrt(self.rounds) if self.rounds else 0.0
+
+    @property
+    def money_edge(self) -> float:
+        """Profit per unit staked (the 'edge on money' convention)."""
+        return self.profit / self.bet_sum if self.bet_sum else 0.0
+
+    @property
+    def corr_bet_tc(self) -> float:
+        n = self.rounds
+        if not n:
+            return 0.0
+        vb = self.ss_bet / n - (self.s_bet / n) ** 2
+        vt = self.ss_tc / n - (self.s_tc / n) ** 2
+        if vb <= 0 or vt <= 0:
+            return 0.0
+        cov = self.x_bet_tc / n - (self.s_bet / n) * (self.s_tc / n)
+        return cov / math.sqrt(vb * vt)
+
+
+def run_ramp(
+    rules: Rules,
+    arm: str,
+    ramp: tuple[tuple[float, float], ...],
+    *,
+    seed: int,
+    rounds: int,
+    rules_name: str = "",
+) -> RampResult:
+    """Simulate a bet ramp live: bet(tc) chosen pre-deal from the tracked
+    count, the round played at bet=1 and its profit scaled (exact — see the
+    section comment). This is the verification arm for the ledger arithmetic
+    and the repo's first betting simulator (STATUS 'combined-play' item)."""
+    strategy = _arm_strategy(rules, arm)
+    on_round = getattr(strategy, "observe_round", None)
+    on_shuffle = getattr(strategy, "new_shoe", None)
+    res = RampResult(
+        rules_name=rules_name, arm=arm, penetration=rules.penetration, ramp=ramp
+    )
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    tracker = CompositionTracker(rules.decks)
+    rounds_since = 0
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            tracker.new_shoe()
+            rounds_since = 0
+            if on_shuffle is not None:
+                on_shuffle()
+        tc = tracker.hilo_true()
+        b = ramp_bet(ramp, tc)
+        result = play_round(rules, shoe, strategy, bet=1.0)
+        rounds_since += 1
+        tracker.observe_round(result)
+        if on_round is not None:
+            on_round(result)
+        p = b * result.profit
+        res.rounds += 1
+        if b:
+            res.rounds_bet += 1
+            res.bet_sum += b
+        res.profit += p
+        res.profit_sq += p * p
+        res.ins_profit += b * result.insurance_profit
+        res.s_bet += b
+        res.ss_bet += b * b
+        res.s_tc += tc
+        res.ss_tc += tc * tc
+        res.x_bet_tc += b * tc
+    return res
+
+
+def format_ramp(res: RampResult) -> str:
+    ramp_txt = ",".join(f"{lo:g}:{u:g}" for lo, u in res.ramp)
+    n = res.rounds
+    lines = [
+        f"rules: {res.rules_name}   arm: {res.arm}   "
+        f"penetration: {res.penetration:.2f}",
+        f"ramp (min_tc:units): {ramp_txt}",
+        f"rounds observed: {n:,}   bet: {res.rounds_bet:,} "
+        f"({100 * res.rounds_bet / n:.2f}%)   avg bet: {res.s_bet / n:.3f}u/round",
+        f"EV: {100 * res.ev_per_round:+.4f} ± {100 * res.ev_stderr:.4f} u/100 "
+        f"observed rounds   (money edge {100 * res.money_edge:+.4f}% per unit "
+        f"staked)",
+        f"per-round sd: {res.std_per_round:.3f}u   corr(bet, tc): "
+        f"{res.corr_bet_tc:+.3f}",
+    ]
+    if res.ins_profit:
+        lines.append(f"insurance contribution: {100 * res.ins_profit / n:+.4f}u/100")
     return "\n".join(lines)

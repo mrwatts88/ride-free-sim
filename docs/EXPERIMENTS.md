@@ -2,6 +2,100 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E16 — Classic blackjack next door: the cover-vs-money ledger (real dollars, real ramps)
+
+**Date:** 2026-07-18 · **Question (Matt):** what does MY standard game actually
+pay, with a real spread in real dollars — and is there any play with "no heat"
+cover (flat-looking bets) and a decent hourly? Sub-question (the holy grail):
+can indexes rescue negative counts?
+
+**Method.** Three new harnesses (all `(rules, seed, strategy)`-deterministic):
+
+1. `cli curve` (`experiments.run_tc_curve`): flat-bet pass binning per-round
+   profit by pre-deal hi-lo TC (integer bins clamped ±8), banking mean,
+   second moment (variance is free), within-bin mean TC, and the insurance
+   attribution. Three playing arms — `basic` (OptimalStrategy, no insurance),
+   `ins` (+composition-exact insurance), `full` (+composition deviations).
+   JSON dumps additive; `cli curvecombine` pools shards.
+2. `cli deviations --json` (extended): the E5/E8 paired-differential harness
+   now bins each round's paired profit diff by hi-lo TC — per-TC deviation
+   value at ~100× the precision of independent arms.
+3. `cli ramp` (`experiments.run_ramp`): a LIVE betting simulator — bet(tc)
+   chosen pre-deal from the tracked count via a configurable step ramp;
+   rounds played at bet=1 and profit scaled (profit is exactly linear in the
+   initial bet, so scaling is exact and the card stream is ramp-invariant).
+   Bet 0 = sit-out (cards still flow: the table-with-others model). This is
+   the "hi-lo betting simulator the repo doesn't have yet" (old STATUS item).
+
+`data/e16_ledger.py` then prices any ramp × arm from the banked bins (EV,
+variance, corr(bet,TC), $/h, σ/h, N0, 5%-RoR bankroll — unit $, pace, RoR,
+game, pen all configurable) — simulate once, price every betting pattern.
+
+**Data banked** (`data/e16_*.json`): h17 pen .75 — basic 10×6M (seeds
+8.9e9–9.8e9 step 1e8), ins 10×6M (9.9e9–10.8e9), paired deviations 8×1M
+(10.9e9–11.6e9); s17 pen .75 — basic 4×6M (11.7e9–12.0e9), ins 4×6M
+(12.1e9–12.4e9); h17 ins pen .80 2×6M (12.5e9–12.6e9), pen .70 2×6M
+(12.8e9–12.9e9). Verification ramps: 13.1e9–13.3e9. **Next unused: 13.4e9+.**
+
+**The curve (h17, pen .75, per-unit EV per round):** baseline −0.63% money
+(cut-card mode; validation battery's 0.646% — consistent), slope ~+0.5%/TC,
+crossover at TC ≈ +1; bin −2 = −1.49%, +3 = +0.85% (basic). Insurance
+attribution is ~all at TC ≥ +3 (+0.056% at +3 → +0.61%/round at +8).
+
+**Negative counts are NOT rescued — the holy-grail question, measured.**
+Composition-PERFECT play (better than any index card) recovers, per round:
++0.064% ± 0.025% at TC −1, +0.129% ± 0.043% at −2, +0.244% ± 0.102% at −4 —
+i.e. ~8–9% of the deficit, uniformly, growing to only ~22% at TC −8
+(+1.39% ± 0.38% against −6.29%). Deviations are tail-heavy on BOTH ends
+(+1.8% ± 0.3% at +8) but the negative-count hole is structural: the flat
+play-all ceiling (perfect deviations + insurance) is still **−0.47%**.
+
+**The menu** ($25 units, 100 obs rounds/h, h17 pen .75, ins arm unless noted):
+
+| play | corr(bet,TC) | $/h | N0 | bankroll |
+|---|---|---|---|---|
+| flat play-all (perfect camo) | 0.00 | **−15.58** (ceiling −11.72) | — | — |
+| flat + exit TC≤−1 | 0.71 | +1.23 (ceiling +3.59) | 34,082h | $63k |
+| 1-2 spread, exit TC≤−2 | 0.84 | +1.82 | 46,629h | $127k |
+| 1-8 classic, play-all | 0.78 | +15.92 | 2,687h | $64k |
+| 1-8 + exit TC≤−1 | 0.84 | **+32.73** (ceiling +45.31) | 605h | $30k |
+| backcount, 8u at TC≥+2 | 0.68 | **+43.54** (money +1.10%) | 543h | $35k |
+
+Pace scales $/h linearly (heads-up ~200 r/h doubles everything). Pen
+sensitivity (1-8+exit, ins): pen .70 +$26.84 → .75 +$32.73 → .80 +$45.67/h —
+**the cut card is worth more than every index combined.** s17 bracket: whole
+curve shifts ~+0.2%; flat play-all still −$10.25/h; verdicts unchanged.
+
+**Verification (live `cli ramp`, 10M rounds each, independent seeds):**
+1-8+exit +1.374 ± 0.102 u/100 vs ledger 1.309 (+0.6σ); flat-exit +0.089 ±
+0.029 vs 0.049 (+1.3σ); backcount +1.469 ± 0.128 vs 1.742 (−2.0σ, the worst
+of three — watched, consistent with sampling); avg bet / per-round sd /
+corr(bet,TC) all match to 3 decimals. Cross-validations for free: the 1-8
+basic row's money edge +0.223% reproduces E4c's independently-measured
++0.23%; the backcount money edge +1.10% matches the "~+1.1% next door"
+STATUS claim.
+
+**Conclusions.**
+1. **"No heat AND decent hourly" does not exist at this game.** The
+   zero-correlation play loses $15.58/h; the only near-invisible positive
+   play (flat + natural-looking exits) makes ~$1–4/h at N0 in the tens of
+   thousands of hours. Real money starts at corr(bet,TC) ≥ 0.7 — visible by
+   construction — or at back-counting, whose tell is the entry pattern
+   rather than the ramp.
+2. Indexes/insurance are worth having but don't change the frontier:
+   insurance ≈ +$4/h on a 1-8 (all at TC ≥ +3), full deviations ceiling
+   ≈ +$12/h more — and NONE of it rescues negative counts (~9% of the
+   deficit). E15's lesson repeats: the human frontier is basically the
+   simple system; the exotic headroom is small.
+3. The best plays here (+$33–44/h, ~$30k bankroll, N0 ~550–600h at 100 r/h)
+   are 2–3× E12's 21+3 and half of E14's Dragon+Panda ($92–101/h at HALF
+   the N0, with native camouflage) — **the EZ Baccarat verdict stands as
+   the project's best game by every column of this ledger.**
+4. Idealizations on record: sit-out rounds still consume cards (someone
+   else plays); rounds independent for variance (live sd confirms to 3
+   decimals); 100 r/h nominal; hi-lo only (E4a: best balanced level-1 count
+   for the standard game IS hi-lo).
+
 ## E15 — Is there value beyond linear counts? Quadratic buys ~4pp on the Dragon; the Panda tail is high-order (M9 epilogue)
 
 **Date:** 2026-07-18 · **Command:** `uv run python -m ridefree.cli bacorder

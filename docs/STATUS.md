@@ -5,9 +5,43 @@ and the precisely-specified next step. Doc map at the bottom.
 
 **Current state in one line: all three research questions are ANSWERED and
 written up (Ride Free: dominated; 21+3: beatable, grind-scale; Dragon 7 +
-Panda 8: beatable, the strongest verdict — `docs/ARTICLE_EZBAC.md`). No next
-step is scheduled; remaining items are field checks on the felt and parked
-options below.**
+Panda 8: beatable, the strongest verdict — `docs/ARTICLE_EZBAC.md`), and E16
+has now priced classic blackjack next door in real dollars (cover-vs-money
+ledger, below). No next step is scheduled; remaining items are field checks
+on the felt and parked options below.**
+
+## E16 DONE (2026-07-18): classic blackjack priced — no-heat play does not pay
+
+Matt's question: real spread, real dollars on his real game (6d H17 DAS
+no-surrender, ~pen .75, $25–$2000 shoes at Potawatomi) — and can anything
+with REAL cover (flat-looking bets) earn a decent hourly? Can indexes rescue
+negative counts (the camouflage holy grail)?
+
+**Answered by measurement (E16, EXPERIMENTS.md; ledger `data/e16_ledger.py`,
+all knobs configurable — unit $, pace, ramps, game, pen):**
+- **Flat play-all (perfect camo): −$15.58/h** at $25 units, 100 r/h — and
+  still **−$11.72/h at the composition-PERFECT ceiling** (deviations +
+  insurance). Negative counts are structural: perfect play recovers only
+  ~8–9% of the deficit at TC −1..−4. The holy grail is closed by data.
+- The only near-invisible positive play — flat bet + exit at TC ≤ −1 —
+  makes **+$1.23/h** (ceiling +$3.59) at N0 ≈ 34,000h: breakeven perch.
+- Real money needs visible correlation: 1-8 + exits **+$32.73/h** (N0 605h,
+  ~$30k, corr(bet,TC)=0.84); backcount 8u at TC ≥ +2 **+$43.54/h** (money
+  +1.10%, corr 0.68 but the tell is the entry pattern). Pen dominates: that
+  1-8 row is $26.84 / $32.73 / $45.67 per hour at pen .70/.75/.80.
+- s17 bracket: everything ~+0.2%; verdicts unchanged. Insurance ≈ +$4/h on
+  a 1-8, all at TC ≥ +3.
+- **EZ Baccarat remains the project's best game by every column** (E14:
+  ~$92–101/h at half the N0, native camouflage, ~2–3× these hourlies).
+
+New capability, gate-passed: per-TC curves with variance (`cli curve` /
+`curvecombine`), per-TC paired deviation values (`cli deviations --json`),
+and the repo's first LIVE betting simulator (`cli ramp`, bet(tc) ramps as
+config — closes old STATUS item 4's "hi-lo betting simulator" gap). Ledger
+arithmetic verified against three live 10M-round ramp runs (worst |z| =
+2.0σ; avg bet / sd / corr match to 3 decimals); E4c's +0.23% and the
+"~+1.1% next door" claim both reproduced independently. 222 tests green.
+Seeds consumed: 8.9e9–13.3e9 (step 1e8). **Next unused block: 13.4e9+.**
 
 ## ⚠ Deep-dive checkpoint (2026-07-17, late session) — read before trusting the numbers below
 
@@ -320,7 +354,8 @@ Seeds consumed (M9c): 7300000007 (test), 8300000001 / 8400000001 (pen .966),
 8500000001 (pen .95), 8600000001 (E14b broken-row run, discarded),
 8700000001 (E14b verification), 8800000001 (E15 order bounds — quadratic
 buys ~4pp on d7, Panda tail high-order; the two-count card is the human
-frontier). **Next unused block: 8.9e9+.**
+frontier). E16 consumed 8.9e9–13.3e9 (see the E16 section above).
+**Next unused block: 13.4e9+.**
 
 ## NEXT STEPS (M8 research complete; field + polish items remain)
 
@@ -438,6 +473,12 @@ uv run python data/e12_verdict.py                         # the E12 ledger
 uv run python -m ridefree.cli bacexact                    # exact baccarat table
 uv run python -m ridefree.cli bac --shoe-mode csm --rounds 2000000 \
     --dragon7 1 --panda8 1                    # M9a gate: sim vs exact + published
+uv run python -m ridefree.cli curve --rules h17 --arm ins --rounds 6000000 \
+    --json data/out.json                      # E16 per-TC curve (basic|ins|full)
+uv run python -m ridefree.cli curvecombine data/e16_h17_ins_p75_s*.json
+uv run python -m ridefree.cli ramp --rules h17 --arm ins \
+    --ramp "-0.5:1,0.5:2,1.5:4,2.5:6,3.5:8"   # live bet-ramp simulator
+uv run python data/e16_ledger.py h17 p75      # the E16 cover-vs-money menu
 ```
 
 ## Open items

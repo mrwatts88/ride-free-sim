@@ -275,7 +275,10 @@ def _deviations(args: argparse.Namespace) -> None:
     from ridefree.experiments import run_deviation_value
 
     name, rules, _, _ = VARIANTS[args.rules]
-    print(f"ruleset: {name}   window threshold: rf_ev >= {args.window_threshold:g}"
+    if args.penetration is not None:
+        rules = dataclasses.replace(rules, penetration=args.penetration)
+    print(f"ruleset: {name}   pen: {rules.penetration:.2f}   "
+          f"window threshold: rf_ev >= {args.window_threshold:g}"
           + ("   (window-only mode)" if args.window_only else ""))
     r = run_deviation_value(
         rules, seed=args.seed, rounds=args.rounds,
@@ -291,6 +294,80 @@ def _deviations(args: argparse.Namespace) -> None:
     print(f"wong-in window value:  {100 * r.window_value:+.4f}% ± "
           f"{100 * r.window_se:.4f}% per round "
           f"({r.window_rounds:,} rounds in window)")
+    if r.by_tc:
+        print("\ndeviation value by hi-lo TC (paired diff per replayed round):")
+        print(f"  {'tc':>4s} {'rounds':>10s} {'value':>9s} {'±1se':>8s}")
+        for k in sorted(r.by_tc):
+            s = r.by_tc[k]
+            if s.rounds < 1000:
+                continue
+            print(f"  {k:+4d} {s.rounds:>10,d} {100 * s.ev:+8.4f}% "
+                  f"{100 * s.stderr:7.4f}%")
+    if args.json:
+        import json
+
+        payload = {
+            "kind": "dev_tc",
+            "rules": name,
+            "penetration": rules.penetration,
+            "seed": args.seed,
+            "rounds": r.rounds,
+            "diff_sum": r.diff_sum,
+            "diff_sq": r.diff_sq,
+            "by_tc": {
+                str(k): [s.rounds, s.profit, s.profit_sq]
+                for k, s in r.by_tc.items()
+            },
+        }
+        with open(args.json, "w") as f:
+            json.dump(payload, f)
+        print(f"\ndeviation JSON written to {args.json}")
+
+
+def _curve(args: argparse.Namespace) -> None:
+    import json
+
+    from ridefree.experiments import format_tc_curve, run_tc_curve, tc_curve_to_json
+
+    name, rules, _, _ = VARIANTS[args.rules]
+    rules = _apply_shoe_overrides(rules, args)
+    if args.penetration is not None:
+        rules = dataclasses.replace(rules, penetration=args.penetration)
+    res = run_tc_curve(
+        rules, args.arm, seed=args.seed, rounds=args.rounds, rules_name=name
+    )
+    print(format_tc_curve(res, min_rounds=args.min_rounds))
+    if args.json:
+        with open(args.json, "w") as f:
+            json.dump(tc_curve_to_json(res, args.seed), f)
+        print(f"\ncurve JSON written to {args.json}")
+
+
+def _curvecombine(args: argparse.Namespace) -> None:
+    from ridefree.experiments import (
+        format_tc_curve,
+        load_tc_curve_json,
+        merge_tc_curves,
+    )
+
+    curves = [load_tc_curve_json(p) for p in args.paths]
+    merged = merge_tc_curves(curves)
+    print(f"merged {len(curves)} curve(s)")
+    print(format_tc_curve(merged, min_rounds=args.min_rounds))
+
+
+def _ramp(args: argparse.Namespace) -> None:
+    from ridefree.experiments import format_ramp, parse_ramp, run_ramp
+
+    name, rules, _, _ = VARIANTS[args.rules]
+    rules = _apply_shoe_overrides(rules, args)
+    if args.penetration is not None:
+        rules = dataclasses.replace(rules, penetration=args.penetration)
+    res = run_ramp(
+        rules, args.arm, parse_ramp(args.ramp),
+        seed=args.seed, rounds=args.rounds, rules_name=name,
+    )
+    print(format_ramp(res))
 
 
 def _bac_rules(args: argparse.Namespace):
@@ -560,7 +637,50 @@ def main() -> None:
     dv.add_argument("--window-only", action="store_true",
                     help="paired replay only inside the window (~7x more window "
                          "rounds per second; overall stats then cover the window only)")
+    dv.add_argument("--penetration", type=float, default=None,
+                    help="override cut-card depth (default: ruleset's 0.75)")
+    dv.add_argument("--json", default=None,
+                    help="dump per-TC paired diffs to this path (E16 shards)")
     dv.set_defaults(func=_deviations)
+
+    cv = sub.add_parser(
+        "curve", help="per-hi-lo-TC EV/variance curve with insurance attribution "
+                      "(E16: the cover ledger's input)"
+    )
+    cv.add_argument("--rules", choices=VARIANTS, default="h17")
+    cv.add_argument("--arm", choices=("basic", "ins", "full"), default="basic",
+                    help="basic = chart play, no insurance; ins = +composition "
+                         "insurance; full = +composition deviations (~0.5k r/s)")
+    cv.add_argument("--shoe-mode", choices=SHOE_END_MODES, default=None)
+    cv.add_argument("--rounds-per-shoe", type=int, default=None)
+    cv.add_argument("--penetration", type=float, default=None,
+                    help="override cut-card depth (default: ruleset's 0.75)")
+    cv.add_argument("--seed", type=int, default=1)
+    cv.add_argument("--rounds", type=int, default=1_000_000)
+    cv.add_argument("--min-rounds", type=int, default=1_000)
+    cv.add_argument("--json", default=None, help="dump curve bins to this path")
+    cv.set_defaults(func=_curve)
+
+    cc = sub.add_parser("curvecombine", help="pool curve JSON dumps and report")
+    cc.add_argument("paths", nargs="+", help="curve JSON files to merge")
+    cc.add_argument("--min-rounds", type=int, default=1_000)
+    cc.set_defaults(func=_curvecombine)
+
+    rp = sub.add_parser(
+        "ramp", help="simulate a bet ramp live: bet(tc) each round, real spread "
+                     "(E16 verification arm)"
+    )
+    rp.add_argument("--rules", choices=VARIANTS, default="h17")
+    rp.add_argument("--arm", choices=("basic", "ins", "full"), default="ins")
+    rp.add_argument("--ramp", required=True,
+                    help="'min_tc:units,...' step function; bet 0 below the "
+                         "lowest step. Flat = '-99:1'; e.g. '-99:1,1:2,2:4,3:8'")
+    rp.add_argument("--shoe-mode", choices=SHOE_END_MODES, default=None)
+    rp.add_argument("--rounds-per-shoe", type=int, default=None)
+    rp.add_argument("--penetration", type=float, default=None)
+    rp.add_argument("--seed", type=int, default=1)
+    rp.add_argument("--rounds", type=int, default=1_000_000)
+    rp.set_defaults(func=_ramp)
 
     bx = sub.add_parser("bacexact", help="exact baccarat outcome table (enumeration)")
     bx.add_argument("--rules", choices=("ez", "classic"), default="ez")
