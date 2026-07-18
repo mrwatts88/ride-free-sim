@@ -85,3 +85,19 @@ print()
 print("Notes: u/100 rounds at $100 side stake == $/hour at 100 rounds/h.")
 print("Seated variance includes the every-round main hand; wong-in only the")
 print("trigger rounds' main hands. N0 = hours to 1-sigma = EV.")
+
+print()
+print("side <= main cap (common rule) — quad-Q, $ per 100 observed rounds:")
+print("wong-in: bet main = side = $100 on trigger rounds only;")
+print("seated:  table-min $15 main off-trigger, raise BOTH to $100 on triggers.")
+print(f"{'pen':>5s} {'wong-in 1:1':>12s} {'seated raise-both':>18s}")
+for pen in (0.75, 0.85):
+    side_u100, p_bet, mu_bet = SYSTEMS[("quad-Q", pen)]
+    wong = (side_u100 - 100.0 * TOLL * p_bet) * 100.0  # main=side, $100 units
+    toll_seated = ((100.0 - 100.0 * p_bet) * TOLL * 15.0
+                   + 100.0 * p_bet * TOLL * 100.0)
+    seated = side_u100 * 100.0 - toll_seated
+    print(f"{pen:5.2f} {wong:+11.2f} {seated:+17.2f}")
+print("(the trigger-round pair nets ~(mu_bet - 0.64%) of the matched amount;")
+print(" the cap costs ~15% in wong-in mode and does not flip any verdict —")
+print(" penetration and paytable remain the kill conditions)")

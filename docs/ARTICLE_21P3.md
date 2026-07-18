@@ -191,6 +191,29 @@ by the game next door**: the signal is orthogonal to hi-lo, so the strongest
 configuration is a counted main game *plus* quad-Q on the side, the two legs
 stacking almost additively.
 
+### What if the side bet is capped at the main bet?
+
+Many houses rule that the side wager may not exceed the main wager, which
+looks fatal for a system whose edge lives on the side. It isn't — because on
+a trigger round the *pair* of bets is jointly profitable: matched at $B, the
+side earns +3.83%·B against the main's −0.64%·B, so every matched dollar
+nets **≈ +3.2% per trigger round**. Concretely (pen 85%, $100 units):
+
+- **Wong-in, main = side on triggers only:** +0.176 units/100 observed
+  rounds ≈ **+$17.6/hour** — the cap costs about 15% of the uncapped edge.
+- **Seated:** table-minimum main off-trigger, then raise *both* bets to the
+  cap when quad-Q fires: ≈ **+$8.5/hour** (vs +$11.5 uncapped). The
+  trigger-round main raise even reads to surveillance like an ordinary bet
+  spread — except it is uncorrelated with the running count, which is not
+  the pattern counter-catchers screen for. (Fine print: trigger windows lean
+  faintly low-count — corr ≈ −0.08 — so the main hand plays a hair worse
+  than −0.64% there; it shaves the margin without changing the sign.)
+
+At 75% penetration the capped numbers are +$6.4/h wonging and negative
+seated — but that game was marginal before the cap. The cap moves the answer
+between "full edge" and "~85% of it"; penetration and the paytable remain
+the kill conditions.
+
 ## The prior art, and an unplanned replication
 
 After deriving all of this, we checked it against the one published attack we
@@ -229,7 +252,9 @@ any dollar figure:
    ~75% this game is not meaningfully playable.
 3. **No CSM.** A continuous shuffler zeroes everything.
 4. **Entry policy and limits.** Wong-in mode needs mid-shoe entry; where it's
-   banned, seated mode needs main-min:side-max of roughly 1:3 or better.
+   banned, seated mode needs either main-min:side-max of roughly 1:3 or
+   better, or the raise-both-on-trigger play above. A side-≤-main cap costs
+   ~15% (wonging) and does not by itself flip any verdict.
 5. **Six decks**, and the idealizations on record: all dealt cards including
    the dealer's hole card assumed eventually visible (standard tracking
    doctrine; the effect of the exceptions is small), heads-up pace for the

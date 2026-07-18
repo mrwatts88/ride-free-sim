@@ -33,6 +33,15 @@ risk-of-ruin at the operating point ≈ σ²/(2μ)·ln(20) ≈ **$37k**. Grind-s
 ≈ additively — the strongest configuration is hi-lo main + quad-Q side
 (replaces the toll with a positive main leg; both windows rarely collide).
 
+**Side ≤ main cap (added same day; arithmetic in `data/e12_verdict.py`):**
+matched bets on a trigger round net ≈ (mean window edge − 0.64%) ≈ +3.2% of
+the matched amount, so the common cap does NOT kill the play: wong-in 1:1 =
++0.176u/100 ≈ $17.6/h (85% of uncapped); seated with min main off-trigger
+and BOTH bets raised to the cap on triggers ≈ +$8.5/h at pen 0.85 (pen 0.75
+capped: +$6.4/h wonging, seated negative). The cap moves the verdict between
+"full edge" and "~85% of it"; penetration and paytable remain the kill
+conditions.
+
 **Conditions for the verdict to hold (rack-card checklist, in order of
 sensitivity):** (1) flat 9-to-1 paytable — tiered "Xtreme" versions have
 ~13% HE and different category weights, nothing transfers; (2) penetration —
