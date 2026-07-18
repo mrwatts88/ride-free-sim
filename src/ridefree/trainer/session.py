@@ -87,6 +87,7 @@ class TrainerSession:
         self.phase = PHASE_BET
         self.round_no = 0
         self.net = 0.0
+        self.profit_sq = 0.0  # sum of per-round profit^2, for lifetime variance
         self.wagered = 0.0
         self.pending_quiz: str | None = None  # reason: shuffle | leave | random
         self._shuffle_after_quiz = False
@@ -245,6 +246,7 @@ class TrainerSession:
         for raw in state.deals:
             self._rc_committed += self.card.tag(raw)
         self.net += state.result.profit
+        self.profit_sq += state.result.profit * state.result.profit
         self.wagered += self._bet
         self._last_result_state = state
         self.phase = PHASE_BET

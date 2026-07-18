@@ -88,3 +88,11 @@ CROUCH15_RED7 = PlayCard(
 
 DEFAULT_CARD = CROUCH15_2R
 CARDS = {CROUCH15_2R.name: CROUCH15_2R, CROUCH15_RED7.name: CROUCH15_RED7}
+
+# Certified operating numbers for the locked card in weekday (never-leave)
+# mode — E18b, 12M live rounds at pen .75: best-estimate EV ≈ +$40/h ± 2 at
+# 200 r/h heads-up, per-round sigma $72.6. The stats page's winner-probability
+# math uses these; they assume card-perfect play (errors cost extra).
+CERTIFIED_EV_PER_ROUND = 0.20  # dollars
+CERTIFIED_SIGMA_PER_ROUND = 72.6  # dollars
+CERTIFIED_ROUNDS_PER_HOUR = 200

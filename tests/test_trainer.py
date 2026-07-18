@@ -416,4 +416,15 @@ def test_store_roundtrip_and_lifetime(tmp_path):
     assert stats["play_mistakes"][0]["expected"] == "hit"
     assert stats["bet_mistakes"][0] == {"expected": "$100", "got": "$15", "n": 1}
     assert stats["recent_sessions"][0]["errors"] == 2
+    # the winner-panel variance inputs: one settled round losing $15
+    assert session.profit_sq == 225.0
+    assert stats["variance_sample"] == {"rounds": 1, "net": -15.0, "profit_sq": 225.0}
+    store.close()
+
+
+def test_store_reopen_survives_profit_sq_migration(tmp_path):
+    path = str(tmp_path / "t.db")
+    Store(path).close()
+    store = Store(path)  # second open hits the duplicate-column ALTER path
+    assert store.lifetime()["variance_sample"]["rounds"] == 0
     store.close()

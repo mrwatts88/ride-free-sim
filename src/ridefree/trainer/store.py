@@ -46,6 +46,15 @@ class Store:
     def __init__(self, path: str) -> None:
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.executescript(_SCHEMA)
+        # 2026-07-18 migration: per-round profit^2 for lifetime variance
+        # (winner-probability panel). Older sessions keep 0 and are excluded
+        # from the variance estimate in lifetime().
+        try:
+            self.db.execute(
+                "ALTER TABLE sessions ADD COLUMN profit_sq REAL NOT NULL DEFAULT 0"
+            )
+        except sqlite3.OperationalError:
+            pass  # column already exists
         self.db.commit()
 
     def close(self) -> None:
@@ -82,7 +91,7 @@ class Store:
         errors = sum(e for _, e in session.tally.values())
         self.db.execute(
             "UPDATE sessions SET rounds = ?, shoes = ?, net = ?, wagered = ?,"
-            " decisions = ?, errors = ?, ended_at = ? WHERE id = ?",
+            " decisions = ?, errors = ?, profit_sq = ?, ended_at = ? WHERE id = ?",
             (
                 session.round_no,
                 session.shoe_no,
@@ -90,6 +99,7 @@ class Store:
                 session.wagered,
                 decisions,
                 errors,
+                session.profit_sq,
                 time.time() if ended else None,
                 session_id,
             ),
@@ -158,6 +168,12 @@ class Store:
                 " ORDER BY started_at DESC LIMIT 20"
             )
         ]
+        # Variance inputs from sessions that recorded profit^2 (post-migration);
+        # the winner panel falls back to the certified sigma when this is thin.
+        var_rounds, var_net, var_p2 = db.execute(
+            "SELECT COALESCE(SUM(rounds), 0), COALESCE(SUM(net), 0),"
+            " COALESCE(SUM(profit_sq), 0) FROM sessions WHERE profit_sq > 0"
+        ).fetchone()
         return {
             "sessions": totals[0],
             "rounds": totals[1],
@@ -165,6 +181,11 @@ class Store:
             "wagered": totals[3],
             "decisions": totals[4],
             "errors": totals[5],
+            "variance_sample": {
+                "rounds": var_rounds,
+                "net": var_net,
+                "profit_sq": var_p2,
+            },
             "by_kind": by_kind,
             "play_situations": play_situations,
             "play_mistakes": play_mistakes,

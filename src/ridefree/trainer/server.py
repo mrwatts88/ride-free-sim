@@ -13,7 +13,13 @@ from threading import Lock
 
 from ridefree.engine import Action
 from ridefree.rules import STANDARD_6D_H17
-from ridefree.trainer.card import CARDS, DEFAULT_CARD
+from ridefree.trainer.card import (
+    CARDS,
+    CERTIFIED_EV_PER_ROUND,
+    CERTIFIED_ROUNDS_PER_HOUR,
+    CERTIFIED_SIGMA_PER_ROUND,
+    DEFAULT_CARD,
+)
 from ridefree.trainer.session import Config, SessionError, TrainerSession
 from ridefree.trainer.store import Store
 
@@ -118,7 +124,13 @@ class TrainerApp:
         return 200, summary
 
     def stats(self) -> tuple[int, dict]:
-        return 200, self.store.lifetime()
+        data = self.store.lifetime()
+        data["certified"] = {  # E18b operating numbers (see trainer/card.py)
+            "ev_per_round": CERTIFIED_EV_PER_ROUND,
+            "sigma_per_round": CERTIFIED_SIGMA_PER_ROUND,
+            "rounds_per_hour": CERTIFIED_ROUNDS_PER_HOUR,
+        }
+        return 200, data
 
     def _finalize(self) -> None:
         if self.session is not None and self.session_id is not None:

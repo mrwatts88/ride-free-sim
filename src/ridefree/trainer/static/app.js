@@ -347,6 +347,71 @@ function renderSummary(s) {
 
 /* ---------------- stats screen ---------------- */
 
+function erf(x) { // Abramowitz-Stegun 7.1.26, |error| < 1.5e-7
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t
+    - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return sign * y;
+}
+const phi = (x) => 0.5 * (1 + erf(x / Math.SQRT2));
+
+function winnerPanel(s) {
+  const c = s.certified;
+  const n = s.rounds;
+  if (!c || n < 50)
+    return `<div class="chart-block"><h3>am I a winner?</h3>` +
+      `<p class="sub">needs at least 50 lifetime rounds — keep drilling</p></div>`;
+
+  // sigma: measured from sessions that banked profit^2, else the certified one
+  const vs = s.variance_sample || { rounds: 0 };
+  let sigma = c.sigma_per_round;
+  let sigmaSrc = `certified $${sigma.toFixed(1)}/round (E18b)`;
+  if (vs.rounds >= 2000) {
+    const vm = vs.net / vs.rounds;
+    sigma = Math.sqrt(Math.max(vs.profit_sq / vs.rounds - vm * vm, 0));
+    sigmaSrc = `measured $${sigma.toFixed(1)}/round over ${vs.rounds.toLocaleString()} rounds`;
+  }
+
+  const mean = s.net / n;
+  const expected = c.ev_per_round * n;
+  const z = (s.net - expected) / (sigma * Math.sqrt(n));
+  const pData = phi(mean * Math.sqrt(n) / sigma);
+  const luckPct = phi(z);
+  const hours = n / c.rounds_per_hour;
+
+  const luckWord = z > 0.5 ? "running hot" : z < -0.5 ? "running cold" : "on script";
+  let html = `<div class="chart-block"><h3>am I a winner?</h3>` +
+    `<p class="sub">${n.toLocaleString()} lifetime rounds ≈ ${hours.toFixed(1)}h ` +
+    `at ${c.rounds_per_hour} r/h · σ ${sigmaSrc}</p>`;
+  html += `<div class="tiles">` +
+    tile(`${(100 * pData).toFixed(0)}%`, "confidence your edge > 0 (results alone)",
+      pData >= 0.5 ? "pos" : "neg") +
+    tile(`${z >= 0 ? "+" : "−"}${Math.abs(z).toFixed(2)}σ`,
+      `luck vs certified edge — ${luckWord}`, z >= 0 ? "pos" : "neg") +
+    tile(money(expected, true), "expected net at certified edge") +
+    tile(money(s.net, true), "actual net", s.net >= 0 ? "pos" : "neg") +
+    `</div>`;
+  html += `<p class="sub">luck percentile ${(100 * luckPct).toFixed(0)}% — ` +
+    `${(100 * (1 - luckPct)).toFixed(0)}% of card-perfect players would be ` +
+    `ahead of you on pure variance</p>`;
+
+  html += `<table><tr><th>card-perfect play for…</th>`;
+  const horizons = [100, 250, 500, 1000];
+  for (const h of horizons) html += `<th class="num">${h}h</th>`;
+  html += `</tr><tr><td>chance you're ahead</td>`;
+  for (const h of horizons) {
+    const p = phi(c.ev_per_round * Math.sqrt(h * c.rounds_per_hour) / sigma);
+    html += `<td class="num">${(100 * p).toFixed(0)}%</td>`;
+  }
+  html += `</tr></table>`;
+  html += `<p class="sub">forward numbers assume the certified card played ` +
+    `perfectly ($${(c.ev_per_round * c.rounds_per_hour).toFixed(0)}/h) — ` +
+    `your error rate above is the discount</p></div>`;
+  return html;
+}
+
 async function showStats() {
   const s = await api("/api/stats");
   if (!s) return;
@@ -358,6 +423,8 @@ async function showStats() {
     tile(s.decisions, "decisions") + tile(rate, "error rate") +
     tile(money(s.net, true), "net", s.net >= 0 ? "pos" : "neg") +
     tile(money(s.wagered), "wagered") + `</div>`;
+
+  html += winnerPanel(s);
 
   html += `<div class="chart-block"><h3>accuracy by decision type</h3>`;
   for (const row of s.by_kind) {
