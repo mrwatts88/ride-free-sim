@@ -19,7 +19,7 @@ from ridefree.cards import Shoe, shoe_seeds
 from ridefree.counting import CompositionTracker, RawCompositionTracker
 from ridefree.engine import play_round
 from ridefree.rules import Rules
-from ridefree.side_bets import ev_21p3, ev_fracs_21p3
+from ridefree.side_bets import _c3, _ev_from, ev_21p3, ev_fracs_21p3
 from ridefree.simulator import _needs_reshuffle
 
 
@@ -760,6 +760,224 @@ def format_sb_decomposition(res: SbDecompResult) -> str:
             f"  {k:6.1f} {cnt:>10,d} {100 * b_sum / cnt:+7.3f}% "
             f"{100 * math.sqrt(s_sq / cnt):6.3f}% {100 * math.sqrt(r_sq / cnt):6.3f}%"
         )
+    return "\n".join(lines)
+
+
+# --- E11b: human-executable 21+3 trackers vs the E10/E11a bounds ------------
+
+
+def sb_ev_suit_config(
+    suit_totals, paytable: tuple[tuple[str, float], ...]
+) -> float:
+    """Exact B+S for a shoe with the given remaining suit totals and ranks
+    uniform within each suit (E11a's suit-smoothed composition, in closed
+    form from the four totals — what a 4-suit counter can know)."""
+    n = sum(suit_totals)
+    n13 = n / 13.0
+    trips = 13.0 * _c3(n13)
+    straights_all = 12.0 * n13 * n13 * n13
+    sf = 12.0 * sum((ns / 13.0) ** 3 for ns in suit_totals)
+    suited_trips = 13.0 * sum(_c3(ns / 13.0) for ns in suit_totals)
+    flush = sum(_c3(ns) for ns in suit_totals) - sf - suited_trips
+    combos = {
+        "straight_flush": sf,
+        "three_of_a_kind": trips,
+        "straight": straights_all - sf,
+        "flush": flush,
+    }
+    return _ev_from(combos, _c3(n), paytable)
+
+
+def sb_threshold_curves(
+    paytable: tuple[tuple[str, float], ...], max_n: int = 312, min_n: int = 16
+) -> tuple[dict[int, float], dict[int, float]]:
+    """Analytic wong-in index curves — NO simulation data involved.
+
+    T1[N]: minimum excess x of ONE rich suit (others equal) making the
+    suit-family EV positive at N cards remaining; T2[N]: same for TWO equally
+    rich suits (each +x). Continuous (bisection): the human's excesses vs N/4
+    are fractional whenever N % 4 != 0, so rounding the curve up would give
+    away real bets. Absent key = unreachable at that depth."""
+
+    def ev_at(n: float, x: float, rich: int) -> float:
+        base = n / 4.0
+        totals = [base - rich * x / (4.0 - rich)] * 4
+        for i in range(rich):
+            totals[i] = base + x
+        return sb_ev_suit_config(totals, paytable)
+
+    t1: dict[int, float] = {}
+    t2: dict[int, float] = {}
+    for n in range(min_n, max_n + 1):
+        for table, rich in ((t1, 1), (t2, 2)):
+            # feasible x keeps every suit total in [0, n]
+            hi_cap = min(3.0 * n / 4.0 / rich, n / 4.0 * (4.0 - rich) / rich)
+            lo, hi = 0.0, None
+            x = 1.0
+            while x <= hi_cap:
+                if ev_at(n, x, rich) > 0:
+                    hi = x
+                    break
+                lo = x
+                x += 1.0
+            if hi is None:
+                continue
+            for _ in range(30):
+                mid = (lo + hi) / 2
+                if ev_at(n, mid, rich) > 0:
+                    hi = mid
+                else:
+                    lo = mid
+            table[n] = hi
+    return t1, t2
+
+
+def sb_rank_tags(
+    paytable: tuple[tuple[str, float], ...], n_ref: int = 156
+) -> dict[int, float]:
+    """Static per-rank tags: the exact-EV gradient wrt each rank's remaining
+    count (suits kept balanced), central-differenced at a balanced mid-shoe.
+    The best LINEAR rank count for the side bet; expected to be weak (the
+    rank term is mostly quadratic) — measured, not assumed."""
+    tags = {}
+    types = [(r, s) for r in range(1, 14) for s in range(4)]
+    base = n_ref / 52.0
+    for rank in range(1, 14):
+        up = {t: base + (0.25 if t[0] == rank else 0.0) for t in types}
+        dn = {t: base - (0.25 if t[0] == rank else 0.0) for t in types}
+        tags[rank] = (
+            ev_fracs_21p3(up, paytable) - ev_fracs_21p3(dn, paytable)
+        ) / 2.0
+    return tags
+
+
+@dataclass
+class SbTrackerResult:
+    rounds: int = 0
+    penetration: float = 0.0
+    rules: dict = field(default_factory=dict)  # name -> _SelStat
+    t1: dict = field(default_factory=dict)
+    t2: dict = field(default_factory=dict)
+
+
+def run_sb_trackers(
+    rules: Rules,
+    strategy,
+    *,
+    seed: int,
+    rounds: int,
+    paytable: tuple[tuple[str, float], ...],
+) -> SbTrackerResult:
+    """E11b: score human-executable selection rules in TRUE exact EV.
+
+    All rules' parameters (threshold curves, rank tags) are derived
+    analytically above — nothing is fit to this run's data."""
+    t1, t2 = sb_threshold_curves(paytable)
+    tags = sb_rank_tags(paytable)
+    res = SbTrackerResult(penetration=rules.penetration, t1=t1, t2=t2)
+    names = (
+        "exact", "additive_exact", "suit4_exact", "any_suit_T1", "pair_rule",
+        "quad_Q", "spades_only_T1", "suit4_plus_linrank",
+    )
+    res.rules = {name: _SelStat() for name in names}
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    raw = RawCompositionTracker(rules.decks)
+    rounds_since = 0
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            raw.new_shoe()
+            rounds_since = 0
+        counts = raw.counts
+        n_rank = [0.0] * 14
+        suit_totals = [0.0, 0.0, 0.0, 0.0]
+        for (rank, suit), c in counts.items():
+            n_rank[rank] += c
+            suit_totals[suit] += c
+        n = raw.cards_remaining
+        f = ev_21p3(counts, paytable)
+        bs = sb_ev_suit_config(suit_totals, paytable)
+        lin = sum(tags[r] * (n_rank[r] - n / 13.0) for r in range(1, 14))
+        # additive uses the exact rank term R = (B+R) - B; with suits balanced
+        # within rank that's ev_fracs of the rank-smoothed comp minus baseline.
+        rank_smooth = {t: n_rank[t[0]] / 4.0 for t in _TYPES_52}
+        balanced = {t: n / 52.0 for t in _TYPES_52}
+        ev_bal = ev_fracs_21p3(balanced, paytable)
+        additive = bs + (ev_fracs_21p3(rank_smooth, paytable) - ev_bal)
+        excesses = sorted((ns - n / 4.0 for ns in suit_totals), reverse=True)
+        thr1 = t1.get(n)
+        thr2 = t2.get(n)
+        start = shoe.snapshot()
+        play_round(rules, shoe, strategy, bet=1.0)
+        raw.observe(shoe.raw_slice(start, shoe.snapshot()))
+        rounds_since += 1
+
+        res.rounds += 1
+        exact_bet = f > 0
+        decisions = (
+            ("exact", exact_bet),
+            ("additive_exact", additive > 0),
+            ("suit4_exact", bs > 0),
+            ("any_suit_T1", thr1 is not None and excesses[0] >= thr1),
+            ("pair_rule",
+             (thr1 is not None and excesses[0] >= thr1)
+             or (thr2 is not None and excesses[1] >= thr2)),
+            # S's quadratic form is symmetric in the suits: threshold on
+            # Q = Σ excess², calibrated from the single-rich boundary where
+            # Q(x) = x² · 4/3 — still just four counts plus arithmetic.
+            ("quad_Q",
+             thr1 is not None
+             and sum(x * x for x in excesses) >= thr1 * thr1 * 4.0 / 3.0),
+            ("spades_only_T1",
+             thr1 is not None and (suit_totals[0] - n / 4.0) >= thr1),
+            ("suit4_plus_linrank", bs + lin > 0),
+        )
+        for name, bet in decisions:
+            if bet:
+                stat = res.rules[name]
+                stat.selected += 1
+                stat.ev_sum += f
+                if exact_bet:
+                    stat.true_pos += 1
+    return res
+
+
+def format_sb_trackers(res: SbTrackerResult) -> str:
+    n = res.rounds
+    exact = res.rules["exact"]
+    ceiling = exact.ev_sum / n * 100 if n else 0.0
+    lines = [
+        f"rounds: {n:,}   penetration: {res.penetration:.2f}",
+        "",
+        "selection rules (all parameters analytic, none fit to this run; "
+        "value in TRUE exact ev):",
+        f"  {'rule':>18s} {'P(bet)':>8s} {'mean ev':>9s} "
+        f"{'u/100':>8s} {'capture':>8s} {'precision':>9s} {'recall':>7s}",
+    ]
+    for name, st in res.rules.items():
+        if st.selected == 0:
+            lines.append(f"  {name:>18s}       —")
+            continue
+        per100 = st.ev_sum / n * 100
+        lines.append(
+            f"  {name:>18s} {100 * st.selected / n:7.3f}% "
+            f"{100 * st.ev_sum / st.selected:+8.3f}% {per100:+7.3f}u "
+            f"{100 * per100 / ceiling:7.2f}% "
+            f"{100 * st.true_pos / st.selected:8.2f}% "
+            f"{100 * st.true_pos / exact.selected:6.2f}%"
+        )
+    lines.append("")
+    lines.append("human index curve (analytic): min excess of richest suit (T1) / "
+                 "each of two rich suits (T2) to bet:")
+    lines.append(f"  {'cards left':>10s} {'decks':>6s} {'T1':>6s} {'T2':>6s}")
+    for cards in (26, 39, 52, 78, 104, 130, 156, 182, 208):
+        d = cards / 52
+        t1 = res.t1.get(cards)
+        t2 = res.t2.get(cards)
+        t1s = f"{t1:.1f}" if t1 is not None else "—"
+        t2s = f"{t2:.1f}" if t2 is not None else "—"
+        lines.append(f"  {cards:>10d} {d:6.2f} {t1s:>6s} {t2s:>6s}")
     return "\n".join(lines)
 
 

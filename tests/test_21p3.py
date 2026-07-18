@@ -214,6 +214,50 @@ def test_decomposition_identities():
     assert abs(f - (-162_360 / 5_013_320)) < 1e-12 and abs(f - b) < 1e-12
 
 
+# --- E11b analytic pieces -----------------------------------------------------
+
+def test_suit_config_matches_general_calculator():
+    from ridefree.experiments import sb_ev_suit_config
+    from ridefree.side_bets import ev_fracs_21p3
+
+    for totals in ([78, 78, 78, 78], [90, 74, 70, 78], [40, 30, 20, 10],
+                   [26, 13, 6.5, 6.5]):
+        smooth = {(r, s): totals[s] / 13.0
+                  for r in range(1, 14) for s in range(4)}
+        a = sb_ev_suit_config(totals, PAYTABLE_21P3_9TO1)
+        b = ev_fracs_21p3(smooth, PAYTABLE_21P3_9TO1)
+        assert abs(a - b) < 1e-12, totals
+
+
+def test_threshold_curves_bracket_the_zero():
+    from ridefree.experiments import sb_ev_suit_config, sb_threshold_curves
+
+    t1, t2 = sb_threshold_curves(PAYTABLE_21P3_9TO1, max_n=160, min_n=40)
+    for n in (52, 104, 156):
+        x = t1[n]
+        base = n / 4.0
+        for delta, positive in ((-0.05, False), (+0.05, True)):
+            totals = [base - (x + delta) / 3.0] * 4
+            totals[0] = base + (x + delta)
+            ev = sb_ev_suit_config(totals, PAYTABLE_21P3_9TO1)
+            assert (ev > 0) == positive, (n, delta, ev)
+        # two rich suits need less individual excess than one
+        assert t2[n] <= t1[n]
+
+
+def test_rank_tags_shape():
+    from ridefree.experiments import sb_rank_tags
+
+    tags = sb_rank_tags(PAYTABLE_21P3_9TO1)
+    # middle ranks sit in 3 straight sequences, A/2/Q/K in 2 — removing a
+    # middle rank should hurt more, i.e. holding it should be worth more.
+    mid = sum(tags[r] for r in range(3, 13)) / 10
+    edge = (tags[1] + tags[2] + tags[13]) / 3
+    assert mid > edge
+    # tags are a gradient around balance: roughly centered
+    assert abs(sum(tags.values())) < abs(mid) * 13
+
+
 # --- engine settlement -------------------------------------------------------
 
 class FakeRawShoe:

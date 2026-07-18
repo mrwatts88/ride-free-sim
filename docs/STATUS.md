@@ -146,8 +146,8 @@ sb21p3_profit / sb21p3_category`; Metrics tracks per-category counts.
    top-3 marginal; empirical shoe-level σ) — every category within ±1.8σ.
 
 Seeds consumed: 6.4e9 block (gate + tests), 6500000001, 6600000001–2 (M8b);
-6700000001, 6800000001 (E10); 6900000001, 7000000001 (E11a).
-Next unused block: **7.1e9+**.
+6700000001, 6800000001 (E10); 6900000001, 7000000001 (E11a); 7100000001,
+7200000001 (E11b). Next unused block: **7.3e9+**.
 
 ## M8c IN PROGRESS: E10 done — 21+3 IS beatable at the ceiling
 
@@ -171,27 +171,33 @@ thresholds required. Four per-suit counts compute B+S EXACTLY, so the
 suit-only row is that family's ceiling; the last ~27% needs rank
 concentration (mostly the straight term).
 
-## NEXT STEP (start here): E11b — human-executable trackers
+**E11b DONE (2026-07-17, EXPERIMENTS.md):** human trackers scored with fully
+analytic parameters (`cli sbtrack`). **Winner: quad-Q — four dealt-per-suit
+counts, bet when Σ(remaining excess)² clears one memorized depth curve —
+captures 74% (pen .75, +0.086u/100) / 78% (pen .85, +0.211u/100) of the
+exact ceiling, equal to the exact 4-suit-family bound** (shape approximation
+free). Adding the best static linear rank count (13-tag second count) → 81%;
+the last ~19% is the quadratic rank term, computer-only. Intuitive
+max-excess rules capture only ~half the suit value (two-moderate-suit states
+matter). Index curve: T1 = 4.0 / 5.9 / 8.7 / 11.2 / 13.5 excess cards at
+0.5 / 1 / 2 / 3 / 4 decks left; T_Q = 4/3·T1².
 
-Score candidate trackers against the E10/E11a bounds (same scan harness;
-threshold table per tracker: P(bet), mean true EV, capture %):
+## NEXT STEP (start here): E12 — betting verdict with the main-bet toll
 
-1. **4-suit counts, exact table** (upper bound of family = suit-only:
-   73–78%): four running counts + cards-seen; bet iff B(N)+S(suit totals) > 0
-   via per-depth lookup. Also: how coarse can the lookup get (max-suit share
-   bins) before capture drops?
-2. **Simplifications downward:** 2-suit and max-suit-only variants (can a
-   human track fewer than 4 counts?); imbalance-from-pairs shortcuts.
-3. **Rank add-on upward:** cheap R proxies (e.g. tens-vs-middle density or a
-   coarse Σn² proxy) — is any human-trackable statistic worth the last 27%?
-4. Threshold sweep per tracker (the >0 cut is not necessarily optimal for a
-   proxy that can't see R).
-
-Then **E12 — betting verdict with the main-bet toll** (the E4c discipline):
-side wong-in at table-legal stake ratios vs the −0.64%/round blackjack toll
-(breakeven side:main ≈ 2.3:1 at pen 0.85 on bet-selection alone); combined
-with hi-lo main play (corr −0.08 ⇒ stacks); bankroll/variance (σ ≈ 2.96 per
-staked round); camouflage/practicality notes.
+The E4c discipline, now with measured inputs:
+1. Per-100-rounds ledger for the systems {exact, quad-Q, quad-Q+linrank} ×
+   pen {0.75, 0.85}: side value (E11b) minus the blackjack toll at the
+   required main bet (basic strategy −0.64%/round h17; also compute with
+   hi-lo main play — corr(sb_ev, hilo) ≈ −0.08, so terms stack ≈ additively).
+   Table-legal stake ratios: breakeven side:main and value at 1:1, 2:1, 3:1,
+   and side-capped-at-$X scenarios.
+2. Variance/bankroll: σ ≈ 2.96/staked round on the side leg; combined-leg
+   variance and N0 for the full system.
+3. Practicality notes: bet frequency vs depth (all value is late-shoe —
+   pattern visible to surveillance), hole-card visibility assumption,
+   rack-card confirmation list (paytable, decks, penetration, side-bet max).
+4. Output: the final M8 verdict paragraph — is 21+3 at Potawatomi worth
+   playing, for whom, at what stakes?
 
 Parked/refuted (ChatGPT list disposition): rank×suit interaction models
 **refuted by E11a** (<0.2% of variance); rank-adjacency beyond the straight

@@ -2,6 +2,44 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E11b — Human trackers scored: quad-Q (4 suit counts) captures 74–78% of the ceiling
+
+**Date:** 2026-07-17 · **Commands:**
+`uv run python -m ridefree.cli sbtrack --rounds 2000000 --seed 7100000001` ·
+`uv run python -m ridefree.cli sbtrack --rounds 2000000 --seed 7200000001
+--penetration 0.85`.
+
+Every rule's parameters are ANALYTIC (threshold curves by bisection on the
+closed-form suit-config EV, rank tags by fractional-removal gradient) —
+nothing fit to simulation data (the in-sample lesson from the audit). Scored
+in TRUE exact EV against the exact rule. Capture (of the E10 ceiling):
+
+| rule | needs | pen 0.75 | pen 0.85 |
+|---|---|---|---|
+| exact (ceiling) | computer | 100% (+0.116u/100) | 100% (+0.269u/100) |
+| additive exact (no interaction) | computer | 99.8% | 99.8% |
+| suit4 exact (B+S > 0) | computer-ish | 73.3% | 77.3% |
+| **quad-Q: Σ excess² ≥ T_Q(N)** | **4 counts + arithmetic** | **74.2% (+0.086u)** | **78.3% (+0.211u)** |
+| suit4 + linear rank count | + a 13-tag count | 80.3% | 81.1% |
+| any-suit max-excess ≥ T1(N) | 4 counts | 38.7% | 47.3% |
+| … + two-suit pair rule (T2) | 4 counts | 44.4% | 53.7% |
+| spades-only specialist | 1 count | 10.1% | 11.2% |
+
+- **The human system is quad-Q**: track the four dealt-per-suit counts;
+  remaining excess per suit vs N/4; bet when Σ excess² clears one memorized
+  depth curve (T_Q(N) = 4/3·T1(N)², from the analytic single-rich boundary).
+  It EQUALS the exact 4-suit family bound (74 vs 73, 78 vs 77 — the shape
+  approximation costs nothing; slight dilution near the EV≈0 boundary is
+  free). Cross-validates E11a's suit-only bound on independent seeds.
+- Max-excess-style rules (the intuitive "one rich suit" heuristic) leave
+  ~half the suit value on the table — the two-moderate-suits states matter.
+- The best static linear rank count adds ~6pp (80–81% total): the only
+  human-shaped path past quad-Q, at the cost of a second (13-tag) running
+  count. The last ~19% needs the full quadratic rank term — computer-only.
+- Analytic index curve (memorize ~5 points): richest-suit excess to bet
+  T1 = 4.0 (26 cards left) / 5.9 (1 deck) / 8.7 (2) / 11.2 (3) / 13.5 (4);
+  T_Q = 4/3·T1².
+
 ## E11a — What carries the 21+3 signal: suit 71%, rank 19%, interaction ~0.2% (dead)
 
 **Date:** 2026-07-17 · **Commands:**

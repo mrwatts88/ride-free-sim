@@ -247,6 +247,21 @@ def _sbdecomp(args: argparse.Namespace) -> None:
     print(format_sb_decomposition(result))
 
 
+def _sbtrack(args: argparse.Namespace) -> None:
+    from ridefree.experiments import format_sb_trackers, run_sb_trackers
+
+    name, rules, _, _ = VARIANTS[args.rules]
+    if args.penetration is not None:
+        rules = dataclasses.replace(rules, penetration=args.penetration)
+    print(f"ruleset: {name}   penetration: {rules.penetration:.2f}")
+    print("E11b: human tracker rules vs the exact 21+3 ceiling")
+    result = run_sb_trackers(
+        rules, _strategy_for(rules), seed=args.seed, rounds=args.rounds,
+        paytable=PAYTABLE_21P3_9TO1,
+    )
+    print(format_sb_trackers(result))
+
+
 def _combine(args: argparse.Namespace) -> None:
     from ridefree.experiments import format_grid, load_grid_json, merge_grids
 
@@ -370,6 +385,15 @@ def main() -> None:
     sd.add_argument("--threshold", type=float, default=0.0,
                     help="wong-in threshold the selection rules are scored at")
     sd.set_defaults(func=_sbdecomp)
+
+    st = sub.add_parser(
+        "sbtrack", help="21+3 human tracker rules scored vs the exact ceiling"
+    )
+    st.add_argument("--rules", choices=VARIANTS, default="h17")
+    st.add_argument("--seed", type=int, default=1)
+    st.add_argument("--rounds", type=int, default=2_000_000)
+    st.add_argument("--penetration", type=float, default=None)
+    st.set_defaults(func=_sbtrack)
 
     c = sub.add_parser("combine", help="pool grid JSON dumps and report")
     c.add_argument("paths", nargs="+", help="grid JSON files to merge")
