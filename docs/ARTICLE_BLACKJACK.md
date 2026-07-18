@@ -178,6 +178,20 @@ and ramp engineering combined. The pre-play recon list is therefore short:
 cut depth, H17/S17 confirm, and whether the room deals $10–$200 heads-up for
 hours on a weekday.
 
+### Post-recon addendum (same day)
+
+Floor recon (a Saturday) found four **$15–$1,000** tables at pen ≈ .75 —
+one cut a full deck deeper (~.83) — and no $10 games that day. The card
+adapts without redesign: keep the SAME $100/$150/$200 jump curve on a $15
+floor ("crouch15" in the ledger) — the floor toll is +$3.50/h, the jump
+bankroll is unchanged. Priced from the banked bins: **+$63.95/h on $27.7k
+at pen .75; +$88.97/h on $21.8k at pen .80** (hi-lo; Red 7 ≈ ×0.935). The
+$1,000 max is the growth path — double the jumps at a ~$55k roll. The
+deep-cut table is the prize seat (and the condition that would wake a 21+3
+overlay, worth ~$17–42/h more depending on cut — E12 numbers, side-max and
+cognitive load pending). Last big unknown: weekday pace — every $/h here
+assumes ~200 rounds/h heads-up; a crowded table pays a third.
+
 ## Where it sits in the portfolio
 
 | play | $/h | bankroll | N0 | camouflage |
