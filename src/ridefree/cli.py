@@ -356,6 +356,57 @@ def _curvecombine(args: argparse.Namespace) -> None:
     print(format_tc_curve(merged, min_rounds=args.min_rounds))
 
 
+def _countcurve(args: argparse.Namespace) -> None:
+    import json
+
+    from ridefree.counting import STANDARD_H17_EOR
+    from ridefree.experiments import (
+        count_curves_to_json,
+        format_count_curves,
+        run_count_curves,
+        search_unbalanced_level1,
+    )
+
+    name, rules, _, _ = VARIANTS[args.rules]
+    rules = _apply_shoe_overrides(rules, args)
+    if args.penetration is not None:
+        rules = dataclasses.replace(rules, penetration=args.penetration)
+    custom = None
+    if args.custom:
+        best = search_unbalanced_level1(STANDARD_H17_EOR, top=3)
+        print("analytic search — best level-1 unbalanced counts "
+              "(imbalance +2/deck, pivot ~TC+2), by betting correlation:")
+        for bc, base, bump in best:
+            tags = dict(base)
+            print(f"  BC {bc:.4f}   tags {tags}   half-bump on rank {bump} "
+                  f"(two red suits +1)")
+        bc, base, bump = best[0]
+        custom = (dict(base), bump)
+        print(f"banking the winner as custom_rc (BC {bc:.4f})\n")
+    res = run_count_curves(
+        rules, args.arm, seed=args.seed, rounds=args.rounds, rules_name=name,
+        custom=custom,
+    )
+    print(format_count_curves(res, min_rounds=args.min_rounds))
+    if args.json:
+        with open(args.json, "w") as f:
+            json.dump(count_curves_to_json(res, args.seed, custom), f)
+        print(f"\ncount-curves JSON written to {args.json}")
+
+
+def _countcombine(args: argparse.Namespace) -> None:
+    from ridefree.experiments import (
+        format_count_curves,
+        load_count_curves_json,
+        merge_count_curves,
+    )
+
+    curves = [load_count_curves_json(p) for p in args.paths]
+    merged = merge_count_curves(curves)
+    print(f"merged {len(curves)} count-curve dump(s)")
+    print(format_count_curves(merged, min_rounds=args.min_rounds))
+
+
 def _ramp(args: argparse.Namespace) -> None:
     from ridefree.experiments import format_ramp, parse_ramp, run_ramp
 
@@ -665,6 +716,29 @@ def main() -> None:
     cc.add_argument("paths", nargs="+", help="curve JSON files to merge")
     cc.add_argument("--min-rounds", type=int, default=1_000)
     cc.set_defaults(func=_curvecombine)
+
+    kc = sub.add_parser(
+        "countcurve", help="EV bins for unbalanced RUNNING counts (red7/KO/"
+                           "half-7/custom) in one pass (E17)"
+    )
+    kc.add_argument("--rules", choices=VARIANTS, default="h17")
+    kc.add_argument("--arm", choices=("basic", "ins", "full"), default="ins")
+    kc.add_argument("--shoe-mode", choices=SHOE_END_MODES, default=None)
+    kc.add_argument("--rounds-per-shoe", type=int, default=None)
+    kc.add_argument("--penetration", type=float, default=None)
+    kc.add_argument("--seed", type=int, default=1)
+    kc.add_argument("--rounds", type=int, default=1_000_000)
+    kc.add_argument("--min-rounds", type=int, default=5_000)
+    kc.add_argument("--custom", action="store_true",
+                    help="run the analytic unbalanced-count search and bank "
+                         "the best candidate as custom_rc")
+    kc.add_argument("--json", default=None)
+    kc.set_defaults(func=_countcurve)
+
+    kcc = sub.add_parser("countcombine", help="pool count-curve JSON dumps")
+    kcc.add_argument("paths", nargs="+")
+    kcc.add_argument("--min-rounds", type=int, default=5_000)
+    kcc.set_defaults(func=_countcombine)
 
     rp = sub.add_parser(
         "ramp", help="simulate a bet ramp live: bet(tc) each round, real spread "

@@ -47,6 +47,18 @@ at Potawatomi): low-limit tables draw the least surveillance attention.
 Recon pending: cut depth (the dominant lever), H17/S17, heads-up dealing.
 **Write-up: `docs/ARTICLE_BLACKJACK.md`** (a summary piece by design).
 
+**E17 DONE (same day): the no-division Red 7 card keeps 93.5%.** New
+`cli countcurve` harness (multi-signal RC bins, one pass, raw-suit
+tracking) + analytic count search (`search_unbalanced_level1`): Red 7
+itself is optimal in the level-1 unbalanced family (BC 0.9755 vs our
+EORs) — no better custom exists there. Recommended card: IRC −12; $100
+at RC ≥ 0 (the pivot — depth-exact TC≥+2 test), $150 at ≥ +2 (insure from
+here), $200 at ≥ +5, leave at RC ≤ −14: **+$59.07/h, N0 307h, $27.2k,
+corr 0.81 = 93.5% of the TC card, no division ever.** KO retains 88% but
+dominated (bank/corr/no-leave). Ledger `data/e17_unbalanced.py`; E17 in
+EXPERIMENTS.md; the Red 7 card is in ARTICLE_BLACKJACK.md. 225 tests.
+Seeds 13.4e9–14.1e9 consumed. **Next unused block: 14.2e9+.**
+
 New capability, gate-passed: per-TC curves with variance (`cli curve` /
 `curvecombine`), per-TC paired deviation values (`cli deviations --json`),
 and the repo's first LIVE betting simulator (`cli ramp`, bet(tc) ramps as
@@ -54,7 +66,7 @@ config — closes old STATUS item 4's "hi-lo betting simulator" gap). Ledger
 arithmetic verified against three live 10M-round ramp runs (worst |z| =
 2.0σ; avg bet / sd / corr match to 3 decimals); E4c's +0.23% and the
 "~+1.1% next door" claim both reproduced independently. 222 tests green.
-Seeds consumed: 8.9e9–13.3e9 (step 1e8). **Next unused block: 13.4e9+.**
+Seeds consumed: 8.9e9–13.3e9 (step 1e8; E17 continued through 14.1e9).
 
 ## ⚠ Deep-dive checkpoint (2026-07-17, late session) — read before trusting the numbers below
 
@@ -367,8 +379,8 @@ Seeds consumed (M9c): 7300000007 (test), 8300000001 / 8400000001 (pen .966),
 8500000001 (pen .95), 8600000001 (E14b broken-row run, discarded),
 8700000001 (E14b verification), 8800000001 (E15 order bounds — quadratic
 buys ~4pp on d7, Panda tail high-order; the two-count card is the human
-frontier). E16 consumed 8.9e9–13.3e9 (see the E16 section above).
-**Next unused block: 13.4e9+.**
+frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
+**Next unused block: 14.2e9+.**
 
 ## NEXT STEPS (M8 research complete; field + polish items remain)
 

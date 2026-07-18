@@ -132,6 +132,34 @@ Runner-up card, for reference ($15–$500 table, 1-16 + exits): $15 below
 +1.5, then $45 / $120 / $180 / $240 at TC rounding to +1 / +2 / +3 / +4+,
 leave at TC ≤ −0.5 — +$83.62/h on $31.4k, corr 0.81.
 
+### The no-division variant: the Red 7 card (E17)
+
+For lower cognitive load the whole play runs on a raw running count — no
+true count, no deck estimation, no division, ever. Count **Red 7**: hi-lo
+tags plus **red sevens +1** (black sevens stay 0). The +2-per-deck imbalance
+puts the count's *pivot* exactly on the crouch's jump threshold, so the one
+decision carrying the money is depth-exact with a fixed number. E17 priced
+it on 48M rounds against the hi-lo card on the same card stream:
+
+| running count (start at **−12** each shoe) | bet / action |
+|---|---|
+| RC ≤ −14 | **leave** — fresh shoe elsewhere |
+| −14 < RC < 0 | **$10** |
+| RC ≥ 0 | **$100** |
+| RC ≥ +2 | **$150** — and take insurance from here up |
+| RC ≥ +5 | **$200** |
+
+**+$59.07/h, N0 307h, $27.2k bankroll — 93.5% of the hi-lo card's hourly.**
+About $4/h is the entire price of never dividing. Two supporting facts from
+the same experiment: an exhaustive analytic search over the level-1
+unbalanced family (our own EOR table, betting-correlation objective)
+returns Red 7 *itself* as the optimum — Snyder's 1983 count is the ceiling
+of its class, so there is no better custom to chase — and KO, the popular
+alternative, retains 88% but with a higher bankroll, worse correlation, and
+no workable leave threshold (its pivot sits at TC +4, off the money
+decision). Threshold tolerance is wide (±1 point moves retention only a few
+points); nothing about the card is knife-edge.
+
 Runner-up: $15–$500 table, 1-16 spread + exits — +$83.62/h on $31.4k at pen
 .75 — more money, but corr 0.81, twice the walking, and a rarer table. The
 crouch matches its N0 (255h vs 251h) and its bankroll efficiency ($2.6/h per

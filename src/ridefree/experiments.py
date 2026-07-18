@@ -2043,6 +2043,256 @@ def run_ramp(
     return res
 
 
+# --- E17: unbalanced running counts for the crouch (no-division play) --------
+#
+# An unbalanced count (per-deck tag sum s != 0) read as a RAW running count
+# encodes depth implicitly: with the initial running count pivot-zeroed at
+# IRC = -s*decks, RC ~= decks_remaining * (TC - s), so RC >= 0 tests TC >= s
+# EXACTLY at every depth — no division, no deck estimation. Off-pivot
+# thresholds blur with depth; banking EV per RC bin prices that blur honestly
+# (a fixed-RC play IS what a human executes). Red 7 (red sevens +1, s=+2)
+# puts the pivot exactly on the crouch's jump threshold.
+
+# Half-bump devices: rank -> +1 on two of the four suits (the red-7 trick
+# generalized). Suits {0,1} are "red" by convention (arbitrary, symmetric).
+_RED_SUITS = (0, 1)
+
+TEN_RANK = 10
+
+
+def unbalanced_bc(base_tags: dict[int, float], eors: dict[int, float]) -> float:
+    """Betting correlation of a (possibly fractional) tag vector with an EOR
+    vector: card-frequency-weighted Pearson correlation over the 52 cards."""
+    w = {r: (16 if r == TEN_RANK else 4) for r in range(1, 11)}
+    n = 52.0
+    mt = sum(w[r] * base_tags[r] for r in w) / n
+    me = sum(w[r] * eors[r] for r in w) / n
+    vt = sum(w[r] * (base_tags[r] - mt) ** 2 for r in w)
+    ve = sum(w[r] * (eors[r] - me) ** 2 for r in w)
+    cov = sum(w[r] * (base_tags[r] - mt) * (eors[r] - me) for r in w)
+    return cov / math.sqrt(vt * ve) if vt > 0 and ve > 0 else 0.0
+
+
+def search_unbalanced_level1(eors: dict[int, float], top: int = 3):
+    """Best level-1 unbalanced counts with per-deck imbalance +2 (pivot at
+    TC ~ +2): integer base tags in {-1,0,+1} for A..9, ten fixed at -1, plus
+    ONE half-rank bump (+1 on two suits of one rank — the red-7 device).
+    Imbalance = 4*sum(base A..9) - 16 + 2*b = +2 with b=+1 forces
+    sum(base A..9) = 4. Ranked by betting correlation vs `eors`. Analytic —
+    nothing fit to simulation data."""
+    import itertools
+
+    results = []
+    ranks = list(range(1, 10))
+    for tags in itertools.product((-1, 0, 1), repeat=9):
+        if sum(tags) != 4:
+            continue
+        base = dict(zip(ranks, tags))
+        base[TEN_RANK] = -1
+        for bump in ranks:  # half-bump rank (raw suits exist only for 1..9)
+            eff = dict(base)
+            eff[bump] = eff[bump] + 0.5  # two of four suits at +1
+            bc = unbalanced_bc(eff, eors)
+            results.append((bc, tuple(sorted(base.items())), bump))
+    results.sort(reverse=True)
+    return results[:top]
+
+
+@dataclass
+class CountCurvesResult:
+    rules_name: str
+    arm: str
+    penetration: float
+    rounds: int = 0
+    total_profit: float = 0.0
+    # signal name -> {bin -> TcBin}
+    by_signal: dict[str, dict] = field(default_factory=dict)
+
+
+def _clamp_rc(value: float) -> int:
+    return max(-40, min(40, int(round(value))))
+
+
+def run_count_curves(
+    rules: Rules,
+    arm: str,
+    *,
+    seed: int,
+    rounds: int,
+    rules_name: str = "",
+    custom: tuple[dict[int, int], int] | None = None,
+) -> CountCurvesResult:
+    """One flat-bet pass banking per-round profit into bins of SEVERAL count
+    signals at once (same card stream — directly comparable):
+
+      hilo_tc   — rounded hi-lo true count (E16 reference / cross-check)
+      red7_rc   — hi-lo + red sevens +1, pivot-zeroed IRC (s=+2, pivot TC+2)
+      ko_rc     — hi-lo + all sevens +1, pivot-zeroed IRC (s=+4, pivot TC+4)
+      half7_rc  — hi-lo + sevens at +0.5: the deterministic ideal red-7
+                  (what red-7 approximates with color noise)
+      custom_rc — optional (base_tags, bump_rank) from the analytic search
+
+    Insurance attribution rides on every signal's bins (TcBin.add)."""
+    strategy = _arm_strategy(rules, arm)
+    on_round = getattr(strategy, "observe_round", None)
+    on_shuffle = getattr(strategy, "new_shoe", None)
+    res = CountCurvesResult(
+        rules_name=rules_name, arm=arm, penetration=rules.penetration
+    )
+    names = ["hilo_tc", "red7_rc", "ko_rc", "half7_rc"]
+    if custom is not None:
+        names.append("custom_rc")
+    res.by_signal = {n: {} for n in names}
+    decks = rules.decks
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    tracker = CompositionTracker(decks)
+    raw = RawCompositionTracker(decks)
+    rounds_since = 0
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            tracker.new_shoe()
+            raw.new_shoe()
+            rounds_since = 0
+            if on_shuffle is not None:
+                on_shuffle()
+        bal = tracker.hilo_running()
+        sevens_dealt = 4 * decks - tracker.counts[7]
+        red7_dealt = sum(decks - raw.counts[(7, s)] for s in _RED_SUITS)
+        signals = {
+            "hilo_tc": _bin_tc8(tracker.hilo_true()),
+            "red7_rc": _clamp_rc(bal + red7_dealt - 2 * decks),
+            "ko_rc": _clamp_rc(bal + sevens_dealt - 4 * decks),
+            "half7_rc": _clamp_rc(bal + 0.5 * sevens_dealt - 2 * decks),
+        }
+        if custom is not None:
+            base_tags, bump = custom  # bump rank in 1..9 (two red suits +1)
+            dealt = {
+                r: (16 if r == TEN_RANK else 4) * decks - tracker.counts[r]
+                for r in range(1, 11)
+            }
+            bump_dealt = sum(decks - raw.counts[(bump, s)] for s in _RED_SUITS)
+            s_deck = sum(
+                base_tags[r] * (16 if r == TEN_RANK else 4) for r in range(1, 11)
+            ) + 2  # per-deck imbalance incl. the half-rank bump
+            rc = (sum(base_tags[r] * dealt[r] for r in range(1, 11))
+                  + bump_dealt - s_deck * decks)  # pivot-zeroed IRC
+            signals["custom_rc"] = _clamp_rc(rc)
+        tc_exact = tracker.hilo_true()
+        start = shoe.snapshot()
+        result = play_round(rules, shoe, strategy, bet=1.0)
+        rounds_since += 1
+        tracker.observe_round(result)
+        raw.observe(shoe.raw_slice(start, shoe.snapshot()))
+        if on_round is not None:
+            on_round(result)
+        res.rounds += 1
+        res.total_profit += result.profit
+        for name, key in signals.items():
+            res.by_signal[name].setdefault(key, TcBin()).add(
+                result.profit, tc_exact, result
+            )
+    return res
+
+
+def count_curves_to_json(res: CountCurvesResult, seed: int, custom=None) -> dict:
+    return {
+        "kind": "count_curves",
+        "rules": res.rules_name,
+        "arm": res.arm,
+        "penetration": res.penetration,
+        "seed": seed,
+        "custom": (
+            None if custom is None
+            else {"tags": {str(r): t for r, t in custom[0].items()},
+                  "bump": custom[1]}
+        ),
+        "rounds": res.rounds,
+        "total_profit": res.total_profit,
+        "signals": {
+            name: {
+                str(k): [b.rounds, b.profit, b.profit_sq, b.tc_sum,
+                         b.ins_rounds, b.ins_profit]
+                for k, b in bins.items()
+            }
+            for name, bins in res.by_signal.items()
+        },
+    }
+
+
+def load_count_curves_json(path: str) -> CountCurvesResult:
+    import json
+
+    with open(path) as f:
+        payload = json.load(f)
+    if payload.get("kind") != "count_curves":
+        raise ValueError(f"{path} is not a count_curves dump")
+    res = CountCurvesResult(
+        rules_name=payload["rules"],
+        arm=payload["arm"],
+        penetration=payload["penetration"],
+        rounds=payload["rounds"],
+        total_profit=payload["total_profit"],
+    )
+    for name, bins in payload["signals"].items():
+        res.by_signal[name] = {
+            int(k): TcBin(rounds=n, profit=p, profit_sq=p2, tc_sum=tcs,
+                          ins_rounds=ir, ins_profit=ip)
+            for k, (n, p, p2, tcs, ir, ip) in bins.items()
+        }
+    return res
+
+
+def merge_count_curves(results: list[CountCurvesResult]) -> CountCurvesResult:
+    assert results
+    first = results[0]
+    merged = CountCurvesResult(
+        rules_name=first.rules_name, arm=first.arm, penetration=first.penetration
+    )
+    for r in results:
+        assert (r.rules_name, r.arm, r.penetration) == (
+            first.rules_name, first.arm, first.penetration
+        )
+        assert sorted(r.by_signal) == sorted(first.by_signal)
+        merged.rounds += r.rounds
+        merged.total_profit += r.total_profit
+        for name, bins in r.by_signal.items():
+            target = merged.by_signal.setdefault(name, {})
+            for k, b in bins.items():
+                t = target.setdefault(k, TcBin())
+                t.rounds += b.rounds
+                t.profit += b.profit
+                t.profit_sq += b.profit_sq
+                t.tc_sum += b.tc_sum
+                t.ins_rounds += b.ins_rounds
+                t.ins_profit += b.ins_profit
+    return merged
+
+
+def format_count_curves(res: CountCurvesResult, min_rounds: int = 5000) -> str:
+    lines = [
+        f"rules: {res.rules_name}   arm: {res.arm}   "
+        f"penetration: {res.penetration:.2f}   rounds: {res.rounds:,}   "
+        f"overall EV: {100 * res.total_profit / res.rounds:+.4f}%",
+    ]
+    for name, bins in res.by_signal.items():
+        lines.append("")
+        lines.append(f"EV by {name} (bins with >= {min_rounds:,} rounds):")
+        lines.append(f"  {'bin':>5s} {'rounds':>11s} {'freq':>8s} {'EV':>9s} "
+                     f"{'±1se':>8s} {'mean hilo tc':>13s}")
+        for k in sorted(bins):
+            b = bins[k]
+            if b.rounds < min_rounds:
+                continue
+            lines.append(
+                f"  {k:+5d} {b.rounds:>11,d} {100 * b.rounds / res.rounds:7.3f}% "
+                f"{100 * b.ev:+8.3f}% {100 * b.stderr:7.3f}% "
+                f"{b.tc_sum / b.rounds:+13.2f}"
+            )
+    return "\n".join(lines)
+
+
 def format_ramp(res: RampResult) -> str:
     ramp_txt = ",".join(f"{lo:g}:{u:g}" for lo, u in res.ramp)
     n = res.rounds

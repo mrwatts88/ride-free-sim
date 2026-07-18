@@ -118,6 +118,61 @@ wide-spread/bimodal ramp rows. Findings at 200 r/h heads-up (weekday):
 Write-up: `docs/ARTICLE_BLACKJACK.md` (deliberately a summary, not a
 discovery piece).
 
+## E17 — The crouch from an unbalanced running count: Red 7 keeps 93.5%, no division ever
+
+**Date:** 2026-07-18 · **Question (Matt):** can the chosen E16 play keep
+most of its EV on an unbalanced count — pure running count, no true-count
+division — for lower cognitive load? And is there a better custom count?
+
+**Method.** New harness `cli countcurve` (`experiments.run_count_curves`):
+one flat-bet pass bins every round's profit by SEVERAL count signals at
+once — hi-lo TC (reference), Red 7 RC, KO RC, half-7 RC (deterministic
+7s-at-+0.5, the color-noise-free ideal Red 7) — same card stream, so
+retention comparisons carry no cross-run noise. Raw (rank,suit) tracking
+feeds the red-seven count (suits {0,1} = red by convention). All running
+counts pivot-zeroed: IRC = −s·decks so RC ≈ d_rem·(TC − s) and RC ≥ 0
+tests TC ≥ s depth-EXACTLY at the pivot. `search_unbalanced_level1`:
+analytic brute force over level-1 unbalanced counts (base tags {−1,0,+1},
+ten −1, one red-half-rank bump, imbalance +2/deck ⇒ pivot ≈ TC+2), ranked
+by betting correlation against the E4a STANDARD_H17_EOR table. Gates in
+`tests/test_e17.py` (incl. differential: multi-pass hi-lo bins ==
+run_tc_curve bins exactly; custom==red7 identity). 225 tests green.
+Ledger: `data/e17_unbalanced.py` (analytic thresholds at nominal
+d_rem = 3.5; sensitivity grids printed, not cherry-picked).
+
+**Data:** 8 × 6M = 48M rounds, ins arm, h17 pen .75, seeds
+13.4e9–14.1e9 step 1e8 (`data/e17_*.json`). **Next unused block: 14.2e9+.**
+
+**Findings ($10 units, 200 r/h; hi-lo TC crouch reference on the same pass
+= +$63.21/h — E16's independent-seed $67.45 is 1.4σ away, consistent):**
+1. **The custom-count search returns Red 7 itself** (hi-lo base, half-bump
+   on 7, BC 0.9755): Snyder's count is optimal in the whole level-1
+   unbalanced family against our own EORs. No better custom exists there.
+2. **The pivot mechanism works as theorized**: jump at RC ≥ 0 is the
+   depth-exact TC ≥ +2 test. Color noise (red vs all sevens) costs ~1pp
+   (half-7 ideal 90.9% vs red 7 89.8% on the same card).
+3. **The recommended no-division card** — IRC −12; $100 at RC ≥ 0, $150 at
+   ≥ +2, $200 at ≥ +5; insure when the $150+ bet is out; leave at RC ≤ −14
+   (chosen structurally: −16 is the analytic τ=−1.5 point but −14 avoids
+   the fresh-shoe IRC −12 collision) — **+$59.07/h, N0 307h, $27.2k
+   bankroll, corr 0.81 = 93.5% of the TC card's hourly.** ~$4/h is the
+   entire price of never dividing.
+4. Sensitivity (pre-registered grids): jump ±1 spans 81–105% (the −2 row
+   "beats" the reference only by betting more — bigger bank, worse N0);
+   leave −12..−18 spans 87–98% (−12 collides with fresh-shoe IRC — it
+   silently converts the card into a wong-in that skips shoe tops).
+   Execution tolerance is wide; nothing is knife-edge.
+5. **KO play-all retains 88.1%** but with higher bankroll ($37.6k), worse
+   corr (0.86), and an unplayable leave threshold (collides with IRC −24):
+   pivot placement (TC+4, off the money threshold) costs it, as predicted.
+   Red 7 dominates KO for this play.
+
+Caveat on record: the ins arm takes composition-exact insurance in every
+system including the reference — retention is arm-consistent (fair) but
+all absolute $/h are slightly optimistic vs the human "insure at $150+"
+rule. RC-card verification on fresh seeds would need a signal-parameterized
+`run_ramp` (parked; bins arithmetic was verified exact in E16).
+
 ## E15 — Is there value beyond linear counts? Quadratic buys ~4pp on the Dragon; the Panda tail is high-order (M9 epilogue)
 
 **Date:** 2026-07-18 · **Command:** `uv run python -m ridefree.cli bacorder
