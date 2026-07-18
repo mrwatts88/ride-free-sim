@@ -82,6 +82,28 @@ for cap in (100.0, 50.0, 25.0):
           f"${bank * UNIT * scale / 1000.0:5.1f}k   (N0 unchanged in rounds)")
 
 print()
+print("operating modes (paper pair from E14b: +1.108u/100, P(any trigger) ~13.8%;")
+print("EZ banker toll 1.02%/round on the main stake; r = main:side stake ratio):")
+print(f"{'mode':>44s} {'net u/100':>10s} {'$/h':>7s} {'N0':>7s}")
+EZ_TOLL = 0.0102
+PAPER_U100 = 1.108
+P_ANY = 0.138
+VAR100 = 570.0  # paper-pair per-100-rounds settlement variance (E14 scale)
+for label, toll_u100, rph in (
+    ("crowded, sit out, side-only allowed (45r/h)", 0.0, 45),
+    ("crowded, min main on trigger rounds r=0.25", 100 * P_ANY * EZ_TOLL * 0.25, 45),
+    ("HEADS-UP, min main every round r=0.10", 100 * EZ_TOLL * 0.10, 100),
+    ("HEADS-UP, min main every round r=0.15", 100 * EZ_TOLL * 0.15, 100),
+    ("HEADS-UP, min main every round r=0.25", 100 * EZ_TOLL * 0.25, 100),
+):
+    net = PAPER_U100 - toll_u100
+    dollars = net * rph / 100.0 * UNIT
+    n0_h = (VAR100 / net ** 2) * 100.0 / rph
+    print(f"{label:>44s} {net:+9.3f}u ${dollars:5.0f} {n0_h:6.0f}h")
+print()
+print("  -> the toll is noise at real stakes ($10-25 main vs $100 side); PACE")
+print("     dominates: heads-up ~doubles $/h and halves N0-hours vs a full table.")
+print()
 print("comparators: 21+3 quad-Q wong-in pen .85 (E12): +$21/h per $100 unit,")
 print("  N0 ~1,200h @100r/h, ~$37k bankroll, AND pays a main-bet toll to play;")
 print("  standard-BJ hi-lo 1-8 spread (E4c): +0.23% on money, ~36% rounds in action.")
