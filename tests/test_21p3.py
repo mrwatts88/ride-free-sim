@@ -171,6 +171,30 @@ def test_csm_always_bet_edge_near_published():
     assert abs(edge - (-0.032386)) < 0.048
 
 
+def test_side_bet_invariant_to_playing_strategy():
+    """Differential brace: the side bet settles pre-play, so in csm mode
+    (fresh shoe per round, same seed stream) its outcomes must be EXACTLY
+    identical regardless of how the blackjack hands are played. Any strategy
+    leakage into the side-bet path breaks this."""
+    from ridefree.player_ev import OptimalStrategy
+    from ridefree.strategy import FreeBetStrategy
+
+    rules = dataclasses.replace(
+        RIDE_FREE, side_bet_21p3=PAYTABLE_21P3_9TO1, shoe_end_mode="csm"
+    )
+    results = [
+        simulate(rules, AlwaysSideBet(inner), seed=6_700_000_001, rounds=20_000)
+        for inner in (BasicStrategy(), FreeBetStrategy(), OptimalStrategy())
+    ]
+    ref = results[0]
+    for m in results[1:]:
+        assert m.sb21p3_profit_total == ref.sb21p3_profit_total
+        assert m.sb21p3_categories == ref.sb21p3_categories
+    # ...while the blackjack profits DO differ (the strategies really diverge).
+    main = [m.total_profit - m.sb21p3_profit_total for m in results]
+    assert len(set(main)) > 1
+
+
 def test_21p3_determinism_and_ridefree_compatibility():
     rules = dataclasses.replace(RIDE_FREE, side_bet_21p3=PAYTABLE_21P3_9TO1)
     from ridefree.player_ev import OptimalStrategy
