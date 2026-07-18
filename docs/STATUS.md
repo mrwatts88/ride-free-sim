@@ -34,6 +34,17 @@ all knobs configurable — unit $, pace, ramps, game, pen):**
 - **EZ Baccarat remains the project's best game by every column** (E14:
   ~$92–101/h at half the N0, native camouflage, ~2–3× these hourlies).
 
+**Follow-up sizing (same session, ledger runs):** at 200 r/h heads-up on a
+~$30k roll — $15–$500 table, 1-16 + exits: **+$84/h, N0 251h, $31.4k**
+(the money line; the $500 max only binds at ~$60k+ roll). $10–$200 table,
+"crouch" (flat $10, jump to $100/$150/$200 at TC ≥ +2): **+$58/h, $30.3k,
+corr 0.73** — beats the graduated 1-20 play-all on every column because the
+TC +1 bin is breakeven (−0.07%): dollars bet below +2 are dead weight, the
+optimal seated shape is bimodal. Field intel (Matt, ex-supervisor at
+Potawatomi): low-limit tables draw little surveillance attention (eyes are
+on the quarter games), so the corr numbers likely overstate practical heat
+at these stakes; recon planned for pen/H17/heads-up dealing.
+
 New capability, gate-passed: per-TC curves with variance (`cli curve` /
 `curvecombine`), per-TC paired deviation values (`cli deviations --json`),
 and the repo's first LIVE betting simulator (`cli ramp`, bet(tc) ramps as

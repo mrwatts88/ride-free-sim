@@ -59,6 +59,12 @@ RAMPS = {
     "1-33, exit tc<=-1": ((0, 1), (1, 5), (2, 16), (3, 25), (4, 33)),
     "backcount, 20u at tc>=+2": ((2, 20),),
     "backcount, 33u at tc>=+2": ((2, 33),),
+    # $10-$200 table shapes: play-all (min floor is cheap camo) and the
+    # "crouch" — flat 1u everywhere, jump straight to a 10u+ curve on the
+    # trigger (the min bet played as a near-zero bet, no exits needed)
+    "playall 1-20": ((-99, 1), (1, 4), (2, 8), (3, 14), (4, 20)),
+    "crouch, jump 10u at +2": ((-99, 1), (2, 10), (3, 15), (4, 20)),
+    "crouch, jump 10u at +1": ((-99, 1), (1, 10), (2, 12), (3, 16), (4, 20)),
 }
 
 # Arms: which banked curve carries the playing skill.
