@@ -131,3 +131,29 @@ class CompositionTracker:
     def rf_ev_shift(self) -> float:
         """Ride-Free-optimal linear signal (EV units)."""
         return self.eor_shift(RIDE_FREE_EOR)
+
+
+class RawCompositionTracker:
+    """Per-(rank, suit) counts of the remaining shoe, fed with raw dealt cards.
+
+    The suit-aware twin of CompositionTracker (M8c): value-collapsed counts
+    cannot express flush richness or distinguish J/Q/K for straights. Fed from
+    `Shoe.raw_slice()` by the experiment harness (all dealt cards, hole
+    included, per the same visibility doctrine as CompositionTracker)."""
+
+    def __init__(self, decks: int) -> None:
+        self.decks = decks
+        self.counts: dict[tuple[int, int], int] = {}
+        self.cards_remaining = 0
+        self.new_shoe()
+
+    def new_shoe(self) -> None:
+        self.counts = {
+            (rank, suit): self.decks for rank in range(1, 14) for suit in range(4)
+        }
+        self.cards_remaining = 52 * self.decks
+
+    def observe(self, cards) -> None:
+        for card in cards:
+            self.counts[card] -= 1
+        self.cards_remaining -= len(cards)

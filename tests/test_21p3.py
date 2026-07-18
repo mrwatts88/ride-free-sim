@@ -87,6 +87,89 @@ def test_exact_six_deck_combinatorics_match_wizard_of_odds():
     assert abs(ev - (-0.032386)) < 5e-7  # published house edge 3.2386%
 
 
+# --- closed-form pre-deal EV (E10 core) --------------------------------------
+
+def _enumerate_combos(counts):
+    """Brute-force category counts by enumerating card-type triples —
+    independent arithmetic to check the closed-form identities against."""
+    from ridefree.side_bets import category_combos_21p3  # noqa: F401 (contrast)
+
+    types = [t for t, c in counts.items() if c > 0]
+    combos = {"straight_flush": 0, "three_of_a_kind": 0, "straight": 0,
+              "flush": 0, None: 0}
+    for a, b, c in combinations(types, 3):
+        combos[classify_21p3(a, b, c)] += counts[a] * counts[b] * counts[c]
+    for a in types:
+        for b in types:
+            if a != b and counts[a] >= 2:
+                combos[classify_21p3(a, a, b)] += comb(counts[a], 2) * counts[b]
+        if counts[a] >= 3:
+            combos[classify_21p3(a, a, a)] += comb(counts[a], 3)
+    return combos
+
+
+def test_closed_form_matches_fresh_shoe_exactly():
+    from ridefree.side_bets import category_combos_21p3, ev_21p3
+
+    counts = {(r, s): 6 for r in range(1, 14) for s in range(4)}
+    combos, total = category_combos_21p3(counts)
+    assert total == 5_013_320
+    assert combos == {"straight_flush": 10_368, "three_of_a_kind": 26_312,
+                      "straight": 155_520, "flush": 292_896}
+    assert abs(ev_21p3(counts, PAYTABLE_21P3_9TO1) - (-162_360 / 5_013_320)) < 1e-15
+
+
+def test_closed_form_matches_enumeration_on_depleted_shoes():
+    import random
+
+    from ridefree.side_bets import category_combos_21p3
+
+    rng = random.Random(987654321)
+    types = [(r, s) for r in range(1, 14) for s in range(4)]
+    for depth in (60, 150, 240, 280):
+        counts = {t: 6 for t in types}
+        deck = [t for t in types for _ in range(6)]
+        rng.shuffle(deck)
+        for card in deck[:depth]:
+            counts[card] -= 1
+        combos, total = category_combos_21p3(counts)
+        brute = _enumerate_combos(counts)
+        assert total == comb(312 - depth, 3)
+        for cat in ("straight_flush", "three_of_a_kind", "straight", "flush"):
+            assert combos[cat] == brute[cat], (depth, cat)
+
+
+def test_ev_positive_when_one_suit_dominates():
+    from ridefree.side_bets import ev_21p3
+
+    # Remaining shoe: all six copies of every spade, one copy of everything else.
+    counts = {(r, s): (6 if s == 0 else 1) for r in range(1, 14) for s in range(4)}
+    assert ev_21p3(counts, PAYTABLE_21P3_9TO1) > 0.5
+
+
+def test_raw_tracker_mirrors_shoe():
+    from collections import Counter
+
+    from ridefree.cards import Shoe
+    from ridefree.counting import RawCompositionTracker
+    from ridefree.side_bets import ev_21p3
+
+    shoe = Shoe(decks=6, penetration=1.0, seed=31415)
+    tracker = RawCompositionTracker(6)
+    for _ in range(217):
+        shoe.deal()
+    tracker.observe(shoe.raw_dealt())
+    remaining = Counter()
+    for card in shoe.raw_dealt():
+        remaining[card] += 1
+    expect = {(r, s): 6 - remaining[(r, s)] for r in range(1, 14) for s in range(4)}
+    assert tracker.counts == expect
+    assert tracker.cards_remaining == shoe.cards_remaining
+    # EV from tracker counts is finite and sane at depth.
+    ev = ev_21p3(tracker.counts, PAYTABLE_21P3_9TO1)
+    assert -0.5 < ev < 0.5
+
+
 # --- engine settlement -------------------------------------------------------
 
 class FakeRawShoe:

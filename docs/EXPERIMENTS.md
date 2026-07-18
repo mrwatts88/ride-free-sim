@@ -2,6 +2,49 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E10 — 21+3 exact pre-deal EV: the side bet IS beatable (perfect-info ceiling)
+
+**Date:** 2026-07-17 · **Commands:**
+`uv run python -m ridefree.cli sbev --rounds 3000000 --seed 6700000001` (pen 0.75) ·
+`uv run python -m ridefree.cli sbev --rounds 3000000 --seed 6800000001
+--penetration 0.85`.
+
+First M8c experiment. Each round, the EXACT 21+3 EV (flat 9:1) is computed in
+closed form from the remaining (rank,suit) composition
+(`side_bets.ev_21p3`, fed by `counting.RawCompositionTracker`) before the
+deal; the bet is always staked so realized settlement checks the prediction.
+
+- **Pen 0.75:** ev > 0 on **4.62% of rounds, mean predicted +2.49%**, realized
+  +3.81% ± 0.82% (consistent). Ceiling = **+0.115 units per 100 rounds** per
+  unit of side stake (bet-when-positive).
+- **Pen 0.85:** ev > 0 on **7.10% of rounds, mean +3.88%**, realized +4.27% ±
+  0.66%. Ceiling = **+0.276u / 100 rounds** — 2.4× the 0.75 figure; the signal
+  lives late (P(ev>0) by depth: 3.6% at 3 decks left → 12.5% at 2 → 18.5% at
+  1.5 → 25.1% at 1 → 28.8% at 0.5, mean positive EV there +7.5%).
+- **Calibration:** realized-on-predicted slope 1.034 ± 0.071 (pen 0.85 run,
+  40 bins spanning −13% to +9%); pen 0.75 run 1.24 ± 0.10 (+2.4σ, watched, not
+  alarming). The closed-form calculator prices depleted shoes correctly end
+  to end.
+- **corr(sb_ev, hilo_tc) ≈ −0.07..−0.09**: essentially orthogonal to the main
+  count — side-bet windows don't collide with main-game counting, so a
+  combined system stacks rather than competes (E12 must still charge the
+  main-bet toll: ~−0.64%/round on the required blackjack bet vs +0.28u/100 per
+  unit of side stake at pen 0.85 ⇒ breakeven side:main stake ratio ≈ 2.3:1 on
+  bet-selection alone, before any main-game counting).
+- Mean predicted EV over all rounds: −3.2464% (0.75) / −3.2369% (0.85) vs the
+  fresh-shoe −3.2386% — the small offset is round-frequency weighting (the
+  cut-card effect's side-bet analogue), noted, not load-bearing.
+- Scale reference: Ride Free's entire bet-selection term was +0.59% on 6.6% of
+  rounds ≈ +0.039u/100. The 21+3 ceiling at equal penetration is ~3× that; at
+  0.85 pen ~7×. **Verdict: proceed to compression (E11) — this clears the bar
+  RF missed.**
+
+Ceiling caveats: perfect information (all dealt cards including dealer hole
+assumed visible, same doctrine as CompositionTracker); wong-in of the side bet
+only (main hand still played); flat 9:1 paytable as configured — re-confirm
+Potawatomi's actual 21+3 paytable on the rack card before believing dollar
+figures.
+
 > **2026-07-17 audit note:** the significance figures in E2–E5 below are overstated
 > by shoe-seed overlap between shards (corrected σ and details in
 > `docs/DEEP_DIVE_AUDIT.md`; the reseeding flaw is fixed in code as of the same

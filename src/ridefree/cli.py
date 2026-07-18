@@ -213,6 +213,25 @@ def _grid(args: argparse.Namespace) -> None:
         print(f"\ngrid JSON written to {args.json}")
 
 
+def _sbev(args: argparse.Namespace) -> None:
+    from ridefree.experiments import format_sb_ev_scan, run_sb_ev_scan
+    from ridefree.strategy import AlwaysSideBet
+
+    name, rules, _, _ = VARIANTS[args.rules]
+    changes = {"side_bet_21p3": PAYTABLE_21P3_9TO1}
+    if args.penetration is not None:
+        changes["penetration"] = args.penetration
+    rules = dataclasses.replace(rules, **changes)
+    print(f"ruleset: {name} + 21+3 flat 9:1   penetration: {rules.penetration:.2f}")
+    print("scan: exact pre-deal EV from remaining (rank,suit) composition, "
+          "always-bet 1 unit")
+    result = run_sb_ev_scan(
+        rules, AlwaysSideBet(_strategy_for(rules)), seed=args.seed,
+        rounds=args.rounds,
+    )
+    print(format_sb_ev_scan(result, min_cell=args.min_cell))
+
+
 def _combine(args: argparse.Namespace) -> None:
     from ridefree.experiments import format_grid, load_grid_json, merge_grids
 
@@ -313,6 +332,18 @@ def main() -> None:
     t.add_argument("--min-cell", type=int, default=2_000)
     t.add_argument("--json", default=None, help="dump raw grid stats to this path")
     t.set_defaults(func=_grid)
+
+    sb = sub.add_parser(
+        "sbev", help="21+3 exact pre-deal EV scan (perfect-information ceiling)"
+    )
+    sb.add_argument("--rules", choices=VARIANTS, default="h17",
+                    help="base blackjack rules (the side bet is added on top)")
+    sb.add_argument("--seed", type=int, default=1)
+    sb.add_argument("--rounds", type=int, default=2_000_000)
+    sb.add_argument("--penetration", type=float, default=None,
+                    help="override cut-card depth (default: ruleset's 0.75)")
+    sb.add_argument("--min-cell", type=int, default=2_000)
+    sb.set_defaults(func=_sbev)
 
     c = sub.add_parser("combine", help="pool grid JSON dumps and report")
     c.add_argument("paths", nargs="+", help="grid JSON files to merge")

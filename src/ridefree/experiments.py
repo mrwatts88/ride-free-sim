@@ -16,9 +16,10 @@ import math
 from dataclasses import dataclass, field
 
 from ridefree.cards import Shoe, shoe_seeds
-from ridefree.counting import CompositionTracker
+from ridefree.counting import CompositionTracker, RawCompositionTracker
 from ridefree.engine import play_round
 from ridefree.rules import Rules
+from ridefree.side_bets import ev_21p3
 from ridefree.simulator import _needs_reshuffle
 
 
@@ -387,6 +388,188 @@ def run_deviation_value(
             result.window_diff += d
             result.window_diff_sq += d * d
     return result
+
+
+# --- E10: 21+3 exact pre-deal EV scan (the perfect-information ceiling) -----
+
+SB_EV_THRESHOLDS = (0.0, 0.005, 0.01, 0.02, 0.03)
+
+
+@dataclass
+class SbEvScanResult:
+    """One pass of exact 21+3 EV vs realized side-bet profit.
+
+    The ceiling numbers (P(ev > thr), mean predicted EV above threshold) are
+    deterministic functions of shoe states — their only error is round
+    sampling. Realized profit per bin is the end-to-end consistency check
+    (calibration slope ≈ 1)."""
+
+    rounds: int = 0
+    penetration: float = 0.0
+    realized_profit: float = 0.0
+    pred_sum: float = 0.0
+    by_ev: dict = field(default_factory=dict)  # ev bin -> BinStat (sb profit)
+    bin_pred: dict = field(default_factory=dict)  # ev bin -> sum predicted ev
+    by_depth: dict = field(default_factory=dict)  # decks-left bin -> [n, n_pos, sum_pos]
+    # thr -> [rounds, pred_sum, profit, profit_sq]
+    thresholds: dict = field(default_factory=dict)
+    # correlation accumulators: ev vs hilo true count
+    s_ev: float = 0.0
+    ss_ev: float = 0.0
+    s_hilo: float = 0.0
+    ss_hilo: float = 0.0
+    cross_ev_hilo: float = 0.0
+
+    @property
+    def corr_ev_hilo(self) -> float:
+        n = self.rounds
+        var_e = self.ss_ev / n - (self.s_ev / n) ** 2
+        var_h = self.ss_hilo / n - (self.s_hilo / n) ** 2
+        if var_e <= 0 or var_h <= 0:
+            return 0.0
+        cov = self.cross_ev_hilo / n - (self.s_ev / n) * (self.s_hilo / n)
+        return cov / math.sqrt(var_e * var_h)
+
+    def calibration_slope(self, min_cell: int = 2000):
+        """Rounds-weighted LSQ slope of realized bin EV on mean predicted EV.
+        1.0 = the exact calculator prices the shoe correctly end to end."""
+        cells = [
+            (self.bin_pred[k] / s.rounds, s)
+            for k, s in self.by_ev.items()
+            if s.rounds >= min_cell
+        ]
+        if len(cells) < 2:
+            return None, None
+        total = sum(s.rounds for _, s in cells)
+        xbar = sum(x * s.rounds for x, s in cells) / total
+        denom = sum(s.rounds * (x - xbar) ** 2 for x, s in cells)
+        if denom <= 0:
+            return None, None
+        slope = sum(s.rounds * (x - xbar) * s.ev for x, s in cells) / denom
+        var = sum(
+            (s.rounds * (x - xbar) / denom) ** 2 * s.stderr**2 for x, s in cells
+        )
+        return slope, math.sqrt(var)
+
+
+def run_sb_ev_scan(
+    rules: Rules,
+    strategy,
+    *,
+    seed: int,
+    rounds: int,
+    bet: float = 1.0,
+) -> SbEvScanResult:
+    """Simulate with the 21+3 bet always staked, computing the EXACT pre-deal
+    EV from the remaining raw composition each round (closed form, no model).
+    `rules.side_bet_21p3` must be set and `strategy` must stake every round."""
+    if not rules.side_bet_21p3:
+        raise ValueError("rules.side_bet_21p3 must be configured for the scan")
+    res = SbEvScanResult(penetration=rules.penetration)
+    res.thresholds = {t: [0, 0.0, 0.0, 0.0] for t in SB_EV_THRESHOLDS}
+    ev_bin = _bin_p(0.005)
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    raw = RawCompositionTracker(rules.decks)
+    comp = CompositionTracker(rules.decks)
+    rounds_since = 0
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            raw.new_shoe()
+            comp.new_shoe()
+            rounds_since = 0
+        ev = ev_21p3(raw.counts, rules.side_bet_21p3)
+        hilo = comp.hilo_true()
+        depth_bin = round(math.floor(shoe.cards_remaining / 52 / 0.5) * 0.5, 1)
+        start = shoe.snapshot()
+        result = play_round(rules, shoe, strategy, bet=bet)
+        raw.observe(shoe.raw_slice(start, shoe.snapshot()))
+        comp.observe_round(result)
+        rounds_since += 1
+        p = result.sb21p3_profit
+
+        res.rounds += 1
+        res.realized_profit += p
+        res.pred_sum += ev
+        key = ev_bin(ev)
+        res.by_ev.setdefault(key, BinStat()).add(p)
+        res.bin_pred[key] = res.bin_pred.get(key, 0.0) + ev
+        d = res.by_depth.setdefault(depth_bin, [0, 0, 0.0])
+        d[0] += 1
+        if ev > 0:
+            d[1] += 1
+            d[2] += ev
+        for t, acc in res.thresholds.items():
+            if ev > t:
+                acc[0] += 1
+                acc[1] += ev
+                acc[2] += p
+                acc[3] += p * p
+        res.s_ev += ev
+        res.ss_ev += ev * ev
+        res.s_hilo += hilo
+        res.ss_hilo += hilo * hilo
+        res.cross_ev_hilo += ev * hilo
+    return res
+
+
+def format_sb_ev_scan(res: SbEvScanResult, min_cell: int = 2000) -> str:
+    n = res.rounds
+    lines = [
+        f"rounds: {n:,}   penetration: {res.penetration:.2f}",
+        f"realized 21+3 EV: {100 * res.realized_profit / n:+.4f}%   "
+        f"mean predicted EV: {100 * res.pred_sum / n:+.4f}%",
+        f"corr(sb_ev, hilo_tc): {res.corr_ev_hilo:+.3f}",
+        "",
+        "ceiling by wong-in threshold (bet only when exact EV > thr):",
+        f"  {'thr':>6s} {'P(ev>thr)':>10s} {'mean pred':>10s} "
+        f"{'realized':>10s} {'±1se':>8s} {'per-100-rounds':>14s}",
+    ]
+    for t, (cnt, pred, prof, prof_sq) in sorted(res.thresholds.items()):
+        if cnt == 0:
+            lines.append(f"  {t:6.3f} {'—':>10s}")
+            continue
+        frac = cnt / n
+        mean_pred = pred / cnt
+        mean_real = prof / cnt
+        var = max(prof_sq / cnt - mean_real * mean_real, 0.0)
+        se = math.sqrt(var / cnt)
+        per100 = 100 * frac * mean_pred
+        lines.append(
+            f"  {t:6.3f} {100 * frac:9.4f}% {100 * mean_pred:+9.4f}% "
+            f"{100 * mean_real:+9.4f}% {100 * se:7.4f}% {per100:+13.4f}u"
+        )
+    lines.append("")
+    lines.append("P(ev>0) by shoe depth (decks remaining, floor-binned):")
+    lines.append(f"  {'decks':>6s} {'rounds':>10s} {'P(ev>0)':>9s} {'mean pos ev':>12s}")
+    for k in sorted(res.by_depth, reverse=True):
+        cnt, pos, sum_pos = res.by_depth[k]
+        mp = 100 * sum_pos / pos if pos else 0.0
+        lines.append(
+            f"  {k:6.1f} {cnt:>10,d} {100 * pos / cnt:8.4f}% {mp:+11.4f}%"
+        )
+    slope, se = res.calibration_slope(min_cell)
+    lines.append("")
+    if slope is not None:
+        lines.append(
+            f"calibration slope (realized on predicted, weighted): "
+            f"{slope:.3f} ± {se:.3f}  (1.0 = exact)"
+        )
+    lines.append("")
+    lines.append(f"realized EV by predicted-EV bin (bins with >= {min_cell:,} rounds):")
+    lines.append(f"  {'bin':>8s} {'rounds':>10s} {'mean pred':>10s} "
+                 f"{'realized':>10s} {'±1se':>8s}")
+    for k in sorted(res.by_ev):
+        s = res.by_ev[k]
+        if s.rounds < min_cell:
+            continue
+        mean_pred = res.bin_pred[k] / s.rounds
+        lines.append(
+            f"  {k:8.3f} {s.rounds:>10,d} {100 * mean_pred:+9.4f}% "
+            f"{100 * s.ev:+9.4f}% {100 * s.stderr:7.4f}%"
+        )
+    return "\n".join(lines)
 
 
 def _parse_bin(text: str):
