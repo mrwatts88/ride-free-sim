@@ -104,6 +104,22 @@ print()
 print("  -> the toll is noise at real stakes ($10-25 main vs $100 side); PACE")
 print("     dominates: heads-up ~doubles $/h and halves N0-hours vs a full table.")
 print()
+print("side <= main cap (if the house requires it), heads-up 100r/h:")
+print("(min main off-trigger; raise MAIN to match the side on trigger rounds —")
+print(" baccarat players ramp bets constantly, this is native behavior)")
+matched_toll = (100 - 100 * P_ANY) * EZ_TOLL * 0.10 + 100 * P_ANY * EZ_TOLL * 1.0
+net_matched = PAPER_U100 - matched_toll
+var_matched = VAR100 + 100 * P_ANY * 0.88  # matched banker settle variance
+for unit, label in ((100.0, "$100 side max"), (25.0, "$25 side max")):
+    dollars = net_matched * 1.0 * unit
+    n0_h = (var_matched / net_matched ** 2) * 100.0 / 100.0
+    bank = (var_matched / 100.0) / (2.0 * net_matched / 100.0) \
+        * math.log(1.0 / RUIN) * unit
+    print(f"  {label}: net {net_matched:+.3f}u/100 = ${dollars:5.0f}/h   "
+          f"N0 {n0_h:4.0f}h   bankroll ${bank / 1000.0:5.1f}k")
+print("  (only a FLAT matched main all shoe long would kill it: net "
+      f"{PAPER_U100 - 100 * EZ_TOLL:+.3f}u/100 — never required; vary the main)")
+print()
 print("comparators: 21+3 quad-Q wong-in pen .85 (E12): +$21/h per $100 unit,")
 print("  N0 ~1,200h @100r/h, ~$37k bankroll, AND pays a main-bet toll to play;")
 print("  standard-BJ hi-lo 1-8 spread (E4c): +0.23% on money, ~36% rounds in action.")
