@@ -318,7 +318,9 @@ required). Full write-up: **`docs/ARTICLE_EZBAC.md`** (done 2026-07-18).
 
 Seeds consumed (M9c): 7300000007 (test), 8300000001 / 8400000001 (pen .966),
 8500000001 (pen .95), 8600000001 (E14b broken-row run, discarded),
-8700000001 (E14b verification). **Next unused block: 8.8e9+.**
+8700000001 (E14b verification), 8800000001 (E15 order bounds — quadratic
+buys ~4pp on d7, Panda tail high-order; the two-count card is the human
+frontier). **Next unused block: 8.9e9+.**
 
 ## NEXT STEPS (M8 research complete; field + polish items remain)
 
