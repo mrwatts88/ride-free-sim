@@ -57,7 +57,13 @@ the 3-rung, or 94% with no walking at all); then deviations, then an
 insurance side count. Trainer default flipped to this card
 (`CROUCH15_2R`); honest E17 correction: the $15-floor toll makes the old
 3-rung card $54.70/h, not the ~$60 the ×0.935 shorthand implied.
-**Next unused seed block: 15.6e9+** (14.9e9 wong depth, 15.0–15.5e9 E18b).
+Session-variance percentiles measured (15.6e9, 2M rounds, never-leave card):
+4h sessions run mean +$192 / sd $2,048 — P10 −$2,362, P5 −$3,072, P1
+−$4,480, 47.6% of sessions lose, and the MEDIAN session touches −$1,182 at
+its low point (P10 low −$3,100). Expectation-setting numbers, in
+EXPERIMENTS E18b.
+**Next unused seed block: 15.7e9+** (14.9e9 wong depth, 15.0–15.5e9 E18b,
+15.6e9 session variance).
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 

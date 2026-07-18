@@ -88,8 +88,10 @@ observed rounds on $23k; pace-scaled $20–29/h).
 `variant` arg), `data/e18_live_s01..06.json`, `data/e18b_live_s01..06.json`;
 the card as data in `src/ridefree/trainer/card.py::CROUCH15_2R` (the trainer
 default). Seeds consumed: 14.2e9 (timing study), 14.3e9–14.8e9 (E18 shards),
-14.9e9 (wong depth), 15.0e9–15.5e9 (E18b shards).
-**Next unused block: 15.6e9+.**
+14.9e9 (wong depth), 15.0e9–15.5e9 (E18b shards), 15.6e9 (session-variance
+percentiles, 2M rounds: 4h sessions P10 −$2,362 / P5 −$3,072 / P1 −$4,480,
+47.6% losing, median intra-session low −$1,182 — the "bad day" table in
+ARTICLE_BLACKJACK's E18b addendum context). **Next unused block: 15.7e9+.**
 
 ## E16 — Classic blackjack next door: the cover-vs-money ledger (real dollars, real ramps)
 
