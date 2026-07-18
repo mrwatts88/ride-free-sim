@@ -234,6 +234,20 @@ The growth path got cleaner too: at a ~$42–52k roll the right card is
 playing deviations, then an insurance side count — in that order, only
 once the drill-room error rates say the current card is clean.
 
+**E18b, the last word on walking:** a second 12M-round certification of the
+same card with *no leave at all* settled the weekday question. The leave's
+exact same-shoe value is $5.83/h; the walking it takes to collect it
+refunds $2.50–6/h in dead time first. So the walk line is **advisory**:
+weekday mode plays every round (**≈ +$40/h ± 2 on ~$36–40k, zero walks,
+one less thing to execute**); walk at zero only when a fresh shoe is
+genuinely adjacent. The same measurement run mapped the card's second
+life: 85% of jump rounds arrive 2+ decks deep and 60% of shoes ripen
+(median entry round 24, then ~12 hot rounds), so the card's top half —
+sit when a watched shoe hits 18, play $100/$200, leave at the shuffle —
+doubles as a busy-room back-counting play (~$65/h per 200 observed rounds
+on a $23k roll; $20–29/h at real crowded-table pace, wearing the wong
+entry pattern). One count, one card, three modes.
+
 ## Where it sits in the portfolio
 
 | play | $/h | bankroll | N0 | camouflage |
