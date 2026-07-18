@@ -273,11 +273,70 @@ class OptimalStrategy:
         return action
 
 
+class CompositionPlayer:
+    """Self-contained best-play strategy for straight simulations.
+
+    Maintains its own CompositionTracker via the simulator's observer hooks
+    (observe_round / new_shoe) and layers two toggleable count-driven features
+    on top of OptimalStrategy:
+
+    - `deviations`: play argmax-EV against the LIVE remaining composition
+      (frozen per round, exactly the E5/E8 estimand). Costs an EVCalculator per
+      round (~0.5k rounds/s vs ~7k fixed-strategy).
+    - `insurance`: take insurance exactly when the tracked composition makes it
+      +EV — p(hole is ten) > 1/(1 + insurance_pays), computed from the pre-deal
+      counts minus the three visible cards (own two + the ace up). This is the
+      E9 rule (~+0.15%/round inside the RF wong-in window).
+
+    With both off it plays identically to OptimalStrategy. Caveat (audit): the
+    tracker sees every card in a RoundResult, including the hole card in rounds
+    the dealer never plays out — a perfect-information convention.
+    """
+
+    def __init__(self, decks: int, *, insurance: bool = True, deviations: bool = True) -> None:
+        from ridefree.counting import CompositionTracker
+
+        self._tracker = CompositionTracker(decks)
+        self._insurance = insurance
+        self._deviations = deviations
+        self._fixed = OptimalStrategy()
+        self._round_calc: EVCalculator | None = None
+
+    # --- simulator observer hooks ----------------------------------------
+    def new_shoe(self) -> None:
+        self._tracker.new_shoe()
+        self._round_calc = None
+
+    def observe_round(self, result) -> None:
+        self._tracker.observe_round(result)
+        self._round_calc = None  # next round sees the updated composition
+
+    # --- engine interface --------------------------------------------------
+    def take_insurance(self, cards: tuple[int, ...], rules: Rules) -> bool:
+        if not self._insurance:
+            return False
+        n = self._tracker.cards_remaining - len(cards) - 1  # minus own cards + ace up
+        if n <= 0:
+            return False
+        tens = self._tracker.counts[TEN] - sum(1 for c in cards if c == TEN)
+        return tens * (1.0 + rules.insurance_pays) > n
+
+    def choose(self, view: HandView, rules: Rules) -> Action:
+        if not self._deviations:
+            return self._fixed.choose(view, rules)
+        if self._round_calc is None:
+            weights = {r: max(c, 0) for r, c in self._tracker.counts.items()}
+            self._round_calc = EVCalculator(rules, weights)
+        return choose_with_calc(self._round_calc, view)
+
+
 class CompositionStrategy:
     """Perfect-information playing deviations: argmax-EV with the LIVE remaining
     shoe composition as the deck model. Call `set_composition` once per round
     (composition is frozen intra-round — the tracker updates between rounds); all
-    decisions in the round share one calculator and its memo."""
+    decisions in the round share one calculator and its memo. Used by the paired
+    deviation harness; deliberately has no insurance hook so that harness
+    measures play deviations alone (insurance is a separable overlay, E9)."""
 
     def __init__(self) -> None:
         self._calc: EVCalculator | None = None

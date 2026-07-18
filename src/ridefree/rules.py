@@ -48,10 +48,21 @@ class Rules:
     max_hands: int = 4  # total hands after all splits
     resplit_aces: bool = False
     hit_split_aces: bool = False  # False = one card only to each split ace
-    split_by_value: bool = True  # True: K-T splits; False: matched rank only
+    # (split_by_value removed 2026-07-17: it was never read, and the 10-collapsed
+    # card model cannot represent a matched-rank-only distinction anyway.)
 
     # Surrender
     late_surrender: bool = False
+
+    # Insurance: side bet offered when the dealer shows an ace, staking half the
+    # main bet, resolved at the peek. The engine only asks a strategy that
+    # implements `take_insurance(cards, rules)`; no built-in strategy takes it
+    # (infinite-deck insurance is -EV), so published-edge validation is
+    # unaffected. It is a real EV source for count-based play (~+0.15%/round in
+    # the RF wong-in window; docs/EXPERIMENTS.md E9). Gate validated 2026-07-17
+    # against the exact 6-deck EV (tests/test_insurance.py).
+    insurance_offered: bool = True
+    insurance_pays: float = 2.0  # 2:1
 
     # Free Bet features (all empty/False = standard blackjack)
     free_double_totals: frozenset[int] = frozenset()  # two-card totals, e.g. {9, 10, 11}

@@ -82,6 +82,11 @@ class RoundResult:
     free_splits: int = 0  # casino-funded splits granted this round
     free_doubles: int = 0  # casino-funded doubles granted this round
     dealer_22_push: bool = False  # dealer drew to 22 and pushed the live hands
+    # Insurance side bet (0 unless the strategy took it): stake is player money,
+    # profit is +pays*stake on a dealer natural, -stake otherwise. Round `profit`
+    # includes insurance_profit; per-hand HandResults never do.
+    insurance_stake: float = 0.0
+    insurance_profit: float = 0.0
 
 
 def _name(card: int) -> str:
@@ -195,6 +200,25 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
 
     player_bj = is_blackjack(player.cards)
     was_pair = player.cards[0] == player.cards[1]
+
+    # Insurance: offered on an ace up, before the peek. The engine asks only
+    # strategies that implement take_insurance(cards, rules); the stake is the
+    # standard half-bet, resolved by whether the hole completes a natural.
+    insurance_stake = 0.0
+    insurance_profit = 0.0
+    if rules.insurance_offered and up == ACE:
+        take = getattr(strategy, "take_insurance", None)
+        if take is not None and take(tuple(player.cards), rules):
+            insurance_stake = bet / 2
+            if is_blackjack(dealer_cards):
+                insurance_profit = rules.insurance_pays * insurance_stake
+                note(f"insurance {insurance_stake:g} — dealer blackjack, pays "
+                     f"{insurance_profit:+g}")
+            else:
+                insurance_profit = -insurance_stake
+                note(f"insurance {insurance_stake:g} — no dealer blackjack, "
+                     f"{insurance_profit:+g}")
+
     if (
         rules.dealer_peeks_for_blackjack
         and up in (ACE, TEN)
@@ -202,20 +226,24 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
     ):
         note("dealer has blackjack")
         outcome = "push" if player_bj else "lose"
-        profit = 0.0 if player_bj else -bet
-        note(f"hand 1: {outcome} {profit:+g}")
-        hand_result = HandResult(tuple(player.cards), bet, 0.0, outcome, profit)
+        hand_profit = 0.0 if player_bj else -bet
+        note(f"hand 1: {outcome} {hand_profit:+g}")
+        hand_result = HandResult(tuple(player.cards), bet, 0.0, outcome, hand_profit)
         return RoundResult(
-            profit, (hand_result,), tuple(dealer_cards), tuple(events),
-            dealer_played_out=False, player_natural=player_bj, was_pair=was_pair,
+            hand_profit + insurance_profit, (hand_result,), tuple(dealer_cards),
+            tuple(events), dealer_played_out=False, player_natural=player_bj,
+            was_pair=was_pair, insurance_stake=insurance_stake,
+            insurance_profit=insurance_profit,
         )
     if player_bj:
-        profit = bet * rules.blackjack_payout
-        note(f"player blackjack {profit:+g}")
-        hand_result = HandResult(tuple(player.cards), bet, 0.0, "blackjack", profit)
+        hand_profit = bet * rules.blackjack_payout
+        note(f"player blackjack {hand_profit:+g}")
+        hand_result = HandResult(tuple(player.cards), bet, 0.0, "blackjack", hand_profit)
         return RoundResult(
-            profit, (hand_result,), tuple(dealer_cards), tuple(events),
-            dealer_played_out=False, player_natural=True, was_pair=was_pair,
+            hand_profit + insurance_profit, (hand_result,), tuple(dealer_cards),
+            tuple(events), dealer_played_out=False, player_natural=True,
+            was_pair=was_pair, insurance_stake=insurance_stake,
+            insurance_profit=insurance_profit,
         )
 
     hands = [player]
@@ -372,10 +400,12 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
             HandResult(tuple(hand.cards), hand.wager, hand.free_wager, outcome, delta)
         )
         profit += delta
+    profit += insurance_profit
     note(f"round profit {profit:+g}")
     return RoundResult(
         profit, tuple(results), tuple(dealer_cards), tuple(events),
         dealer_played_out=any_live, player_natural=False, was_pair=was_pair,
         did_split=len(hands) > 1, did_double=any(h.doubled for h in hands),
         free_splits=free_splits, free_doubles=free_doubles, dealer_22_push=dealer_22,
+        insurance_stake=insurance_stake, insurance_profit=insurance_profit,
     )

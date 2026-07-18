@@ -8,7 +8,7 @@ collected separately from game logic — the collector only sees RoundResults.
 import math
 from dataclasses import dataclass, field
 
-from ridefree.cards import Shoe
+from ridefree.cards import Shoe, shoe_seeds
 from ridefree.engine import RoundResult, play_round
 from ridefree.rules import Rules
 
@@ -21,6 +21,12 @@ class Metrics:
     _sum_sq: float = 0.0  # sum of per-round profit^2, for variance
     outcomes: dict[str, int] = field(default_factory=dict)
     player_naturals: int = 0  # true count, even when both-BJ makes it a push
+    # Insurance side bet (nonzero only when the strategy takes it). `edge` keeps
+    # the published convention (per initial MAIN wager); insurance profit is
+    # inside total_profit, and these fields make its contribution explainable.
+    insured_rounds: int = 0
+    insurance_stake_total: float = 0.0
+    insurance_profit_total: float = 0.0
     pairs_dealt: int = 0
     splits: int = 0
     doubles: int = 0
@@ -40,6 +46,10 @@ class Metrics:
         self.total_initial_wager += bet
         if result.player_natural:
             self.player_naturals += 1
+        if result.insurance_stake:
+            self.insured_rounds += 1
+            self.insurance_stake_total += result.insurance_stake
+            self.insurance_profit_total += result.insurance_profit
         if result.was_pair:
             self.pairs_dealt += 1
         if result.did_split:
@@ -116,16 +126,25 @@ def simulate(
     rounds: int,
     bet: float = 1.0,
 ) -> Metrics:
+    # Observer hooks (DESIGN.md counting architecture): a strategy that tracks
+    # the shoe implements observe_round(result) and new_shoe(); the simulator
+    # feeds it every settled round and every reshuffle. Strategies without the
+    # hooks (BasicStrategy, OptimalStrategy) are unaffected.
+    on_round = getattr(strategy, "observe_round", None)
+    on_shuffle = getattr(strategy, "new_shoe", None)
     metrics = Metrics()
-    shoe = Shoe(rules.decks, rules.penetration, seed)
-    shuffles = 0
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
     rounds_since = 0
     for _ in range(rounds):
         if _needs_reshuffle(rules, shoe, rounds_since):
-            shuffles += 1
-            shoe = Shoe(rules.decks, rules.penetration, seed + shuffles)
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
             rounds_since = 0
+            if on_shuffle is not None:
+                on_shuffle()
         result = play_round(rules, shoe, strategy, bet=bet)
         rounds_since += 1
+        if on_round is not None:
+            on_round(result)
         metrics.observe(result, bet)
     return metrics

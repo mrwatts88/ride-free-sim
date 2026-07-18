@@ -15,6 +15,14 @@ from ridefree.rules import Rules
 
 
 class PlayerStrategy(Protocol):
+    """`choose` is required. Three OPTIONAL hooks (looked up by name):
+
+    - take_insurance(cards, rules) -> bool: engine asks when the dealer shows an
+      ace and rules.insurance_offered; absent = never insure.
+    - observe_round(result), new_shoe(): the simulator feeds settled rounds and
+      reshuffles to card-tracking strategies (see player_ev.CompositionPlayer).
+    """
+
     def choose(self, view: HandView, rules: Rules) -> Action: ...
 
 

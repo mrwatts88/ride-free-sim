@@ -1,0 +1,30 @@
+{
+ "seed": 1300000001,
+ "rounds": 1000000,
+ "report": {
+  "all": {
+   "rounds": 1000000,
+   "frac_of_all": 1.0,
+   "ace_up_rate": 0.076534,
+   "ins_take_rate": 0.008294,
+   "overlay_ev_per_round": 0.00022769077488221922,
+   "overlay_se": 3.3576765964381505e-06
+  },
+  "win75": {
+   "rounds": 145078,
+   "frac_of_all": 0.145078,
+   "ace_up_rate": 0.08800783027061305,
+   "ins_take_rate": 0.03034919146941645,
+   "overlay_ev_per_round": 0.0009927141897438107,
+   "overlay_se": 1.9378957447371382e-05
+  },
+  "win125": {
+   "rounds": 66064,
+   "frac_of_all": 0.066064,
+   "ace_up_rate": 0.09209251634778397,
+   "ins_take_rate": 0.041596028093969485,
+   "overlay_ev_per_round": 0.001532566670466916,
+   "overlay_se": 3.697157533729911e-05
+  }
+ }
+}

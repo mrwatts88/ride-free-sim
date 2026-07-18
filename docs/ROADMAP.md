@@ -1,10 +1,12 @@
 # Roadmap
 
-**M6a is COMPLETE (2026-07-17).** The attack question is answered end-to-end — see
-docs/STATUS.md for the verdict and docs/EXPERIMENTS.md E1–E5 for the full arc
-(naive betting refuted → pair anomaly → game-specific EORs → RF count subsumes
-pairs → betting verdict → deviations quantified). Remaining milestones (M6b
-practical distillation, M6c hi-lo certification, M7 Rust) are parked pending need.
+**PROJECT CONCLUDED (2026-07-17).** M6a answered the attack question; the same-day
+deep dive (docs/DEEP_DIVE_AUDIT.md, docs/DEEP_DIVE_STRATEGY.md, E6–E9) audited and
+re-certified it on clean seeds: wong-in ≈ +1.0%/played round ceiling on 6.6% of
+rounds, strictly dominated by standard blackjack, camouflage thesis refuted by
+measurement. Insurance and deviations are modeled in-engine and gate-validated.
+Human-capture distillation deliberately not pursued. M6b/M6c/M7 permanently
+parked unless the project reopens.
 
 Each milestone has a validation gate; don't advance until it passes.
 

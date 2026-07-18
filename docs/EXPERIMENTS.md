@@ -2,7 +2,103 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+> **2026-07-17 audit note:** the significance figures in E2–E5 below are overstated
+> by shoe-seed overlap between shards (corrected σ and details in
+> `docs/DEEP_DIVE_AUDIT.md`; the reseeding flaw is fixed in code as of the same
+> date). E6–E9 used base seeds spaced ≥ 2×10⁸ and are unaffected — but they ran on
+> the pre-fix code, so post-fix reruns of their commands reproduce statistically
+> equivalent, not bit-identical, output. The banked `data/` JSONs are canonical.
+
+## E9 — Insurance overlay: +0.15% per wong-in round (perfect information; unmodeled)
+
+**Date:** 2026-07-17 · **Command:** `uv run python data/e9_insurance_overlay.py
+1300000001 1000000 data/e9_insurance.json` (1M rounds).
+
+Insurance is not modeled in the engine (see DEEP_DIVE_AUDIT.md); this measures the
+overlay from taking it exactly when +EV — p(hole=ten) > 1/3 computed from the
+tracked composition minus the three visible cards; stake 0.5, pays 2:1.
+
+- All rounds: **+0.023%**/round (off-window it stays a sucker bet).
+- rf_ev ≥ +0.0075 (14.5% of rounds): **+0.099% ± 0.002%** per played round.
+- **rf_ev ≥ +0.0125 (6.6%): +0.153% ± 0.004%** per played round. In-window the
+  dealer shows an ace 9.2% of rounds (vs 7.7% base) and ~45% of those are +EV.
+- Independently replicated at +0.157% (300k rounds, seed 999999937).
+
+Ceiling caveats: perfect-information take rule (human capture via a ten side count
+unmeasured — next step); rack card must confirm insurance is offered.
+
+**Engine promotion (same day):** insurance is now first-class — `Rules.insurance_offered`
+/ `insurance_pays`, an optional strategy hook `take_insurance(cards, rules)`, explicit
+`RoundResult`/`Metrics` ledger fields, and `player_ev.CompositionPlayer` implementing
+the E9 composition rule. Gate passed: always-insure on the standard game in csm mode
+reproduces the exact 6-deck insurance EV (−23/311 per unit staked, computed reference;
+`tests/test_insurance.py`). No built-in reference strategy insures, so all validated
+published-edge numbers are untouched. `cli sim` takes insurance (and plays deviations)
+by default — `--no-insurance --no-deviations` restores the published-edge comparator;
+`validate` always uses the reference strategies.
+
+## E8 — Window-conditional deviation value, properly powered: +0.322% ± 0.063%
+
+**Date:** 2026-07-17 · **Command:** `uv run python data/e8_window_deviations.py
+<seed> 1000000 0.0125 <out>` × 4 shards, seeds 1900000001 / 2100000001 /
+2300000001 / 2500000001 → `data/e8_wdev_shard*.json`.
+
+Same paired differential design as E5, but the expensive live-composition replay
+runs only when rf_ev ≥ threshold (~7× more window rounds per wall-clock; the base
+timeline is canonical either way, so the estimand is identical).
+
+- **Deviation value at rf_ev ≥ +0.0125: +0.322% ± 0.063%** (264k paired window
+  rounds, 5σ; shards +0.23 / +0.09 / +0.36 / +0.60). 3.4% of window rounds change
+  profit. Perfect-information ceiling.
+- Supersedes E5's window figure (+0.20% ± 0.13%, which was measured at the wider
+  0.0075 threshold and underpowered). E5's *overall* +0.12%/round stands (with the
+  corrected σ from the audit).
+
+**Harness promotion (same day):** `run_deviation_value` now takes
+`window_threshold` and `window_only` (E8's replay-only-in-window mode, ~7× more
+window rounds/sec; window stats proven identical to the full run), counts true
+*action* changes alongside profit changes (fixing the E5 mislabel at the source),
+and both are exposed on `cli deviations`. Deviations are also playable in straight
+sims via `player_ev.CompositionPlayer` (`cli sim`, default on).
+
+## E7 — rf_ev × hilo_tc joint grid: dominance closed, camouflage measured
+
+**Date:** 2026-07-17 · **Command:** `grid --rules ridefree --row rf_ev --col
+hilo_tc --rounds 3000000 --json …` × 3 shards, seeds 3400000001 / 3500000001 /
+3600000001 → `data/e7_joint_shard*.json` (9M rounds).
+
+- **E4b's open dominance question: CLOSED.** Within-rf_ev hi-lo residual slope
+  +0.02%/TC ± 0.04% — null. Hi-lo adds nothing at fixed RF count; the parked
+  resplit-aware EOR re-derivation is retired.
+- **Camouflage fraction (first measurement): 3.2%** of rf_ev ≥ +0.0125 rounds have
+  hilo_tc ≤ +1 (12.4% at ≥ +0.0075) — 96.8% of wong-in entries coincide with
+  hi-lo TC ≥ +2, so the ARTICLE's "reads as a hunch player" thesis fails as
+  stated. Residual nuance: only 32% of TC ≥ +2 rounds are RF-playable.
+- Independent wong-in check @ +0.0125: +0.696% ± 0.138%.
+
+## E6 — rf_ev × p_free_double: subsumed; wong-in EV recertified on clean seeds
+
+**Date:** 2026-07-17 · **Command:** `grid --rules ridefree --row rf_ev --col
+p_free_double --rounds 3000000 --json …` × 4 shards, seeds 900000001 /
+1100000001 / 1500000001 / 1700000001 → `data/e6_pfd_shard*.json` (12M rounds).
+
+- Pooled within-rf_ev p_free_double slope: **−0.03% ± 0.05%. Null** — with E4b,
+  the RF count now subsumes *both* event signals.
+- Fresh wong-in @ rf_ev ≥ +0.0125: +0.51% ± 0.12%; **pooled with E7's 9M rounds:
+  +0.59% ± 0.09% at 6.6% of rounds** — the certified replacement for E4c's
+  in-sample +1.04% (see DEEP_DIVE_AUDIT.md). Fresh threshold frontier and the
+  corrected full-system stack (≈ +1.06% ± 0.11%/played round incl. E8+E9
+  ceilings) are in DEEP_DIVE_STRATEGY.md.
+- RF-count calibration slope on clean data: 0.93–0.97 (E4b's 0.75 was a
+  contaminated-data artifact).
+
 ## E5 — Value of playing deviations: +0.12% ± 0.05% (perfect-information ceiling)
+
+> **[Audit correction, 2026-07-17]** Shards 7777/8888 shared 68% of their shoes:
+> honest overall value **+0.119% ± 0.060% (+2.0σ)**. "2.1% of rounds change any
+> action" actually measured *profit*-changed rounds — the true action-change rate
+> is **3.7%**, gaining ~+3.2% per changed round. The window figure is superseded
+> by E8: **+0.322% ± 0.063%** at the operating threshold (+0.0125).
 
 **Date:** 2026-07-17 · **Command:** `deviations --rules ridefree --rounds 150000`
 × 2 shards (seeds 7777/8888), paired differential design (each round played twice
@@ -32,6 +128,13 @@ count (game-derived), event signals (subsumed), bet ramps, wong-in, deviations.
 M6a's core question — can Ride Free be beaten, how, and by how much — is answered.
 
 ## E4c — Which accounting system makes money, and how much (the M6a betting verdict)
+
+> **[Audit correction, 2026-07-17]** The "independent seeds" overlapped ~98%, so
+> the cross-fit protection did not exist and the wong-in EVs were
+> in-sample-optimistic (honest SE on +1.04% is ±0.24% before selection effects).
+> Clean-seed certification (E6/E7, 21M fresh rounds): **≥ +0.0075 → +0.21% ±
+> 0.08%; ≥ +0.0125 → +0.59% ± 0.09%.** The standard-game row was single-grid
+> (necessarily in-sample), as noted below. The seated-play verdict is unchanged.
 
 **Date:** 2026-07-17 · **Method:** pure arithmetic on banked grids, cross-fitted
 (bet thresholds selected on one dataset, profit evaluated on independent seeds).
@@ -65,6 +168,11 @@ strategy changes). That's E5. Also parked: resplit-aware EOR re-derivation (susp
 to sharpen the RF count somewhat; the E4b dominance question stays open until then).
 
 ## E4b — The pair effect is fully explained by the RF count (null at −0.6σ)
+
+> **[Audit correction, 2026-07-17]** Shards 5555/6666 shared 98.4% of their
+> shoes; honest SE ±0.19% — the null stands (and E7 later closed the open
+> dominance question below: hi-lo is fully subsumed; the calibration slope on
+> clean seeds is 0.97, not 0.75).
 
 **Date:** 2026-07-17 · **Command:** `grid --rules ridefree --row rf_ev --col p_pair
 --rounds 3000000` × 2 shards (seeds 5555/6666), merged. Raw: `data/e4b_shard*.json`.
@@ -147,6 +255,13 @@ linear model is well-calibrated); (2) the purified pair claim — pair slope at 
 RF count.
 
 ## E3 — Replication: the pair effect is CONFIRMED (+6.6σ combined)
+
+> **[Audit correction, 2026-07-17]** The four "fresh" shards and E2 shared 95–98%
+> of their shoes (the `seed + shuffles` flaw), so this was one large sample, not
+> a replication: honest combined evidence ≈ **+0.55–0.63% ± 0.21% (≈ +3σ)** (the
+> range reflects a min_cell estimand shift the audit also found), and the tight
+> shard agreement below is duplication, not confirmation. Qualitative conclusion
+> unchanged — and E4b subsumes the signal regardless.
 
 **Date:** 2026-07-17 · **Command:** `grid --rules ridefree --row hilo_tc --col p_pair
 --rounds 3000000` × 4 shards (seeds 1111/2222/3333/4444, fresh — never used in E2),

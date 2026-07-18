@@ -52,3 +52,24 @@ def test_paired_harness_smoke():
     assert abs(r.deviation_value) < 0.05
     # Windowed accumulators are consistent.
     assert 0 <= r.window_rounds <= r.rounds
+
+
+def test_action_changes_at_least_profit_changes():
+    # Identical action sequences imply identical cards and profits, so every
+    # profit-changed round must also be action-changed (the converse fails:
+    # e.g. hit-and-bust vs stand-and-lose tie on profit).
+    r = run_deviation_value(RIDE_FREE, seed=12, rounds=1_500)
+    assert r.actions_changed >= r.rounds_changed
+
+
+def test_window_only_matches_full_run_window_stats():
+    # E8's efficiency mode: the base timeline is canonical either way, so the
+    # window accumulators must match the full run exactly.
+    full = run_deviation_value(RIDE_FREE, seed=11, rounds=1_200, window_threshold=0.003)
+    wo = run_deviation_value(
+        RIDE_FREE, seed=11, rounds=1_200, window_threshold=0.003, window_only=True
+    )
+    assert full.window_rounds > 0  # threshold low enough to exercise the window
+    assert wo.window_rounds == full.window_rounds
+    assert wo.window_diff == pytest.approx(full.window_diff)
+    assert wo.window_diff_sq == pytest.approx(full.window_diff_sq)

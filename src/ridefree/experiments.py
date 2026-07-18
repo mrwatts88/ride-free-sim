@@ -15,7 +15,7 @@ test the hypothesis that free-double abundance anti-correlates with hi-lo true c
 import math
 from dataclasses import dataclass, field
 
-from ridefree.cards import Shoe
+from ridefree.cards import Shoe, shoe_seeds
 from ridefree.counting import CompositionTracker
 from ridefree.engine import play_round
 from ridefree.rules import Rules
@@ -102,15 +102,14 @@ def run_conditional_ev(
     ss = dict.fromkeys(names, 0.0)
     cross = {(a, b): 0.0 for i, a in enumerate(names) for b in names[i + 1:]}
 
-    shoe = Shoe(rules.decks, rules.penetration, seed)
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
     tracker = CompositionTracker(rules.decks)
-    shuffles = 0
     rounds_since = 0
     total_profit = 0.0
     for _ in range(rounds):
         if _needs_reshuffle(rules, shoe, rounds_since):
-            shuffles += 1
-            shoe = Shoe(rules.decks, rules.penetration, seed + shuffles)
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
             tracker.new_shoe()
             rounds_since = 0
         values = {name: SIGNALS[name][0](tracker) for name in names}
@@ -236,15 +235,14 @@ def run_conditional_ev_grid(
     row_extract, row_bin = SIGNALS[row_signal]
     col_extract, col_bin = SIGNALS[col_signal]
     grid: dict = {}
-    shoe = Shoe(rules.decks, rules.penetration, seed)
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
     tracker = CompositionTracker(rules.decks)
-    shuffles = 0
     rounds_since = 0
     total_profit = 0.0
     for _ in range(rounds):
         if _needs_reshuffle(rules, shoe, rounds_since):
-            shuffles += 1
-            shoe = Shoe(rules.decks, rules.penetration, seed + shuffles)
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
             tracker.new_shoe()
             rounds_since = 0
         row = row_bin(row_extract(tracker))
@@ -270,6 +268,7 @@ class DeviationResult:
     diff_sum: float
     diff_sq: float
     rounds_changed: int  # rounds where the two strategies' profits differ
+    actions_changed: int = 0  # rounds where any chosen action differs (>= rounds_changed)
     window_rounds: int = 0  # rounds inside the wong-in window (rf_ev >= threshold)
     window_diff: float = 0.0
     window_diff_sq: float = 0.0
@@ -300,6 +299,19 @@ class DeviationResult:
         return math.sqrt(var / self.window_rounds)
 
 
+class _ActionRecorder:
+    """Transparent strategy wrapper recording the round's action sequence."""
+
+    def __init__(self, inner) -> None:
+        self._inner = inner
+        self.actions: list = []
+
+    def choose(self, view, rules):
+        action = self._inner.choose(view, rules)
+        self.actions.append(action)
+        return action
+
+
 def run_deviation_value(
     rules: Rules,
     *,
@@ -307,6 +319,7 @@ def run_deviation_value(
     rounds: int,
     bet: float = 1.0,
     window_threshold: float = 0.0075,
+    window_only: bool = False,
 ) -> DeviationResult:
     """Paired differential simulation of composition-conditioned play.
 
@@ -316,28 +329,46 @@ def run_deviation_value(
     (its cards advance the shoe and feed the tracker). Most rounds the strategies
     agree, so the difference is exactly 0 and its variance is tiny — resolving
     deviation values far below what independent runs could.
+
+    `window_only` (E8's efficiency mode) skips the paired replay on rounds below
+    `window_threshold`, accumulating window rounds ~7x faster per second. In that
+    mode only the window_* fields are meaningful — the overall deviation_value /
+    rounds_changed / actions_changed cover window rounds alone. The base timeline
+    is identical either way, so window stats match the full run exactly.
+
+    Insurance is deliberately excluded on both arms: this harness isolates PLAY
+    deviations; the insurance overlay is separable and measured by E9.
     """
     from ridefree.player_ev import CompositionStrategy, OptimalStrategy
 
-    base = OptimalStrategy()
-    dev = CompositionStrategy()
-    shoe = Shoe(rules.decks, rules.penetration, seed)
+    base = _ActionRecorder(OptimalStrategy())
+    dev_inner = CompositionStrategy()
+    dev = _ActionRecorder(dev_inner)
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
     tracker = CompositionTracker(rules.decks)
-    shuffles = 0
     rounds_since = 0
     result = DeviationResult(0, 0.0, 0.0, 0.0, 0)
     for _ in range(rounds):
         if _needs_reshuffle(rules, shoe, rounds_since):
-            shuffles += 1
-            shoe = Shoe(rules.decks, rules.penetration, seed + shuffles)
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
             tracker.new_shoe()
             rounds_since = 0
         in_window = tracker.rf_ev_shift() >= window_threshold
+        if window_only and not in_window:
+            r_base = play_round(rules, shoe, base, bet=bet)
+            tracker.observe_round(r_base)
+            rounds_since += 1
+            result.rounds += 1
+            result.base_profit += r_base.profit
+            continue
+        base.actions.clear()
         start = shoe.snapshot()
         r_base = play_round(rules, shoe, base, bet=bet)
         end = shoe.snapshot()
         shoe.restore(start)
-        dev.set_composition(rules, tracker.counts)
+        dev_inner.set_composition(rules, tracker.counts)
+        dev.actions.clear()
         r_dev = play_round(rules, shoe, dev, bet=bet)
         shoe.restore(end)  # canonical timeline: the fixed strategy's cards
         tracker.observe_round(r_base)
@@ -349,6 +380,8 @@ def run_deviation_value(
         result.diff_sq += d * d
         if d != 0.0:
             result.rounds_changed += 1
+        if base.actions != dev.actions:
+            result.actions_changed += 1
         if in_window:
             result.window_rounds += 1
             result.window_diff += d

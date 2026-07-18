@@ -3,6 +3,39 @@
 Updated 2026-07-17. This is the resume-here document: current state, key numbers,
 and the precisely-specified next step. Doc map at the bottom.
 
+## ⚠ Deep-dive checkpoint (2026-07-17, late session) — read before trusting the numbers below
+
+A full correctness audit + strategy hunt ran after this file's last update. Key
+corrections (details: `docs/DEEP_DIVE_AUDIT.md`, new results: `docs/DEEP_DIVE_STRATEGY.md`):
+
+- **Shoe reseeding flaw — FIXED in code**: `seed + shuffles` made "independent"
+  shards replay 95–98% identical shoes (E3's +6.6σ is really ≈ +3σ; all
+  shard-agreement claims tautological). `cards.shoe_seeds()` now derives
+  non-sequential shoe seeds everywhere; 149 tests pass, determinism preserved.
+  Pre-fix commands no longer reproduce bit-identical output (banked JSONs stay
+  valid as data).
+- **Wong-in headline corrected**: fresh 21M rounds give **+0.59% ± 0.09%** at
+  rf_ev ≥ +0.0125 (published +1.04% was in-sample-selected). Engine itself is
+  clean — new csm runs match published off-the-top EV (+0.5σ).
+- **New certified system** (per played round, 6.6% of rounds): +0.59% bet
+  selection + **+0.32% ± 0.06% deviations** (E8, repowered) + **+0.15% insurance**
+  (E9 — insurance was never modeled!) ≈ **+1.06% ± 0.11%** (two ceiling terms).
+- **E4b dominance question CLOSED** (hi-lo null at fixed rf_ev, 9M fresh rounds);
+  free-double signal also subsumed (E6); **camouflage thesis refuted by
+  measurement** (96.8% of wong-in rounds coincide with hi-lo TC ≥ +2).
+- **Sit-out wonging**: seated toll shrinks −0.44% → −0.05% (breakeven perch, not
+  profit). New data: `data/e6_*`, `e7_*`, `e8_*`, `e9_*`. Post-audit re-run of
+  all four validation batteries: ALL PASS, tightest readings yet (RF 1.108% vs
+  1.12 derived, −0.16σ; WoO 1.026% vs 1.04, −0.19σ). **Project concluded — see
+  the section below.**
+- **Insurance + deviations are now first-class** (same day): `Rules.insurance_offered`,
+  strategy hook `take_insurance`, `CompositionPlayer` (tracker-fed, both features
+  toggleable), simulator observer hooks; `cli sim` defaults BOTH ON
+  (`--no-insurance --no-deviations` = published-edge comparator; `validate`
+  always uses reference strategies). Insurance gate passed vs exact 6-deck EV.
+  `cli deviations` gained `--window-threshold` / `--window-only` and true
+  action-change counting. 161 tests pass.
+
 ## Where the project stands
 
 Goal (Matt's framing): simulate Potawatomi's **Ride Free** blackjack (Free Bet
@@ -59,16 +92,23 @@ worth +0.12% ± 0.05% overall (perfect-information ceiling; 2.1% of rounds chang
 Standard blackjack hi-lo still beats it on raw EV (~3× the playable volume at equal
 quality); Ride Free's differentiator is camouflage.
 
-## Candidate next steps (Matt to choose)
+## PROJECT CONCLUDED (Matt, 2026-07-17)
 
-- **Practical distillation:** human-trackable versions of the RF count and the top
-  deviation rules; quantify edge lost per simplification. (The "teach a human"
-  step.)
-- **Resplit-aware EOR re-derivation:** suspected to sharpen the RF count; also
-  settles E4b's open dominance question.
-- **Bankroll/risk analysis:** variance, risk-of-ruin, hourly $ for the wong-in
-  system at real table conditions (penetration sweep, spread limits).
-- **M6c / M7:** full hi-lo certification; Rust core if sweeps grow.
+The research question is answered and re-certified on clean seeds: **Ride Free is
+beatable only by wong-in at rf_ev ≥ +0.0125 (~6.6% of rounds) for ≈ +1.0% ± 0.11%
+per played round at the perfect-information ceiling (bet +0.59 / deviations +0.32
+/ insurance +0.15) — and that is strictly dominated by standard blackjack next
+door (~3× the volume at ~+1.1% with plain hi-lo), with the camouflage
+differentiator refuted by measurement (97% of RF entries coincide with hi-lo
+TC ≥ +2).** Human-capture distillation deliberately not pursued: no reason to
+optimize execution of the second-best game.
+
+Formerly-candidate items, now all parked with no successor scheduled: practical
+distillation / RF deviation index, bankroll & hourly analysis, resplit-aware EOR
+re-derivation (retired — E7 closed the dominance question), hi-lo certification
+(M6c), Rust core (M7). Still outstanding if ever revisited: apply the
+DEEP_DIVE_AUDIT.md prose corrections to EXPERIMENTS/ARTICLE (editorial), and the
+audit's unverified test-coverage backlog.
 
 ## Superseded plan notes (E4, done)
 
@@ -114,7 +154,7 @@ symptom). Plan:
 ## Commands cheat sheet
 
 ```
-uv run pytest -q                                   # 140 tests
+uv run pytest -q                                   # 161 tests
 uv run python -m ridefree.cli demo --rules ridefree --seed 44 --hands 6
 uv run python -m ridefree.cli sim --rules ridefree --rounds 2000000
 uv run python -m ridefree.cli validate --rules {h17,s17,ridefree,ridefree_woo}

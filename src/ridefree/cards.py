@@ -6,7 +6,7 @@ modeled. One deck therefore holds four of each rank 1-9 and sixteen tens.
 """
 
 import random
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 
 ACE = 1
 TEN = 10
@@ -20,6 +20,21 @@ _PER_DECK = {rank: 16 if rank == TEN else 4 for rank in RANKS}
 def deck_composition(decks: int) -> dict[int, int]:
     """Rank -> count for a fresh shoe of `decks` decks."""
     return {rank: count * decks for rank, count in _PER_DECK.items()}
+
+
+def shoe_seeds(base_seed: int) -> Iterator[int]:
+    """Deterministic, non-sequential shoe seeds for one run.
+
+    Successive shoes must be independent of each other AND of every other run's
+    shoes. The old derivation (base_seed + shuffle_count) made runs with nearby
+    base seeds traverse overlapping shoe-seed ranges and replay identical rounds
+    (docs/DEEP_DIVE_AUDIT.md, `shoe-seed-overlap`). Drawing 63-bit seeds from a
+    base-seeded RNG keeps (rules, seed, strategy) exactly reproducible while
+    making cross-run seed collisions vanishingly unlikely.
+    """
+    rng = random.Random(base_seed)
+    while True:
+        yield rng.getrandbits(63)
 
 
 class Shoe:

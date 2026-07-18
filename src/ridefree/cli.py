@@ -9,7 +9,7 @@
 import argparse
 import dataclasses
 
-from ridefree.cards import Shoe
+from ridefree.cards import Shoe, shoe_seeds
 from ridefree.engine import play_round
 from ridefree.rules import (
     RIDE_FREE,
@@ -54,10 +54,11 @@ VARIANTS = {
 def _demo(args: argparse.Namespace) -> None:
     _, rules, _, _ = VARIANTS[args.rules]
     strategy = _strategy_for(rules)
-    shoe = Shoe(rules.decks, rules.penetration, args.seed)
+    seeds = shoe_seeds(args.seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
     for n in range(1, args.hands + 1):
         if shoe.needs_shuffle or shoe.cards_remaining < 20:
-            shoe = Shoe(rules.decks, rules.penetration, args.seed + n)
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
         result = play_round(rules, shoe, strategy, bet=1.0, log=True)
         print(f"--- hand {n} ---")
         for line in result.events:
@@ -71,7 +72,21 @@ def _sim(args: argparse.Namespace) -> None:
     print(f"shoe mode: {rules.shoe_end_mode}"
           + (f" ({rules.rounds_per_shoe} rounds/shoe)"
              if rules.shoe_end_mode == "fixed_rounds" else ""))
-    m = simulate(rules, _strategy_for(rules), seed=args.seed, rounds=args.rounds, bet=1.0)
+    if args.insurance or args.deviations:
+        from ridefree.player_ev import CompositionPlayer
+
+        strategy = CompositionPlayer(
+            rules.decks, insurance=args.insurance, deviations=args.deviations
+        )
+        print(f"strategy: composition player (insurance={'on' if args.insurance else 'off'}, "
+              f"deviations={'on' if args.deviations else 'off'})"
+              + (" — deviations rebuild the EV calculator per round, ~0.5k rounds/s"
+                 if args.deviations else ""))
+    else:
+        strategy = _strategy_for(rules)
+        print("strategy: fixed reference (chart play, no insurance) — "
+              "the published-edge comparator")
+    m = simulate(rules, strategy, seed=args.seed, rounds=args.rounds, bet=1.0)
     edge_pct = m.edge * 100
     err_pct = m.edge_stderr * 100
     print(f"rounds:            {m.rounds:,}")
@@ -81,6 +96,12 @@ def _sim(args: argparse.Namespace) -> None:
     print(f"player naturals:   {m.player_naturals:,} "
           f"({100 * m.player_naturals / m.rounds:.2f}% of rounds)")
     print(f"per-round std dev: {m.profit_std:.3f} units")
+    if m.insured_rounds:
+        print(f"insurance:         {m.insured_rounds:,} rounds "
+              f"({100 * m.insured_rounds / m.rounds:.2f}%), "
+              f"staked {m.insurance_stake_total:g}, "
+              f"profit {m.insurance_profit_total:+.1f} "
+              f"({100 * m.insurance_profit_total / m.rounds:+.4f}%/round)")
     if m.free_splits or m.free_doubles or m.dealer_22_pushes:
         print(f"free splits:       {m.free_splits:,} "
               f"({100 * m.free_splits / m.rounds:.2f}% of rounds)")
@@ -187,14 +208,20 @@ def _deviations(args: argparse.Namespace) -> None:
     from ridefree.experiments import run_deviation_value
 
     name, rules, _, _ = VARIANTS[args.rules]
-    print(f"ruleset: {name}")
-    r = run_deviation_value(rules, seed=args.seed, rounds=args.rounds)
-    print(f"rounds:               {r.rounds:,} (paired)")
-    print(f"base EV:              {100 * r.base_profit / r.rounds:+.3f}%")
-    print(f"deviation value:      {100 * r.deviation_value:+.4f}% ± "
-          f"{100 * r.deviation_se:.4f}% per round")
-    print(f"rounds changed:       {100 * r.rounds_changed / r.rounds:.2f}%")
-    print(f"wong-in window value: {100 * r.window_value:+.4f}% ± "
+    print(f"ruleset: {name}   window threshold: rf_ev >= {args.window_threshold:g}"
+          + ("   (window-only mode)" if args.window_only else ""))
+    r = run_deviation_value(
+        rules, seed=args.seed, rounds=args.rounds,
+        window_threshold=args.window_threshold, window_only=args.window_only,
+    )
+    print(f"rounds:                {r.rounds:,} (paired)")
+    print(f"base EV:               {100 * r.base_profit / r.rounds:+.3f}%")
+    if not args.window_only:
+        print(f"deviation value:       {100 * r.deviation_value:+.4f}% ± "
+              f"{100 * r.deviation_se:.4f}% per round")
+        print(f"action-changed rounds: {100 * r.actions_changed / r.rounds:.2f}%   "
+              f"profit-changed: {100 * r.rounds_changed / r.rounds:.2f}%")
+    print(f"wong-in window value:  {100 * r.window_value:+.4f}% ± "
           f"{100 * r.window_se:.4f}% per round "
           f"({r.window_rounds:,} rounds in window)")
 
@@ -217,6 +244,12 @@ def main() -> None:
                    help="rounds per shoe for fixed_rounds mode")
     s.add_argument("--seed", type=int, default=1)
     s.add_argument("--rounds", type=int, default=100_000)
+    s.add_argument("--insurance", action=argparse.BooleanOptionalAction, default=True,
+                   help="take insurance when the tracked composition makes it +EV "
+                        "(default on; --no-insurance for the published-edge comparator)")
+    s.add_argument("--deviations", action=argparse.BooleanOptionalAction, default=True,
+                   help="composition-based playing deviations (default on; slower "
+                        "~0.5k rounds/s; --no-deviations for fixed chart play)")
     s.set_defaults(func=_sim)
 
     v = sub.add_parser("validate", help="run the validation battery vs references")
@@ -272,6 +305,12 @@ def main() -> None:
     dv.add_argument("--rules", choices=VARIANTS, default="ridefree")
     dv.add_argument("--seed", type=int, default=1)
     dv.add_argument("--rounds", type=int, default=150_000)
+    dv.add_argument("--window-threshold", type=float, default=0.0075,
+                    help="rf_ev wong-in threshold for the window stats "
+                         "(E4c/E8 operating point is 0.0125)")
+    dv.add_argument("--window-only", action="store_true",
+                    help="paired replay only inside the window (~7x more window "
+                         "rounds per second; overall stats then cover the window only)")
     dv.set_defaults(func=_deviations)
 
     args = parser.parse_args()
