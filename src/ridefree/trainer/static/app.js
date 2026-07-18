@@ -8,6 +8,7 @@ const RANK_NAMES = { 1: "A", 11: "J", 12: "Q", 13: "K" };
 let state = null;      // last server state
 let lastBet = null;    // for one-key rebet
 let quizOnDemand = false;
+let lastShoeNo = null; // to detect shuffles and flash the new-shoe interstitial
 
 /* ---------------- api ---------------- */
 
@@ -43,6 +44,17 @@ function render() {
   if (!state || state.phase === "none") { show("start-screen"); return; }
   if (state.phase === "over") { show("start-screen"); return; }
   show("play-screen");
+
+  if (state.shoe_no !== lastShoeNo) {
+    // flash on every shuffle, and on session start (round 0) — but not on a
+    // mid-session page reload (lastShoeNo null with rounds already played)
+    if (lastShoeNo !== null || state.round_no === 0) {
+      $("shoe-flash-irc").textContent = signed(state.card.irc);
+      $("shoe-flash").classList.remove("hidden");
+      feed(`— shoe ${state.shoe_no}: count resets to ${signed(state.card.irc)} —`, "info");
+    }
+    lastShoeNo = state.shoe_no;
+  }
 
   $("hud-round").innerHTML = `round <b>${state.round_no}</b>`;
   $("hud-shoe").innerHTML = `shoe <b>${state.shoe_no}</b>`;
@@ -467,7 +479,17 @@ $("settings-close").onclick = async () => {
 $("end-btn").onclick = endSession;
 $("summary-close").onclick = () => { closeModals(); render(); };
 
+function dismissShoeFlash() {
+  $("shoe-flash").classList.add("hidden");
+}
+$("shoe-flash").onclick = dismissShoeFlash;
+
 document.addEventListener("keydown", (e) => {
+  if (!$("shoe-flash").classList.contains("hidden")) {
+    dismissShoeFlash();
+    e.preventDefault();
+    return;
+  }
   if (e.target.tagName === "INPUT") return;
   if (!state || state.phase === "none") return;
   if (!$("modal-backdrop").classList.contains("hidden")) return;

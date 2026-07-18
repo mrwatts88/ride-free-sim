@@ -133,6 +133,22 @@ input {
 #quiz-result.ok { color: var(--good); }
 #quiz-result.err { color: var(--bad); }
 
+/* ---- new-shoe interstitial ---- */
+#shoe-flash { position: fixed; inset: 0; z-index: 40; cursor: pointer;
+  background: rgba(5, 8, 12, .88); display: flex; align-items: center;
+  justify-content: center; }
+.shoe-flash-box { text-align: center; padding: 48px 72px; background: var(--surface);
+  border: 2px solid var(--accent); border-radius: 16px;
+  animation: flashin .18s ease-out; }
+.shoe-flash-title { font-size: 54px; font-weight: 800; letter-spacing: .1em;
+  color: var(--accent); }
+.shoe-flash-sub { margin-top: 10px; font-size: 20px; color: var(--ink); }
+.shoe-flash-sub b { color: var(--good); font-size: 28px; }
+.shoe-flash-hint { margin-top: 18px; color: var(--ink-3); font-size: 13px;
+  text-transform: uppercase; letter-spacing: .12em; }
+@keyframes flashin { from { transform: scale(.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; } }
+
 /* ---- toast ---- */
 #toast-wrap { position: fixed; top: 58px; right: 316px; z-index: 30;
   display: flex; flex-direction: column; gap: 8px; }
