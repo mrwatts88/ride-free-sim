@@ -40,9 +40,13 @@ corrections (details: `docs/DEEP_DIVE_AUDIT.md`, new results: `docs/DEEP_DIVE_ST
 
 Goal (Matt's framing): simulate Potawatomi's **Ride Free** blackjack (Free Bet
 variant), first matching published EVs exactly, then beating the game with
-"accounting systems" — count/composition-based betting. Milestones M0–M5 are ✅ done
-with validation gates met (see ROADMAP.md). We are in **M6a, the attack phase**, and
-have one confirmed discovery.
+"accounting systems" — count/composition-based betting. Milestones M0–M6 (the
+Ride Free question) are ✅ done and CONCLUDED — see the verdict section below.
+**M8 (the 21+3 side bet attack) is also ✅ complete as of 2026-07-17**: M8a
+suit-aware cards, M8b the bet as validated configuration, M8c the attack
+(E10–E12) — final verdict at the top of this file; write-up in
+`docs/ARTICLE_21P3.md`. Remaining items are field confirmation (rack card)
+and optional realism passes.
 
 ## Where the attack stands (E1–E4c, see EXPERIMENTS.md)
 
@@ -209,8 +213,17 @@ record: hole card eventually visible; 100 rounds/h heads-up.
    tracker (drop hole-card assumption — expect ~nil), full-table
    cards-per-round model, tiered-paytable re-derivation (pure configuration:
    rerun sbev/sbdecomp/sbtrack with the actual paytable).
-3. Optional write-up: extend `docs/ARTICLE.md` with the 21+3 chapters
-   (M8a–E12 arc: engine → gates → ceiling → decomposition → quad-Q → verdict).
+3. ~~Optional write-up~~ **DONE**: `docs/ARTICLE_21P3.md` (the full M8 arc:
+   engine → gates → ceiling → decomposition → quad-Q → verdict → Jacobson
+   comparison). Open editorial item if ever wanted: a same-harness head-to-head
+   of Jacobson's spread count inside `sbtrack` (currently a cross-harness
+   comparison, flagged honestly in the article).
+4. Combined-play measurement (parked; would upgrade the E12 "stacks with
+   hi-lo" claim from arithmetic to measurement): simulate hi-lo-spread main +
+   quad-Q side in one run; needs a hi-lo betting simulator class the repo
+   doesn't have yet. E12's seated toll assumed flat-bet basic strategy
+   (−0.64%/round) — with a counted main game the toll flips to a profit leg
+   (E4c: +0.23% on money at 1–8 spread, standard game).
 
 Parked/refuted (ChatGPT list disposition): rank×suit interaction models
 **refuted by E11a** (<0.2% of variance); rank-adjacency beyond the straight
@@ -295,6 +308,12 @@ uv run python -m ridefree.cli signals --rules ridefree --rounds 3000000
 uv run python -m ridefree.cli grid --rules ridefree --row hilo_tc --col p_pair \
     --rounds 3000000 --json data/out.json
 uv run python -m ridefree.cli combine data/e2_ridefree_grid.json data/e3_shard*.json
+uv run python -m ridefree.cli sim --rules h17 --shoe-mode csm --21p3 \
+    --no-insurance --no-deviations           # 21+3 published-edge comparator
+uv run python -m ridefree.cli sbev --rounds 2000000 [--penetration 0.85]
+uv run python -m ridefree.cli sbdecomp --rounds 2000000   # EV = B+S+R+X shares
+uv run python -m ridefree.cli sbtrack --rounds 2000000    # human trackers scored
+uv run python data/e12_verdict.py                         # the E12 ledger
 ```
 
 ## Open items
@@ -310,8 +329,11 @@ uv run python -m ridefree.cli combine data/e2_ridefree_grid.json data/e3_shard*.
 
 - `CLAUDE.md` — working doctrine (rules-as-data, one engine, determinism, ledger).
 - `docs/DESIGN.md` — architecture, money model, shoe-end modes, counting design,
-  Rust decision record.
-- `docs/ROADMAP.md` — milestones M0–M7 with gates and results.
-- `docs/EXPERIMENTS.md` — experiment log E1–E3 (newest first), reproducible.
+  suit-aware card / M8 decision records, Rust decision record.
+- `docs/ROADMAP.md` — milestones M0–M8 with gates and results.
+- `docs/EXPERIMENTS.md` — experiment log E1–E12 (newest first), reproducible.
+- `docs/ARTICLE.md` — the Free Bet (Ride Free) write-up.
+- `docs/ARTICLE_21P3.md` — the 21+3 side bet write-up (M8 arc, quad-Q, verdict).
 - `docs/STATUS.md` — this file. Update it at every session checkpoint.
-- `data/` — banked grid JSONs (E2, E3 shards); bin stats are additive.
+- `data/` — banked grid JSONs (E2, E3 shards; additive bin stats) and
+  `e12_verdict.py` (the E12 ledger arithmetic).
