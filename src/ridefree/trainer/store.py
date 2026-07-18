@@ -46,15 +46,16 @@ class Store:
     def __init__(self, path: str) -> None:
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.executescript(_SCHEMA)
-        # 2026-07-18 migration: per-round profit^2 for lifetime variance
-        # (winner-probability panel). Older sessions keep 0 and are excluded
-        # from the variance estimate in lifetime().
-        try:
-            self.db.execute(
-                "ALTER TABLE sessions ADD COLUMN profit_sq REAL NOT NULL DEFAULT 0"
-            )
-        except sqlite3.OperationalError:
-            pass  # column already exists
+        # 2026-07-18 migrations: profit^2 (winner-probability variance) and
+        # active playing time (pace). Older sessions keep 0 and are excluded
+        # from the respective lifetime estimates.
+        for column in ("profit_sq", "active_seconds"):
+            try:
+                self.db.execute(
+                    f"ALTER TABLE sessions ADD COLUMN {column} REAL NOT NULL DEFAULT 0"
+                )
+            except sqlite3.OperationalError:
+                pass  # column already exists
         self.db.commit()
 
     def close(self) -> None:
@@ -91,7 +92,8 @@ class Store:
         errors = sum(e for _, e in session.tally.values())
         self.db.execute(
             "UPDATE sessions SET rounds = ?, shoes = ?, net = ?, wagered = ?,"
-            " decisions = ?, errors = ?, profit_sq = ?, ended_at = ? WHERE id = ?",
+            " decisions = ?, errors = ?, profit_sq = ?, active_seconds = ?,"
+            " ended_at = ? WHERE id = ?",
             (
                 session.round_no,
                 session.shoe_no,
@@ -100,6 +102,7 @@ class Store:
                 decisions,
                 errors,
                 session.profit_sq,
+                session.active_seconds,
                 time.time() if ended else None,
                 session_id,
             ),
@@ -162,10 +165,11 @@ class Store:
                 "net": net,
                 "decisions": decisions,
                 "errors": errors,
+                "active_seconds": active,
             }
-            for sid, started, rounds, net, decisions, errors in db.execute(
-                "SELECT id, started_at, rounds, net, decisions, errors FROM sessions"
-                " ORDER BY started_at DESC LIMIT 20"
+            for sid, started, rounds, net, decisions, errors, active in db.execute(
+                "SELECT id, started_at, rounds, net, decisions, errors,"
+                " active_seconds FROM sessions ORDER BY started_at DESC LIMIT 20"
             )
         ]
         # Variance inputs from sessions that recorded profit^2 (post-migration);
@@ -186,6 +190,16 @@ class Store:
                 "net": var_net,
                 "profit_sq": var_p2,
             },
+            "pace": dict(
+                zip(
+                    ("rounds", "seconds"),
+                    db.execute(
+                        "SELECT COALESCE(SUM(rounds), 0),"
+                        " COALESCE(SUM(active_seconds), 0) FROM sessions"
+                        " WHERE active_seconds > 0"
+                    ).fetchone(),
+                )
+            ),
             "by_kind": by_kind,
             "play_situations": play_situations,
             "play_mistakes": play_mistakes,

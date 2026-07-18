@@ -89,6 +89,10 @@ class TrainerSession:
         self.net = 0.0
         self.profit_sq = 0.0  # sum of per-round profit^2, for lifetime variance
         self.wagered = 0.0
+        # Pace: active seconds accumulate per settled round, with idle gaps
+        # capped so a walk-away doesn't dilute the rounds/hour number.
+        self.active_seconds = 0.0
+        self._last_mark = time.time()
         self.pending_quiz: str | None = None  # reason: shuffle | leave | random
         self._shuffle_after_quiz = False
 
@@ -248,6 +252,9 @@ class TrainerSession:
         self.net += state.result.profit
         self.profit_sq += state.result.profit * state.result.profit
         self.wagered += self._bet
+        now = time.time()
+        self.active_seconds += min(now - self._last_mark, 60.0)  # cap idle gaps
+        self._last_mark = now
         self._last_result_state = state
         self.phase = PHASE_BET
         self._state = None
@@ -315,6 +322,12 @@ class TrainerSession:
             "shoes": self.shoe_no,
             "net": self.net,
             "wagered": self.wagered,
+            "active_seconds": self.active_seconds,
+            "pace_rph": (
+                self.round_no / self.active_seconds * 3600
+                if self.active_seconds > 0
+                else None
+            ),
             "by_kind": {
                 kind: {"attempts": a, "errors": e, "accuracy": (a - e) / a if a else None}
                 for kind, (a, e) in sorted(self.tally.items())
@@ -365,6 +378,11 @@ class TrainerSession:
             "wagered": self.wagered,
             "pending": pending,
             "pending_quiz": self.pending_quiz,
+            "pace_rph": (
+                self.round_no / self.active_seconds * 3600
+                if self.active_seconds > 30 and self.round_no >= 5
+                else None
+            ),
             "table": table,
             "session_stats": {
                 kind: {"attempts": a, "errors": e} for kind, (a, e) in self.tally.items()

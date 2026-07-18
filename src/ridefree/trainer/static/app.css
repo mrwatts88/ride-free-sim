@@ -146,6 +146,8 @@ input {
 .shoe-flash-sub b { color: var(--good); font-size: 28px; }
 .shoe-flash-hint { margin-top: 18px; color: var(--ink-3); font-size: 13px;
   text-transform: uppercase; letter-spacing: .12em; }
+.shoe-flash-actions { margin-top: 22px; padding-top: 16px;
+  border-top: 1px solid var(--edge); }
 @keyframes flashin { from { transform: scale(.85); opacity: 0; }
   to { transform: scale(1); opacity: 1; } }
 

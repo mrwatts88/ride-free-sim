@@ -69,6 +69,8 @@ function render() {
     decisions += state.session_stats[k].attempts;
   }
   $("hud-errors").innerHTML = `errors <b class="${errors ? "neg" : "pos"}">${errors}</b>/${decisions}`;
+  $("hud-pace").innerHTML = state.pace_rph
+    ? `pace <b>${Math.round(state.pace_rph)}</b> r/h` : "";
 
   renderTable();
   renderControls();
@@ -333,7 +335,10 @@ function renderSummary(s) {
     (cc.n ? `, mean |off| ${cc.mean_abs_delta.toFixed(2)}` : "") + `)</p>`;
   html += `<p>rounds <b>${s.rounds}</b> · shoes <b>${s.shoes}</b> · net ` +
     `<b class="${s.net >= 0 ? "pos" : "neg"}">${money(s.net, true)}</b> · ` +
-    `${Math.round(s.duration_s / 60)} min · seed ${s.seed}</p>`;
+    `${Math.round(s.duration_s / 60)} min` +
+    (s.pace_rph ? ` · pace <b>${Math.round(s.pace_rph)} r/h</b> ` +
+      `(${(s.active_seconds / 60).toFixed(1)} active min)` : "") +
+    ` · seed ${s.seed}</p>`;
   if (s.errors.length) {
     html += `<h3 style="margin-top:12px">mistakes</h3><table>` +
       `<tr><th>round</th><th>kind</th><th>expected</th><th>got</th></tr>`;
@@ -422,7 +427,13 @@ async function showStats() {
     tile(s.sessions, "sessions") + tile(s.rounds, "rounds") +
     tile(s.decisions, "decisions") + tile(rate, "error rate") +
     tile(money(s.net, true), "net", s.net >= 0 ? "pos" : "neg") +
-    tile(money(s.wagered), "wagered") + `</div>`;
+    tile(money(s.wagered), "wagered") +
+    tile(
+      s.pace && s.pace.seconds > 60
+        ? `${Math.round(s.pace.rounds / s.pace.seconds * 3600)}`
+        : "—",
+      "rounds / hour"
+    ) + `</div>`;
 
   html += winnerPanel(s);
 
@@ -466,12 +477,16 @@ async function showStats() {
 
   if (s.recent_sessions.length) {
     html += `<div class="chart-block"><h3>recent sessions</h3><table>` +
-      `<tr><th>date</th><th class="num">rounds</th><th class="num">net</th>` +
+      `<tr><th>date</th><th class="num">rounds</th><th class="num">r/h</th>` +
+      `<th class="num">net</th>` +
       `<th class="num">errors</th><th class="num">error rate</th></tr>`;
     for (const r of s.recent_sessions) {
       const when = new Date(r.started_at * 1000).toLocaleString();
       const erate = r.decisions ? (100 * r.errors / r.decisions).toFixed(1) + "%" : "—";
+      const pace = r.active_seconds > 60
+        ? Math.round(r.rounds / r.active_seconds * 3600) : "—";
       html += `<tr><td>${when}</td><td class="num">${r.rounds}</td>` +
+        `<td class="num">${pace}</td>` +
         `<td class="num ${r.net >= 0 ? "pos" : "neg"}">${money(r.net, true)}</td>` +
         `<td class="num">${r.errors}</td><td class="num">${erate}</td></tr>`;
     }
@@ -550,6 +565,11 @@ function dismissShoeFlash() {
   $("shoe-flash").classList.add("hidden");
 }
 $("shoe-flash").onclick = dismissShoeFlash;
+$("shoe-flash-end").onclick = (e) => {
+  e.stopPropagation();
+  dismissShoeFlash();
+  endSession();
+};
 
 document.addEventListener("keydown", (e) => {
   if (!$("shoe-flash").classList.contains("hidden")) {

@@ -376,6 +376,27 @@ def test_shuffle_quiz_blocks_betting_and_resets_count():
     assert session.rc_committed() == CARD.irc(rules.decks)
 
 
+def _play_out_round(session, bet):
+    session.place_bet(bet)
+    while session.phase != "bet":
+        if session.phase == "insurance":
+            session.answer_insurance(False)
+        else:
+            view = session._state.pending.view
+            session.answer_action(session.oracle.choose(view, RULES))
+
+
+def test_pace_accumulates_with_idle_gaps_capped():
+    session = TrainerSession(RULES, CROUCH15_2R, seed=41, config=quiet_config())
+    session._last_mark -= 3600  # an hour idle before the first round settles
+    _play_out_round(session, 15.0)
+    assert 0 < session.active_seconds <= 60.5  # the hour capped to 60s
+    before = session.active_seconds
+    _play_out_round(session, 15.0)
+    assert session.active_seconds > before
+    assert session.summary()["pace_rph"] > 0
+
+
 def test_summary_shape():
     session = TrainerSession(RULES, CARD, seed=17, config=quiet_config())
     session.place_bet(CARD.bet_for(session.rc_committed()))
@@ -419,6 +440,9 @@ def test_store_roundtrip_and_lifetime(tmp_path):
     # the winner-panel variance inputs: one settled round losing $15
     assert session.profit_sq == 225.0
     assert stats["variance_sample"] == {"rounds": 1, "net": -15.0, "profit_sq": 225.0}
+    # pace inputs: one settled round of active time
+    assert stats["pace"]["rounds"] == 1 and stats["pace"]["seconds"] > 0
+    assert stats["recent_sessions"][0]["active_seconds"] > 0
     store.close()
 
 
