@@ -419,6 +419,18 @@ def _bacev(args: argparse.Namespace) -> None:
     print(format_bac_ev_scan(res, min_cell=args.min_cell))
 
 
+def _bactrack(args: argparse.Namespace) -> None:
+    from ridefree.experiments import format_bac_track, run_bac_track
+
+    rules = _bac_rules(args)
+    print(f"baccarat tracker scoring "
+          f"({'EZ' if rules.banker_push_on_three_card_7 else 'classic'}, "
+          f"{rules.decks} decks, pen {rules.penetration:g}; analytic/published "
+          f"parameters only, scored in exact EV)")
+    res = run_bac_track(rules, seed=args.seed, rounds=args.rounds)
+    print(format_bac_track(res))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ridefree")
     sub = parser.add_subparsers(required=True)
@@ -572,6 +584,15 @@ def main() -> None:
     be.add_argument("--rounds", type=int, default=100_000)
     be.add_argument("--min-cell", type=int, default=2_000)
     be.set_defaults(func=_bacev, shoe_mode=None, rounds_per_shoe=None)
+
+    bt = sub.add_parser("bactrack", help="score human D7/P8 count systems vs the "
+                                         "exact ceiling (M9c)")
+    bt.add_argument("--rules", choices=("ez", "classic"), default="ez")
+    bt.add_argument("--decks", type=int, default=None)
+    bt.add_argument("--penetration", type=float, default=None)
+    bt.add_argument("--seed", type=int, default=1)
+    bt.add_argument("--rounds", type=int, default=100_000)
+    bt.set_defaults(func=_bactrack, shoe_mode=None, rounds_per_shoe=None)
 
     args = parser.parse_args()
     args.func(args)

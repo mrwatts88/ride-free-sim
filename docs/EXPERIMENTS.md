@@ -2,6 +2,80 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E14 — The Dragon/Panda verdict: two written counts, ~90% of the ceiling, +$92/h (M9c)
+
+**Date:** 2026-07-17 · **Commands:** `uv run python -m ridefree.cli bactrack
+--rounds 100000 --penetration {0.966,0.95} --seed {8300000001, 8400000001,
+8500000001}` (300k rounds; all parameters analytic or published, scored in
+TRUE exact EV, the E11b doctrine) · ledger: `uv run python data/e14_verdict.py`.
+
+**Prior-art check (fetched 2026-07-17):** Panda 8 DOES have a published
+count — WoO appendix 8 (A/2/T +1, 3/4/5/8 −2, 6/7 −1, 9 +4, TC ≥ 11):
+0.238u/shoe at cut-14, "the Dragon remains substantially more profitable."
+Scored inside our harness, their exact spec gives **0.241 ± 0.011u/shoe, bet
+4.60% of rounds at +6.43%/bet vs their published 0.238u / 4.61% / +6.34% —
+third independent pipeline cross-validation** (after the M9a combination
+table and E13's Dragon count match). Nothing in the published record scores
+the PAIR or derives the linear ceiling — that part is ours.
+
+**EOR derivation (analytic, `fast_outcomes` gradients, regeneration-tested):**
+our exact D7 removal effects ×10 reproduce WoO's optimal "System 1" tags
+digit-for-digit (8 +5.4, 9 +4.8, 7 −3.6, 6 −3.3, 4/5 −2.7, T +0.9…), and the
+P8 effects reproduce their appendix tags' shape (9 dominant +4.5; 3/4/5/8
+negative; A/2/T mildly positive). Both published counts are near-optimal
+LINEAR counts — the open value is threshold quality and the nonlinear tail.
+
+**Capture table (pen 0.966 pooled 2×100k; pen 0.95 in parentheses):**
+
+| row | bet% | u/shoe | capture |
+|---|---|---|---|
+| d7 linear-EOR tags, analytic threshold | 11.6% | +0.691 | **92.3%** (93.7%) |
+| d7 WoO count @ TC≥4 | 9.5% | +0.651 | 86.9% (87.4%) |
+| p8 linear-EOR tags, analytic threshold | 5.0% | +0.253 | **83.2%** (87.2%) |
+| p8 WoO appendix @ TC≥11 | 4.6% | +0.241 | 79.4% (84.0%) |
+| p8 triggered by the d7 count (shared-count) | 11.6% | −0.446 | **−147%** |
+
+- **The two-count pair (Matt's paper-and-pencil point) captures ~90% of the
+  combined exact ceiling** (linear pair +1.155u/100 vs ceiling +1.244u/100
+  pooled): at a baccarat table a scorecard is expected, so two running counts
+  cost nothing socially. The linear-EOR tags are just WoO System-1-style
+  scaled integers — written arithmetic, no memory burden.
+- **The shared-count row refutes single-count play for the pair:** betting
+  Panda on Dragon triggers is firmly −EV (mean −4.7%/bet). The Panda leg
+  exists only with its own count — corr(ev_d7, ev_p8) = +0.41 is not enough.
+- The last ~10% (ceiling − linear pair ≈ +0.09u/100) is nonlinear
+  composition signal — computer territory (or a printed 2-variable lookup;
+  not pursued: thin).
+- Calibration watch item (E13, d7 pooled −1.89σ): E14's realized columns ran
+  ABOVE prediction at pen .966 (+9.9%/+8.6% vs +7.3% predicted windows) —
+  opposite direction, consistent with settlement noise. Watch stays open,
+  unalarming.
+
+**The ledger (`data/e14_verdict.py`, pen 0.966, no toll — sitting out is
+normal baccarat):**
+
+| system | u/100 rounds | $/h @80r/h, $100 unit | N0 @80r/h | bankroll 5% RoR |
+|---|---|---|---|---|
+| exact (computer) | +1.244 | $100/h | 490h | $73k |
+| **linear pair (paper)** | **+1.155** | **+$92/h** | **582h** | **$81k** |
+| published pair | +1.092 | +$87/h | 554h | $73k |
+
+Cap sensitivity (linear pair): $50 max → +$46/h on $40k; **$25 max → +$23/h
+on $20k — still beats the entire 21+3 operation (E12: +$21/h, $37k, toll,
+1,200h N0) at a quarter of the exposure.** Full table (45 r/h) roughly
+halves $/h and doubles N0-hours.
+
+**M9c VERDICT: the Dragon 7 + Panda 8 pair at 8-deck EZ Baccarat is the
+strongest opportunity this project has found — ~4× the 21+3 hourly at half
+the N0, toll-free, at the house's own standard penetration, with native
+scorecard camouflage, using two written counts anyone can run. Conditions:
+D7/P8 offered at 40:1/25:1, real shoe (no CSM-equivalent), cut ≥ ~0.95,
+side maxes ≥ $25. Remaining field items: Potawatomi's EZ table's cut depth,
+side maxes, sit-without-betting tolerance.** Idealizations on record: all
+dealt cards visible (baccarat deals face-up — weaker assumption than 21+3's
+hole card), 80 rounds/h heads-up pace, burn cards not modeled (single-digit
+% effect on rounds/shoe, none on conditional EVs).
+
 ## E13 — Dragon 7 / Panda 8 exact pre-deal EV: 4.4× the 21+3 ceiling, toll-free (M9b)
 
 **Date:** 2026-07-17 · **Commands:** `uv run python -m ridefree.cli bacev

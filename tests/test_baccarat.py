@@ -331,3 +331,43 @@ def test_bac_ev_scan_smoke():
     assert -0.10 < res.pred_sum_d7 / res.rounds < -0.05
     text = format_bac_ev_scan(res, min_cell=200)
     assert "WoO count comparator" in text and "calibration" in text
+
+
+def test_bac_eors_regenerate_from_fast_outcomes():
+    # The hardcoded E14 removal-effect vectors must equal a fresh derivation.
+    from ridefree.baccarat import fast_outcomes
+    from ridefree.experiments import BAC_EOR_D7, BAC_EOR_P8
+
+    rules = EZ_BACCARAT_8D
+    base = fresh_composition(8)
+    out0 = fast_outcomes(base)
+    for v in range(10):
+        c = dict(base)
+        c[v] -= 1
+        out = fast_outcomes(c)
+        assert out.ev_dragon7(rules) - out0.ev_dragon7(rules) == pytest.approx(
+            BAC_EOR_D7[v], abs=5e-7)
+        assert out.ev_panda8(rules) - out0.ev_panda8(rules) == pytest.approx(
+            BAC_EOR_P8[v], abs=5e-7)
+
+
+def test_bac_track_smoke():
+    from ridefree.experiments import format_bac_track, run_bac_track
+
+    rules = BaccaratRules(penetration=0.95, banker_commission=0.0,
+                          banker_push_on_three_card_7=True)
+    res = run_bac_track(rules, seed=7300000007, rounds=4_000)
+    assert res.rounds == 4_000
+    assert res.ceiling_d7 > 0 and res.ceiling_p8 > 0
+    by_name = {r.name: r for r in res.rows}
+    lin = by_name["d7 linear-EOR (analytic)"]
+    woo = by_name["d7 WoO count @ TC>=4"]
+    assert lin.rounds_bet > 0 and woo.rounds_bet > 0
+    # The exact-tag linear count with the analytic threshold must capture at
+    # least as much exact EV as the coarse published count on the same shoes.
+    assert lin.ev_sum >= woo.ev_sum
+    # Every row's captured EV is bounded by its bet's ceiling.
+    for row in res.rows:
+        ceiling = res.ceiling_d7 if row.bet == "d7" else res.ceiling_p8
+        assert row.ev_sum <= ceiling + 1e-9
+    assert "capture" in format_bac_track(res)

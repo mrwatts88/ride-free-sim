@@ -49,12 +49,16 @@ suit-aware cards, M8b the bet as validated configuration, M8c the attack
 9:1 21+3 IS on Potawatomi's floor** (alongside a separate 21+3 progressive and
 "Top 3") — the verdict's most sensitive condition is confirmed; still to check:
 pen/cut depth, CSM, entry policy, side max, decks, H17/S17.
-**M9 IS OPEN (chosen 2026-07-17): attack the Dragon 7 (EZ Baccarat, confirmed
-on Potawatomi's floor), Panda 8 riding along.** M9a (engine + validation) ✅
-and M9b (exact ceiling, E13) ✅ are done — combined D7+P8 ceiling
-**+1.215u/100 rounds at the baccarat-normal cut, 4.4× the 21+3 ceiling,
-toll-free**; WoO's published count reproduced same-harness to half a percent.
-Next step is M9c (human compression + the E12-style ledger verdict).
+**M9 IS ✅ COMPLETE (2026-07-17): the Dragon 7 + Panda 8 attack — the
+project's strongest verdict.** M9a engine gate-passed (enumeration == WoO's
+combination table to the integer); M9b exact ceiling (E13): combined D7+P8
+**+1.24u/100 rounds at cut-card-14, ~4.4× the 21+3 ceiling, toll-free**;
+M9c verdict (E14): **two written counts capture ~90% → +$92/h per $100 unit
+heads-up, N0 ≈ 582h, ~$81k bankroll (at $25 caps: +$23/h on $20k, still
+beating all of 21+3)**. Three independent published cross-validations along
+the way (combination table; WoO Dragon count 0.592 vs 0.597 u/shoe; WoO
+Panda count 0.241 vs 0.238). Remaining: EZ-table field items on the rack
+card below; optional write-up.
 
 ## Where the attack stands (E1–E4c, see EXPERIMENTS.md)
 
@@ -273,16 +277,28 @@ Seeds consumed: 7300000001–6 (tests + calibration), 7400000001 (M9a
 calibration), 7500000001 / 7600000001 (M9a gate), 7700000001–8200000001
 step 1e8 (E13 shards). **Next unused block: 8.3e9+.**
 
-**M9c NEXT (precise spec):** compression + the betting verdict. (1) Human
-system for the BET PAIR: score the WoO count, a re-derived optimal linear D7
-count (EOR-style, from `fast_outcomes` gradients), a P8-specific count, and
-a two-count combined system — all same-harness, exact-EV-scored, analytic
-parameters only (no in-sample fitting; the E11b lesson). (2) The E12-style
-ledger: u/100 → $/h at realistic paces, per-bet variance → N0 and bankroll
-at 5% RoR, wong-style vs seated-observer play (toll-free either way),
-side-bet caps sensitivity. (3) Replicate calibration on the accumulated
-rounds. Rack-card dependencies: D7/P8 offered + paytables (40:1/25:1
-assumed), cut depth, side maxes, sit-without-betting tolerance.
+## M9c DONE (2026-07-17): the verdict — two written counts, ~90% of ceiling, +$92/h (E14)
+
+**E14 (EXPERIMENTS.md):** Panda 8 prior art checked — WoO appendix 8 has a
+count (0.238u/shoe); scored same-harness we get 0.241 ± 0.011 (third
+independent pipeline cross-validation). Our exact D7 EORs ×10 reproduce
+WoO's optimal System 1 digit-for-digit; P8 EORs reproduce their appendix
+tags' shape. Capture at cut-14 (analytic thresholds, zero fitting): **d7
+linear-EOR 92.3% / p8 83.2% → the two-count pair captures ~90% of the
++1.244u/100 combined ceiling = +1.155u/100.** Single-count play refuted:
+Panda on Dragon triggers = −4.7%/bet (−147% capture). Ledger
+(`data/e14_verdict.py`, toll-free): **+$92/h per $100 unit at 80 rounds/h,
+N0 ≈ 582h, ~$81k bankroll at 5% RoR; $25 cap → +$23/h on $20k — still
+beats all of 21+3 (E12: $21/h, $37k, toll, 1,200h).** ~4× the 21+3 hourly
+at half the N0. Baccarat deals face-up (no hole-card idealization); pace
+and burn-card idealizations on record in E14.
+
+**M9 IS COMPLETE. The Dragon 7 + Panda 8 pair is the project's strongest
+verdict.** Conditions: 40:1/25:1 paytables, real shoe, cut ≥ ~0.95, side
+maxes ≥ $25, two written counts (scorecards are normal at baccarat).
+
+Seeds consumed (M9c): 7300000007 (test), 8300000001 / 8400000001 (pen .966),
+8500000001 (pen .95). **Next unused block: 8.6e9+.**
 
 ## NEXT STEPS (M8 research complete; field + polish items remain)
 

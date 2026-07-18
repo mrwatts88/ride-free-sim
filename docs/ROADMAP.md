@@ -118,14 +118,17 @@ toll-free.** Gate passed: WoO's practical count scored same-harness gives
 the D7 ceiling; P8 is unclaimed value on top). Calibration via pooled
 binomial z: d7 −1.89 / p8 +1.57 (watched, not alarming). Full log: E13.
 
-## M9c — Compression + the betting verdict (the E11/E12 analogue)
+## M9c — Compression + the betting verdict ✅ (E14, 2026-07-17)
 
-What carries the signal (rank decomposition; there is no suit term), how much
-a human count captures (published counts as same-harness comparator rows —
-the head-to-head E12 could only do cross-harness), then the ledger verdict:
-u/100 observed rounds, $/h, N0, bankroll at 5% RoR — with baccarat's toll-free
-sit-out structure. Panda 8 as a configuration rider; do the two bets' windows
-collide?
+Exact EORs derived from `fast_outcomes` gradients (reproduce WoO System 1
+digit-for-digit; regeneration-tested); Panda 8 prior art found (WoO appendix
+8) and cross-validated same-harness (0.241 vs published 0.238u/shoe).
+Capture at cut-14, analytic thresholds, zero fitting: d7 linear-EOR 92.3%,
+p8 83.2%, **two-count pair ~90% of the +1.244u/100 ceiling**; shared-count
+play refuted (Panda on Dragon triggers −4.7%/bet). Ledger
+(`data/e14_verdict.py`): **+$92/h per $100 unit at 80r/h, N0 582h, $81k
+bankroll; $25-cap scenario +$23/h on $20k.** ~4× the 21+3 hourly at half
+the N0, toll-free. M9 complete — cli: bacexact / bac / bacev / bactrack.
 
 Each milestone has a validation gate; don't advance until it passes.
 

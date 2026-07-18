@@ -1354,3 +1354,160 @@ def format_bac_ev_scan(res: BacEvScanResult, min_cell: int = 2000) -> str:
             f"{acc[2]:,}, z = {zval:+.2f}"
         )
     return "\n".join(lines)
+
+
+# --- E14 (M9c): human trackers for the Dragon 7 / Panda 8 pair ---------------
+
+# Exact removal effects (EV change per one card removed from the fresh 8-deck
+# shoe), derived from `fast_outcomes` 2026-07-17; regeneration-tested in
+# tests/test_baccarat.py. Cross-validation: the d7 vector x10 reproduces WoO's
+# published optimal "System 1" tags digit-for-digit; the p8 vector's shape
+# matches their appendix-8 integer tags.
+BAC_EOR_D7 = {0: 0.000863, 1: 0.000498, 2: -0.000896, 3: -0.001076,
+              4: -0.002680, 5: -0.002635, 6: -0.003242, 7: -0.003584,
+              8: 0.005378, 9: 0.004785}
+BAC_EOR_P8 = {0: 0.001208, 1: 0.001322, 2: 0.001444, 3: -0.002861,
+              4: -0.002536, 5: -0.002655, 6: -0.000892, 7: -0.000914,
+              8: -0.002241, 9: 0.004502}
+
+# First-order model (fraction-space gradient, see E14 notes): for tags equal
+# to the removal effects, predicted EV = ev_fresh + (415/52) * TC, so the
+# analytic wong-in threshold is TC* = -ev_fresh * 52/415. No fitting.
+_LINEAR_SLOPE = 415.0 / 52.0
+
+
+@dataclass
+class BacTrackRow:
+    """One policy row: stake `bet` when the row's true count clears trigger."""
+
+    name: str
+    bet: str  # "d7" | "p8"
+    tags: dict  # baccarat value (0-9) -> tag
+    trigger: float
+    rounds_bet: int = 0
+    ev_sum: float = 0.0  # exact EV of the staked bet on trigger rounds
+    profit: float = 0.0
+    profit_sq: float = 0.0
+    running: float = 0.0
+
+    def new_shoe(self) -> None:
+        self.running = 0.0
+
+    def observe_cards(self, cards) -> None:
+        for card in cards:
+            self.running += self.tags.get(card % 10, 0.0)
+
+
+def bac_track_rows() -> list:
+    """The E14 row set. Triggers: published rows use the published triggers
+    (WoO d7 TC>=4; WoO p8 appendix TC>=11); linear-EOR rows use the analytic
+    threshold from the first-order model. The shared-count row quantifies
+    what a single (d7) count loses when it must also trigger the panda."""
+    d7_thr = 0.076113 / _LINEAR_SLOPE
+    p8_thr = 0.101876 / _LINEAR_SLOPE
+    return [
+        BacTrackRow("d7 linear-EOR (analytic)", "d7", dict(BAC_EOR_D7), d7_thr),
+        BacTrackRow("d7 WoO count @ TC>=4", "d7",
+                    {4: -1, 5: -1, 6: -1, 7: -1, 8: 2, 9: 2}, 4.0),
+        BacTrackRow("p8 linear-EOR (analytic)", "p8", dict(BAC_EOR_P8), p8_thr),
+        BacTrackRow("p8 WoO appendix @ TC>=11", "p8",
+                    {0: 1, 1: 1, 2: 1, 3: -2, 4: -2, 5: -2, 6: -1, 7: -1,
+                     8: -2, 9: 4}, 11.0),
+        BacTrackRow("p8 on d7-count trigger (shared-count cost)", "p8",
+                    dict(BAC_EOR_D7), d7_thr),
+    ]
+
+
+@dataclass
+class BacTrackResult:
+    rounds: int = 0
+    shoes: int = 0
+    penetration: float = 0.0
+    # exact ceilings accumulated on the same rounds, for capture denominators
+    ceiling_d7: float = 0.0  # sum of max(ev_d7, 0)
+    ceiling_p8: float = 0.0
+    rows: list = field(default_factory=list)
+
+
+def run_bac_track(rules, *, seed: int, rounds: int) -> BacTrackResult:
+    """Score the E14 policy rows against exact EV, same shoes for all rows.
+
+    Every row's bet is scored in TRUE exact EV (the E11b doctrine) and also
+    settled for real (realized column). All parameters are analytic or
+    published — nothing is fit to simulation data."""
+    from ridefree.baccarat import (
+        FlatBettor,
+        _needs_reshuffle as bac_needs_reshuffle,
+        composition_from_shoe,
+        fast_outcomes,
+        play_baccarat_round,
+    )
+
+    res = BacTrackResult(penetration=rules.penetration, rows=bac_track_rows())
+    bettor = FlatBettor(main=None, dragon7=1.0, panda8=1.0)
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    res.shoes = 1
+    rounds_since = 0
+    for _ in range(rounds):
+        if bac_needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            res.shoes += 1
+            for row in res.rows:
+                row.new_shoe()
+            rounds_since = 0
+        out = fast_outcomes(composition_from_shoe(shoe.remaining_composition()))
+        ev = {"d7": out.ev_dragon7(rules), "p8": out.ev_panda8(rules)}
+        decks_left = shoe.cards_remaining / 52.0
+        triggered = []
+        for row in res.rows:
+            tc = row.running / decks_left if decks_left > 0 else 0.0
+            if tc >= row.trigger:
+                triggered.append(row)
+        result = play_baccarat_round(rules, shoe, bettor)
+        rounds_since += 1
+        realized = {"d7": result.dragon7_profit, "p8": result.panda8_profit}
+        for row in res.rows:
+            row.observe_cards(result.player_cards + result.banker_cards)
+        for row in triggered:
+            row.rounds_bet += 1
+            row.ev_sum += ev[row.bet]
+            p = realized[row.bet]
+            row.profit += p
+            row.profit_sq += p * p
+        res.rounds += 1
+        res.ceiling_d7 += max(ev["d7"], 0.0)
+        res.ceiling_p8 += max(ev["p8"], 0.0)
+    return res
+
+
+def format_bac_track(res: BacTrackResult) -> str:
+    n = res.rounds
+    lines = [
+        f"rounds: {n:,}   shoes: {res.shoes:,}   penetration: "
+        f"{res.penetration:.3f}",
+        f"exact ceilings: d7 {100 * res.ceiling_d7 / n:+.4f}u/100 "
+        f"({res.ceiling_d7 / res.shoes:+.4f}u/shoe)   "
+        f"p8 {100 * res.ceiling_p8 / n:+.4f}u/100 "
+        f"({res.ceiling_p8 / res.shoes:+.4f}u/shoe)",
+        "",
+        f"  {'row':<44} {'bet%':>7} {'mean ev':>8} {'u/100':>8} "
+        f"{'u/shoe':>8} {'capture':>8} {'realized':>9}",
+    ]
+    for row in res.rows:
+        ceiling = res.ceiling_d7 if row.bet == "d7" else res.ceiling_p8
+        if row.rounds_bet == 0:
+            lines.append(f"  {row.name:<44} {'—':>7}")
+            continue
+        frac = row.rounds_bet / n
+        mean_ev = row.ev_sum / row.rounds_bet
+        mean_real = row.profit / row.rounds_bet
+        var = max(row.profit_sq / row.rounds_bet - mean_real ** 2, 0.0)
+        se = math.sqrt(var / row.rounds_bet)
+        lines.append(
+            f"  {row.name:<44} {100 * frac:6.3f}% {100 * mean_ev:+7.3f}% "
+            f"{100 * frac * mean_ev:+7.4f}u {row.ev_sum / res.shoes:+7.4f}u "
+            f"{100 * row.ev_sum / ceiling:7.2f}% "
+            f"{100 * mean_real:+7.3f}%±{100 * se:.2f}"
+        )
+    return "\n".join(lines)
