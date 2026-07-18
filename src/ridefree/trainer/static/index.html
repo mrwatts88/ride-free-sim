@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>crouch15 trainer</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ start screen ============ -->
+  <section id="start-screen" class="screen">
+    <div class="start-box">
+      <h1>crouch15 <span class="dim">/ Red 7 trainer</span></h1>
+      <p class="dim">6-deck H17 DAS &middot; pen .75 &middot; $15&ndash;$1,000 &middot; IRC &minus;12 &middot;
+         $100 at RC 0 &middot; $150 + insure at +2 &middot; $200 at +5 &middot; leave at &minus;14</p>
+      <div class="row">
+        <input id="seed-input" type="number" placeholder="seed (blank = clock)">
+        <button id="start-btn" class="primary">Start session</button>
+        <button id="stats-btn">Lifetime stats</button>
+      </div>
+      <p class="dim small">Keys: <b>1&ndash;4</b> bet 15/100/150/200 &middot; <b>Enter</b> rebet &middot;
+        <b>H</b>it <b>S</b>tand <b>D</b>ouble s<b>P</b>lit &middot; <b>Y/N</b> insurance &middot;
+        <b>L</b>eave &middot; <b>C</b>ount check &middot; <b>K</b> peek</p>
+    </div>
+  </section>
+
+  <!-- ============ play screen ============ -->
+  <section id="play-screen" class="screen hidden">
+    <header id="topbar">
+      <span id="hud-round" class="hud"></span>
+      <span id="hud-shoe" class="hud"></span>
+      <span id="hud-depth" class="hud"><span id="depth-bar"><span id="depth-fill"></span></span></span>
+      <span id="hud-net" class="hud"></span>
+      <span id="hud-errors" class="hud"></span>
+      <span class="spacer"></span>
+      <button id="verify-btn" title="C">Count check</button>
+      <button id="peek-btn" title="K">Peek</button>
+      <button id="settings-btn">&#9881;</button>
+      <button id="end-btn" class="danger">End session</button>
+    </header>
+
+    <main id="felt">
+      <div id="dealer-area">
+        <div class="area-label">dealer <span id="dealer-total" class="total"></span></div>
+        <div id="dealer-cards" class="cards"></div>
+      </div>
+      <div id="message" class="hidden"></div>
+      <div id="hands-area"></div>
+    </main>
+
+    <footer id="controls">
+      <!-- bet bar -->
+      <div id="bet-bar" class="control-bar hidden">
+        <span class="bar-label">bet</span>
+        <button class="chip" data-bet="15">$15</button>
+        <button class="chip jump" data-bet="100">$100</button>
+        <button class="chip jump" data-bet="150">$150</button>
+        <button class="chip jump" data-bet="200">$200</button>
+        <input id="custom-bet" type="number" min="15" max="1000" placeholder="$">
+        <button id="custom-bet-btn">bet</button>
+        <button id="rebet-btn" class="primary hidden"></button>
+        <button id="leave-btn" class="warn" title="L">Leave table</button>
+      </div>
+      <!-- action bar -->
+      <div id="action-bar" class="control-bar hidden">
+        <button data-action="hit" class="act">Hit</button>
+        <button data-action="stand" class="act">Stand</button>
+        <button data-action="double" class="act">Double</button>
+        <button data-action="split" class="act">Split</button>
+      </div>
+      <!-- insurance bar -->
+      <div id="insurance-bar" class="control-bar hidden">
+        <span class="bar-label">insurance?</span>
+        <button id="ins-yes" class="act">Take (Y)</button>
+        <button id="ins-no" class="act">Decline (N)</button>
+      </div>
+    </footer>
+
+    <aside id="feed"><div class="area-label">session feed</div><ul id="feed-list"></ul></aside>
+  </section>
+
+  <!-- ============ modals ============ -->
+  <div id="modal-backdrop" class="hidden">
+    <div id="quiz-modal" class="modal hidden">
+      <h2 id="quiz-title">Count check</h2>
+      <p id="quiz-reason" class="dim"></p>
+      <div class="row">
+        <input id="quiz-input" type="number" placeholder="running count">
+        <button id="quiz-submit" class="primary">Check</button>
+        <button id="quiz-skip">Skip</button>
+      </div>
+      <p id="quiz-result"></p>
+    </div>
+
+    <div id="settings-modal" class="modal hidden">
+      <h2>Settings</h2>
+      <label><input type="checkbox" id="cfg-quiz-shuffle"> count quiz at every shuffle</label>
+      <label>random quiz about every
+        <input type="number" id="cfg-quiz-mean" min="0" style="width:4em"> rounds (0 = off)</label>
+      <label><input type="checkbox" id="cfg-reveal"> reveal true RC on errors</label>
+      <div class="row"><button id="settings-close" class="primary">Done</button></div>
+    </div>
+
+    <div id="summary-modal" class="modal hidden">
+      <h2>Session summary</h2>
+      <div id="summary-body"></div>
+      <div class="row"><button id="summary-close" class="primary">Done</button></div>
+    </div>
+  </div>
+
+  <!-- ============ stats screen ============ -->
+  <section id="stats-screen" class="screen hidden">
+    <header id="stats-topbar">
+      <h1>Lifetime stats</h1>
+      <span class="spacer"></span>
+      <button id="stats-back" class="primary">Back</button>
+    </header>
+    <main id="stats-body"></main>
+  </section>
+
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

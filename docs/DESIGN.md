@@ -218,3 +218,42 @@ Rationale:
   cheap transcription job.
 - PyO3/maturin adds a build step to a repo that currently needs none, and the binding
   API can't be designed well before the experiment layer's needs are known.
+
+## Decision record: the trainer reuses the engine via replay (2026-07-18)
+
+**What:** `ridefree.trainer` — a localhost web app (stdlib `http.server`,
+vanilla JS, SQLite, zero dependencies) that drills the chosen live play
+(docs/ARTICLE_BLACKJACK.md: crouch15 Red 7 card on STANDARD_6D_H17, pen .75)
+and flags every human error: bet-vs-card, basic-strategy play, insurance,
+the leave threshold, and the running count itself (quiz at shuffle + random
+spot checks + on-demand). Sessions and every scored decision persist to
+`data/trainer.db` for lifetime accuracy views.
+
+**How the human gets inside `play_round` without touching it:** the engine is
+synchronous, so `trainer/driver.py` replays the round from the shoe's
+round-start snapshot on every decision — a scripted strategy feeds the answers
+recorded so far and raises `NeedDecision` at the first unanswered ask; the
+immutable shoe order makes each replay re-deal the identical round. Cost is
+O(decisions²) engine runs per round — nothing at human pace. The alternatives
+(threaded engine, forked interactive engine) were rejected: the first adds
+lifecycle/cleanup complexity to a stdlib server, the second forks validated
+code (CLAUDE.md rule 1).
+
+**Oracles are the validated objects themselves:** the play check is
+`strategy.BasicStrategy.choose()` on the engine's own `HandView`; the game is
+`STANDARD_6D_H17` unmodified; shoes come from `cards.shoe_seeds`, so a session
+is replayable from its recorded seed. The card (tags incl. red sevens, IRC,
+rungs, insure/leave thresholds) is data (`trainer/card.py`), like `Rules`.
+
+**The one piece of duplicated mechanics, and its gate:** mid-round table
+display (which raw card sits in which split hand) — the engine only reports
+final `RoundResult`s. `driver._mirror` reconstructs it from the raw deal
+sequence plus the decision trace, and asserts itself card-for-card against
+the engine's result every finished round (and against the engine's `HandView`
+at every pending ask), so drift raises `MirrorError` instead of mis-training.
+Fuzzed in `tests/test_trainer.py` over thousands of random-play rounds.
+
+**Count visibility convention:** the oracle RC excludes the current round's
+hole card until settlement, then counts it — exactly what a live counter sees,
+and the convention the E16/E17 pricing assumed (hole revealed before the next
+bet decision).

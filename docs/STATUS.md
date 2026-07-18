@@ -10,6 +10,29 @@ has now priced classic blackjack next door in real dollars (cover-vs-money
 ledger, below). No next step is scheduled; remaining items are field checks
 on the felt and parked options below.**
 
+## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
+
+**`uv run python -m ridefree.trainer` → http://127.0.0.1:8877/** — a
+zero-dependency web app (stdlib server, vanilla JS, SQLite) that drills the
+chosen play end to end: real rounds from the validated engine on
+STANDARD_6D_H17 (pen .75), Matt keeps the Red 7 count and plays the crouch15
+card; the app knows ground truth and immediately flags wrong bet size for the
+RC, basic-strategy mistakes, insurance mistakes, missed leaves, and count
+drift (quiz at every shuffle + random spot checks + on-demand verify + peek).
+Session summaries + lifetime stats (accuracy by decision type, most-missed
+plays, count-error histogram, bet confusion, per-session history) persist in
+`data/trainer.db` (gitignored). Keyboard-first UI for pace.
+
+Design doctrine held: `play_round` and `BasicStrategy` are reused UNTOUCHED —
+a replay driver re-runs the round from the shoe snapshot per decision (exact
+under determinism), and the only duplicated mechanics (mid-round display
+mirror) self-asserts against the engine's RoundResult every round. Decision
+record in DESIGN.md; 29 new tests (254 green) incl. a random-play fuzz gate
+and an oracle-player-is-error-free gate. Oracle RC excludes the current hole
+card until settlement (the live-visibility convention E16/E17 priced).
+Sessions replay from their recorded seed. Trainer consumes no experiment
+seed blocks (clock-seeded by default, `--seed` to pin).
+
 ## E16 DONE (2026-07-18): classic blackjack priced — no-heat play does not pay
 
 Matt's question: real spread, real dollars on his real game (6d H17 DAS
@@ -512,6 +535,7 @@ uv run python -m ridefree.cli curvecombine data/e16_h17_ins_p75_s*.json
 uv run python -m ridefree.cli ramp --rules h17 --arm ins \
     --ramp "-0.5:1,0.5:2,1.5:4,2.5:6,3.5:8"   # live bet-ramp simulator
 uv run python data/e16_ledger.py h17 p75      # the E16 cover-vs-money menu
+uv run python -m ridefree.trainer             # the crouch15 drill room (web app)
 ```
 
 ## Open items
@@ -539,6 +563,10 @@ uv run python data/e16_ledger.py h17 p75      # the E16 cover-vs-money menu
 - `src/ridefree/baccarat.py` — the M9 engine (rules, tableau, exact
   enumeration, simulator); gates in `tests/test_baccarat.py`; ledger
   `data/e14_verdict.py`.
+- `src/ridefree/trainer/` — the crouch15 drill-room web app (card as data,
+  replay driver, session checker, SQLite store, stdlib server + static UI);
+  gates in `tests/test_trainer.py` / `test_trainer_server.py`; decision
+  record in DESIGN.md.
 - `docs/STATUS.md` — this file. Update it at every session checkpoint.
 - `data/` — banked grid JSONs (E2, E3 shards; additive bin stats) and
   `e12_verdict.py` (the E12 ledger arithmetic).
