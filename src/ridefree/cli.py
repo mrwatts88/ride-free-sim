@@ -406,6 +406,19 @@ def _bac(args: argparse.Namespace) -> None:
     print(f"per-round profit std: {m.profit_std:.3f} units")
 
 
+def _bacev(args: argparse.Namespace) -> None:
+    from ridefree.experiments import format_bac_ev_scan, run_bac_ev_scan
+
+    rules = _bac_rules(args)
+    print(f"baccarat exact pre-deal EV scan "
+          f"({'EZ' if rules.banker_push_on_three_card_7 else 'classic'}, "
+          f"{rules.decks} decks, pen {rules.penetration:g}, "
+          f"D7 {rules.dragon7_pays:g}:1 / P8 {rules.panda8_pays:g}:1, "
+          f"both staked every round)")
+    res = run_bac_ev_scan(rules, seed=args.seed, rounds=args.rounds)
+    print(format_bac_ev_scan(res, min_cell=args.min_cell))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ridefree")
     sub = parser.add_subparsers(required=True)
@@ -549,6 +562,16 @@ def main() -> None:
     b.add_argument("--panda8", type=float, default=0.0,
                    help="panda 8 stake per round (0 = not played)")
     b.set_defaults(func=_bac)
+
+    be = sub.add_parser("bacev", help="exact Dragon 7 / Panda 8 pre-deal EV scan "
+                                      "(M9b: ceiling, calibration, WoO comparator)")
+    be.add_argument("--rules", choices=("ez", "classic"), default="ez")
+    be.add_argument("--decks", type=int, default=None)
+    be.add_argument("--penetration", type=float, default=None)
+    be.add_argument("--seed", type=int, default=1)
+    be.add_argument("--rounds", type=int, default=100_000)
+    be.add_argument("--min-cell", type=int, default=2_000)
+    be.set_defaults(func=_bacev, shoe_mode=None, rounds_per_shoe=None)
 
     args = parser.parse_args()
     args.func(args)

@@ -1087,3 +1087,270 @@ def format_experiment(result: ExperimentResult, min_rounds: int = 1000) -> str:
                 f"{stat.ev * 100:+8.3f}% {stat.stderr * 100:7.3f}%"
             )
     return "\n".join(lines)
+
+
+# --- E13 (M9b): Dragon 7 / Panda 8 exact pre-deal EV scan --------------------
+
+BAC_EV_THRESHOLDS = (0.0, 0.02, 0.04)
+
+
+@dataclass
+class BacEvScanResult:
+    """One pass of exact Dragon 7 / Panda 8 pre-deal EV vs realized profit.
+
+    Ceiling numbers (P(ev > thr), mean predicted EV) are deterministic
+    functions of shoe states — round sampling is their only error. Realized
+    per-bin profit and the pooled indicator z-scores are the end-to-end
+    consistency checks; the WoO-count row is the same-harness published
+    comparator (0.597u/shoe at cut-card-14)."""
+
+    rounds: int = 0
+    shoes: int = 0
+    penetration: float = 0.0
+    realized_d7: float = 0.0
+    realized_p8: float = 0.0
+    pred_sum_d7: float = 0.0
+    pred_sum_p8: float = 0.0
+    # ev bin -> BinStat on the WIN INDICATOR (0/1); bin_pred_* sums predicted
+    # win probability, so calibration reads realized frequency on predicted
+    # probability (same information as EV at 42x less settlement noise).
+    by_p_d7: dict = field(default_factory=dict)
+    bin_pred_d7: dict = field(default_factory=dict)
+    by_p_p8: dict = field(default_factory=dict)
+    bin_pred_p8: dict = field(default_factory=dict)
+    # decks-left bin -> [n, n_pos_d7, sum_pos_d7, n_pos_p8, sum_pos_p8]
+    by_depth: dict = field(default_factory=dict)
+    # thr -> [rounds, pred_sum, profit, profit_sq], per bet
+    thresholds_d7: dict = field(default_factory=dict)
+    thresholds_p8: dict = field(default_factory=dict)
+    # WoO count policy (TC >= trigger): [rounds, exact-ev sum, profit, profit_sq]
+    woo: list = field(default_factory=lambda: [0, 0.0, 0.0, 0.0])
+    # pooled binomial calibration: sum of predicted p and of p(1-p), hits
+    cal_d7: list = field(default_factory=lambda: [0.0, 0.0, 0])  # deep: <= 1.5 decks
+    cal_d7_all: list = field(default_factory=lambda: [0.0, 0.0, 0])
+    cal_p8_all: list = field(default_factory=lambda: [0.0, 0.0, 0])
+    # correlation accumulators
+    s_d7: float = 0.0
+    ss_d7: float = 0.0
+    s_p8: float = 0.0
+    ss_p8: float = 0.0
+    s_tc: float = 0.0
+    ss_tc: float = 0.0
+    x_d7_tc: float = 0.0
+    x_d7_p8: float = 0.0
+    n_pos_d7: int = 0
+    n_pos_p8: int = 0
+    n_pos_both: int = 0
+
+    def _corr(self, sx, ssx, sy, ssy, sxy) -> float:
+        n = self.rounds
+        vx = ssx / n - (sx / n) ** 2
+        vy = ssy / n - (sy / n) ** 2
+        if vx <= 0 or vy <= 0:
+            return 0.0
+        return (sxy / n - sx * sy / n / n) / math.sqrt(vx * vy)
+
+    @property
+    def corr_d7_tc(self) -> float:
+        return self._corr(self.s_d7, self.ss_d7, self.s_tc, self.ss_tc,
+                          self.x_d7_tc)
+
+    @property
+    def corr_d7_p8(self) -> float:
+        return self._corr(self.s_d7, self.ss_d7, self.s_p8, self.ss_p8,
+                          self.x_d7_p8)
+
+
+def run_bac_ev_scan(rules, *, seed: int, rounds: int) -> BacEvScanResult:
+    """Simulate baccarat with Dragon 7 + Panda 8 staked every round, computing
+    both bets' EXACT pre-deal EV from the remaining composition each round
+    (closed form via `fast_outcomes` — bit-identical to `exact_outcomes`)."""
+    from ridefree.baccarat import (
+        Dragon7Count,
+        FlatBettor,
+        _needs_reshuffle as bac_needs_reshuffle,
+        composition_from_shoe,
+        fast_outcomes,
+        play_baccarat_round,
+    )
+
+    res = BacEvScanResult(penetration=rules.penetration)
+    res.thresholds_d7 = {t: [0, 0.0, 0.0, 0.0] for t in BAC_EV_THRESHOLDS}
+    res.thresholds_p8 = {t: [0, 0.0, 0.0, 0.0] for t in BAC_EV_THRESHOLDS}
+    p_bin = _bin_p(0.002)
+    bettor = FlatBettor(main=None, dragon7=1.0, panda8=1.0)
+    count = Dragon7Count()
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    res.shoes = 1
+    rounds_since = 0
+    for _ in range(rounds):
+        if bac_needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            res.shoes += 1
+            count.new_shoe()
+            rounds_since = 0
+        out = fast_outcomes(composition_from_shoe(shoe.remaining_composition()))
+        ev_d7 = out.ev_dragon7(rules)
+        ev_p8 = out.ev_panda8(rules)
+        p_d7 = out.p_dragon7
+        p_p8 = out.p_panda8
+        tc = count.true_count(shoe.cards_remaining)
+        decks_left = shoe.cards_remaining / 52.0
+        depth_bin = round(math.floor(decks_left / 0.5) * 0.5, 1)
+        start = shoe.snapshot()
+        result = play_baccarat_round(rules, shoe, bettor)
+        count.observe_cards(result.player_cards + result.banker_cards)
+        rounds_since += 1
+        hit_d7 = 1 if result.banker_three_card_7 else 0
+        hit_p8 = 1 if result.player_three_card_8 else 0
+
+        res.rounds += 1
+        res.realized_d7 += result.dragon7_profit
+        res.realized_p8 += result.panda8_profit
+        res.pred_sum_d7 += ev_d7
+        res.pred_sum_p8 += ev_p8
+        k = p_bin(p_d7)
+        res.by_p_d7.setdefault(k, BinStat()).add(hit_d7)
+        res.bin_pred_d7[k] = res.bin_pred_d7.get(k, 0.0) + p_d7
+        k = p_bin(p_p8)
+        res.by_p_p8.setdefault(k, BinStat()).add(hit_p8)
+        res.bin_pred_p8[k] = res.bin_pred_p8.get(k, 0.0) + p_p8
+        d = res.by_depth.setdefault(depth_bin, [0, 0, 0.0, 0, 0.0])
+        d[0] += 1
+        if ev_d7 > 0:
+            d[1] += 1
+            d[2] += ev_d7
+            res.n_pos_d7 += 1
+        if ev_p8 > 0:
+            d[3] += 1
+            d[4] += ev_p8
+            res.n_pos_p8 += 1
+        if ev_d7 > 0 and ev_p8 > 0:
+            res.n_pos_both += 1
+        for t, acc in res.thresholds_d7.items():
+            if ev_d7 > t:
+                acc[0] += 1
+                acc[1] += ev_d7
+                acc[2] += result.dragon7_profit
+                acc[3] += result.dragon7_profit ** 2
+        for t, acc in res.thresholds_p8.items():
+            if ev_p8 > t:
+                acc[0] += 1
+                acc[1] += ev_p8
+                acc[2] += result.panda8_profit
+                acc[3] += result.panda8_profit ** 2
+        if tc >= Dragon7Count.TRIGGER:
+            res.woo[0] += 1
+            res.woo[1] += ev_d7
+            res.woo[2] += result.dragon7_profit
+            res.woo[3] += result.dragon7_profit ** 2
+        res.cal_d7_all[0] += p_d7
+        res.cal_d7_all[1] += p_d7 * (1 - p_d7)
+        res.cal_d7_all[2] += hit_d7
+        res.cal_p8_all[0] += p_p8
+        res.cal_p8_all[1] += p_p8 * (1 - p_p8)
+        res.cal_p8_all[2] += hit_p8
+        if decks_left <= 1.5:
+            res.cal_d7[0] += p_d7
+            res.cal_d7[1] += p_d7 * (1 - p_d7)
+            res.cal_d7[2] += hit_d7
+        res.s_d7 += ev_d7
+        res.ss_d7 += ev_d7 * ev_d7
+        res.s_p8 += ev_p8
+        res.ss_p8 += ev_p8 * ev_p8
+        res.s_tc += tc
+        res.ss_tc += tc * tc
+        res.x_d7_tc += ev_d7 * tc
+        res.x_d7_p8 += ev_d7 * ev_p8
+    return res
+
+
+def _cal_z(acc) -> tuple[float, float] | None:
+    """Pooled binomial consistency: (observed - expected) / sigma, expected."""
+    exp, var, hits = acc
+    if var <= 0:
+        return None
+    return (hits - exp) / math.sqrt(var), exp
+
+
+def format_bac_ev_scan(res: BacEvScanResult, min_cell: int = 2000) -> str:
+    n = res.rounds
+    rps = n / res.shoes
+    lines = [
+        f"rounds: {n:,}   shoes: {res.shoes:,} ({rps:.1f} rounds/shoe)   "
+        f"penetration: {res.penetration:.3f}",
+        f"dragon 7: realized {100 * res.realized_d7 / n:+.4f}%   "
+        f"mean predicted {100 * res.pred_sum_d7 / n:+.4f}%",
+        f"panda 8:  realized {100 * res.realized_p8 / n:+.4f}%   "
+        f"mean predicted {100 * res.pred_sum_p8 / n:+.4f}%",
+        f"corr(ev_d7, woo_tc): {res.corr_d7_tc:+.3f}   "
+        f"corr(ev_d7, ev_p8): {res.corr_d7_p8:+.3f}",
+        f"+EV windows: d7 {100 * res.n_pos_d7 / n:.3f}%  "
+        f"p8 {100 * res.n_pos_p8 / n:.3f}%  "
+        f"both {100 * res.n_pos_both / n:.3f}%",
+        "",
+        "ceiling by threshold (bet when exact EV > thr), per bet:",
+        f"  {'bet':>4s} {'thr':>5s} {'P(ev>thr)':>10s} {'mean pred':>10s} "
+        f"{'realized':>10s} {'±1se':>8s} {'u/100 rounds':>13s} {'u/shoe':>8s}",
+    ]
+    for label, thresholds in (("d7", res.thresholds_d7),
+                              ("p8", res.thresholds_p8)):
+        for t, (cnt, pred, prof, prof_sq) in sorted(thresholds.items()):
+            if cnt == 0:
+                lines.append(f"  {label:>4s} {t:5.2f} {'—':>10s}")
+                continue
+            frac = cnt / n
+            mean_pred = pred / cnt
+            mean_real = prof / cnt
+            var = max(prof_sq / cnt - mean_real * mean_real, 0.0)
+            se = math.sqrt(var / cnt)
+            lines.append(
+                f"  {label:>4s} {t:5.2f} {100 * frac:9.4f}% "
+                f"{100 * mean_pred:+9.4f}% {100 * mean_real:+9.4f}% "
+                f"{100 * se:7.4f}% {100 * frac * mean_pred:+12.4f}u "
+                f"{pred / res.shoes:+7.4f}u"
+            )
+    cnt, pred, prof, prof_sq = res.woo
+    lines.append("")
+    if cnt:
+        mean_real = prof / cnt
+        var = max(prof_sq / cnt - mean_real * mean_real, 0.0)
+        se = math.sqrt(var / cnt)
+        lines.append(
+            f"WoO count comparator (TC >= +4): bet {100 * cnt / n:.3f}% of "
+            f"rounds, exact ev on bet rounds {100 * pred / cnt:+.4f}%, "
+            f"realized {100 * mean_real:+.4f}% ± {100 * se:.4f}%"
+        )
+        lines.append(
+            f"  -> {100 * (cnt / n) * (pred / cnt):+.4f}u/100 rounds = "
+            f"{pred / res.shoes:+.4f}u/shoe (exact-weighted; published "
+            f"0.597u/shoe at cut-14)   realized {prof / res.shoes:+.4f}u/shoe"
+        )
+    else:
+        lines.append("WoO count comparator: no trigger rounds")
+    lines.append("")
+    lines.append("windows by shoe depth (decks remaining, floor-binned):")
+    lines.append(f"  {'decks':>6s} {'rounds':>10s} {'P(d7>0)':>9s} "
+                 f"{'mean pos':>9s} {'P(p8>0)':>9s} {'mean pos':>9s}")
+    for k in sorted(res.by_depth, reverse=True):
+        cnt, pos7, sum7, pos8, sum8 = res.by_depth[k]
+        m7 = 100 * sum7 / pos7 if pos7 else 0.0
+        m8 = 100 * sum8 / pos8 if pos8 else 0.0
+        lines.append(
+            f"  {k:6.1f} {cnt:>10,d} {100 * pos7 / cnt:8.4f}% {m7:+8.4f}% "
+            f"{100 * pos8 / cnt:8.4f}% {m8:+8.4f}%"
+        )
+    lines.append("")
+    for label, acc in (("d7 all rounds", res.cal_d7_all),
+                       ("d7 deep (<=1.5 decks)", res.cal_d7),
+                       ("p8 all rounds", res.cal_p8_all)):
+        z = _cal_z(acc)
+        if z is None:
+            continue
+        zval, exp = z
+        lines.append(
+            f"calibration {label}: expected {exp:,.1f} wins, observed "
+            f"{acc[2]:,}, z = {zval:+.2f}"
+        )
+    return "\n".join(lines)

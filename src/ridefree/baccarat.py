@@ -20,6 +20,7 @@ settles them only when a bettor stakes them, and no built-in bettor does
 unless explicitly configured, so published-edge validation is untouched.
 """
 
+import functools
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -447,6 +448,141 @@ def composition_from_shoe(remaining: Mapping[int, int]) -> dict[int, int]:
     for rank, count in remaining.items():
         comp[rank % 10] += count
     return comp
+
+
+@functools.lru_cache(maxsize=1)
+def _tableau_table() -> tuple[tuple[tuple[tuple[int, int], ...], int, tuple[int, ...]], ...]:
+    """The tableau's path structure, independent of any composition.
+
+    Enumerates every ordered value sequence the tableau can deal and
+    aggregates by the MULTISET of values drawn: for a fixed multiset every
+    ordering has the same probability (a product of per-value falling
+    factorials), so `fast_outcomes` only needs, per multiset, how many
+    orderings end in each outcome. Entries are
+    ((value, multiplicity) pairs, cards dealt, (banker, player, tie, dragon7,
+    panda8) ordering counts). Built once per process (~a second), ~7k entries.
+    """
+    table: dict[tuple[tuple[int, int], ...], list] = {}
+
+    def acc(cards: tuple[int, ...], outcome: int, d7: bool, p8: bool) -> None:
+        exps = [0] * 10
+        for c in cards:
+            exps[c] += 1
+        key = tuple((v, k) for v, k in enumerate(exps) if k)
+        vec = table.get(key)
+        if vec is None:
+            vec = table[key] = [len(cards), 0, 0, 0, 0, 0]
+        vec[1 + outcome] += 1
+        if d7:
+            vec[4] += 1
+        if p8:
+            vec[5] += 1
+
+    def classify(pf: int, bf: int) -> int:
+        return 1 if pf > bf else (0 if bf > pf else 2)
+
+    for v1 in range(10):
+        for v2 in range(10):
+            p_total = (v1 + v2) % 10
+            for v3 in range(10):
+                for v4 in range(10):
+                    b_total = (v3 + v4) % 10
+                    natural = p_total >= 8 or b_total >= 8
+                    if natural or (p_total >= 6 and b_total >= 6):
+                        acc((v1, v2, v3, v4), classify(p_total, b_total),
+                            False, False)
+                        continue
+                    if p_total >= 6:
+                        for v6 in range(10):
+                            bf = (b_total + v6) % 10
+                            o = classify(p_total, bf)
+                            acc((v1, v2, v3, v4, v6), o, o == 0 and bf == 7,
+                                False)
+                        continue
+                    for v5 in range(10):
+                        pf = (p_total + v5) % 10
+                        if not _banker_draws(b_total, v5):
+                            o = classify(pf, b_total)
+                            acc((v1, v2, v3, v4, v5), o, False,
+                                o == 1 and pf == 8)
+                            continue
+                        for v6 in range(10):
+                            bf = (b_total + v6) % 10
+                            o = classify(pf, bf)
+                            acc((v1, v2, v3, v4, v5, v6), o,
+                                o == 0 and bf == 7, o == 1 and pf == 8)
+    return tuple(
+        (key, vec[0], tuple(vec[1:]))
+        for key, vec in table.items()
+    )
+
+
+def fast_outcomes(composition: Mapping[int, int]) -> ExactOutcomes:
+    """`exact_outcomes`, restructured for per-round use: identical integers
+    (differentially tested), ~10x faster by iterating the precomputed
+    multiset table instead of re-walking the tableau."""
+    n = [composition.get(v, 0) for v in range(10)]
+    total_cards = sum(n)
+    if total_cards < 6:
+        raise ValueError("composition must hold at least 6 cards")
+    # ff[v][k] = n_v * (n_v - 1) * ... * (n_v - k + 1); zero when k > n_v.
+    ff = []
+    for v in range(10):
+        row = [1] * 7
+        f = 1
+        for k in range(1, 7):
+            f *= max(n[v] - k + 1, 0)
+            row[k] = f
+        ff.append(row)
+    filler = {
+        4: (total_cards - 4) * (total_cards - 5),
+        5: total_cards - 5,
+        6: 1,
+    }
+    banker = player = tie = dragon7 = panda8 = 0
+    for pairs, length, vec in _tableau_table():
+        w = filler[length]
+        for v, k in pairs:
+            w *= ff[v][k]
+            if not w:
+                break
+        if not w:
+            continue
+        banker += vec[0] * w
+        player += vec[1] * w
+        tie += vec[2] * w
+        dragon7 += vec[3] * w
+        panda8 += vec[4] * w
+    total = 1
+    for k in range(6):
+        total *= total_cards - k
+    return ExactOutcomes(total=total, banker=banker, player=player, tie=tie,
+                         dragon7=dragon7, panda8=panda8)
+
+
+class Dragon7Count:
+    """Wizard of Odds' practical Dragon 7 count (System 2, fetched
+    2026-07-17): per card SEEN, 4/5/6/7 tag -1 and 8/9 tag +2 (others 0);
+    true count = running / decks remaining; bet at TC >= +4. Published
+    performance at cut-card-14 penetration: bet on 9.16% of hands, +8.03%
+    average edge, 0.597 units/shoe. The M9b same-harness comparator row."""
+
+    TAGS = {4: -1, 5: -1, 6: -1, 7: -1, 8: 2, 9: 2}
+    TRIGGER = 4.0
+
+    def __init__(self) -> None:
+        self.running = 0
+
+    def new_shoe(self) -> None:
+        self.running = 0
+
+    def observe_cards(self, cards) -> None:
+        for card in cards:
+            self.running += self.TAGS.get(card % 10, 0)
+
+    def true_count(self, cards_remaining: int) -> float:
+        decks = cards_remaining / 52.0
+        return self.running / decks if decks > 0 else 0.0
 
 
 def exact_outcomes(composition: Mapping[int, int]) -> ExactOutcomes:

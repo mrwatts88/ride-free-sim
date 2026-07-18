@@ -107,16 +107,16 @@ precision (classic banker −1.0579%, player −1.2351%, tie −14.3596%, EZ ban
 2 × 2M-round always-bet csm shards (seeds 7500000001 / 7600000001) match —
 see STATUS for per-shard σ. 208 tests green; determinism under seed verified.
 
-## M9b — Exact pre-deal EV + the ceiling (the E10 analogue)
+## M9b — Exact pre-deal EV + the ceiling (the E10 analogue) ✅ (E13, 2026-07-17)
 
-`exact_outcomes` on the live remaining composition each round → exact Dragon 7
-/ Panda 8 / main-bet EV before the bet. Measure: +EV frequency and magnitude by
-depth and penetration, the perfect-play ceiling in u/100 rounds, correlation
-with the published linear count. Gate: calibration slope of realized on
-predicted ≈ 1, published-count comparator reproduces WoO's ~0.6u/shoe within
-noise. Performance note: fresh-shoe enumeration is sub-second, and late-shoe
-(small-N) compositions enumerate faster still; late-shoe-only evaluation is
-the fallback if per-round cost bites.
+`fast_outcomes` (multiset-table form of `exact_outcomes`, bit-identical,
+2.4ms/call) on the live composition every round, both bets always staked
+(`cli bacev`), 600k rounds. **Combined D7+P8 ceiling at cut-card-14:
++1.215u/100 observed rounds ≈ +0.99u/shoe — 4.4× the 21+3 pen-.85 ceiling,
+toll-free.** Gate passed: WoO's practical count scored same-harness gives
++0.592 ± 0.004u/shoe vs their published 0.597 (the count captures 85.8% of
+the D7 ceiling; P8 is unclaimed value on top). Calibration via pooled
+binomial z: d7 −1.89 / p8 +1.57 (watched, not alarming). Full log: E13.
 
 ## M9c — Compression + the betting verdict (the E11/E12 analogue)
 

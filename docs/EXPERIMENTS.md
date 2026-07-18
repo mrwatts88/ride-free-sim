@@ -2,6 +2,71 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E13 — Dragon 7 / Panda 8 exact pre-deal EV: 4.4× the 21+3 ceiling, toll-free (M9b)
+
+**Date:** 2026-07-17 · **Commands:** `uv run python -m ridefree.cli bacev
+--rounds 100000 --penetration {0.966,0.95,0.90} --seed <s>` — six shards:
+pen 0.966 (cut-card-14, WoO's comparator point) seeds 7700000001 / 7800000001 /
+7900000001; pen 0.95 seeds 8000000001 / 8100000001; pen 0.90 seed 8200000001.
+600k rounds, ~7,470 shoes. Both side bets staked every round; each round's
+EXACT pre-deal EV computed from the remaining composition via
+`baccarat.fast_outcomes` (multiset-table restructuring of `exact_outcomes` —
+bit-identical integers, differentially tested, 2.4ms/call).
+
+**Ceilings (bet-when-positive, per unit staked, EZ 8-deck flat paytables):**
+
+| pen | bet | P(ev>0) | mean window EV | u/100 rounds | u/shoe |
+|---|---|---|---|---|---|
+| 0.966 | Dragon 7 | 11.11% | +7.60% | **+0.845** | +0.690 |
+| 0.966 | Panda 8 | 5.04% | +7.33% | **+0.370** | +0.303 |
+| 0.966 | **both** | — | — | **+1.215** | **+0.993** |
+| 0.95 | Dragon 7 | 10.91% | +6.52% | +0.711 | +0.571 |
+| 0.95 | both | — | — | +0.980 | +0.787 |
+| 0.90 | Dragon 7 | 9.29% | +5.19% | +0.482 | +0.367 |
+| 0.90 | both | — | — | +0.654 | +0.498 |
+
+Scale reference: the 21+3 exact ceiling was +0.115u/100 (pen .75) / +0.276u
+(pen .85). **The combined Dragon+Panda ceiling at baccarat's normal cut is
++1.215u/100 observed rounds — 4.4× the 21+3 pen-.85 ceiling — and there is no
+main-bet toll to subtract** (baccarat sit-out is normal behavior; E12 spent
+half its analysis on the toll 21+3 must pay).
+
+**The published-count cross-validation (the load-bearing check):** scoring
+WoO's practical Dragon 7 count (4–7 = −1, 8/9 = +2, TC ≥ +4) inside our
+harness at cut-14: bet 8.76% of rounds at exact-weighted +8.27% → **+0.592 ±
+0.004 u/shoe vs WoO's published 0.597u/shoe** (shards 0.586/0.600/0.591) —
+same-harness agreement to half a percent, the E12-Jacobson-style independent
+validation of the entire pipeline (engine, depletion, calculator). At pen
+0.95 / 0.90 the same count drops to 0.496 / 0.320 u/shoe — penetration
+sensitivity matches intuition.
+
+- **The simple count already captures 85.8%** of the D7 exact ceiling
+  (corr(ev_d7, tc) ≈ +0.905) — the D7 signal is far more one-dimensional
+  than 21+3's suit quadratic (where the best published count got 65%). The
+  remaining headroom: ~14% of D7 (+0.10u/shoe) plus ALL of Panda 8
+  (+0.30u/shoe; corr(ev_d7, ev_p8) only +0.41, both-windows 2.7% of rounds
+  — P8 needs its own signal, published prior art treats it as an
+  afterthought). M9c question: cheapest human system for the PAIR of bets.
+- **Depth structure:** D7 ignites ~6.5 decks out and grows monotonically —
+  P(ev>0) by decks left at pen .966: 2.5% (5) → 11% (3) → 22% (1.5) → 27%
+  (1) → 36% (0.5) → 40% (last quarter deck), window mean reaching +12–19%.
+  P8 sleeps until ~4.5 decks then follows the same shape at half the
+  frequency. Baccarat's cut-14 custom means the game's OWN dealing
+  convention delivers the deep tail 21+3 had to pray for.
+- **Calibration (pooled binomial on win indicators, 600k rounds):** d7
+  all-rounds z = −1.89 (observed 13,291 vs expected 13,508.6; all six shards
+  mildly negative), d7 deep-subset z = −2.15, p8 z = +1.57. The predictor is
+  exact-by-construction conditional on composition (and `fast_outcomes` ==
+  `exact_outcomes` bit-for-bit), so these are WATCHED as sampling
+  fluctuation, same doctrine as E10's +2.4σ slope note; M9c's larger samples
+  will settle it. Realized window EVs are individually noisy (±6–8%/shard —
+  40:1 settlement variance) and consistent with predictions at ~2σ.
+
+**Verdict: proceed to M9c (compression + ledger).** The exact ceiling
+clears every bar the project has set: bigger than 21+3 by 4×, toll-free,
+at the house's own standard penetration, with the published count as a
+strong-but-beatable baseline and Panda 8 as unclaimed value on top.
+
 ## E12 — The 21+3 betting verdict: beatable for real, wong-in at deep penetration
 
 **Date:** 2026-07-17 · **Command:** `uv run python data/e12_verdict.py`

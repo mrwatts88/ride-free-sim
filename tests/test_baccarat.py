@@ -267,3 +267,67 @@ def test_composition_from_shoe_collapses_tens():
         shoe.deal()
     comp = composition_from_shoe(shoe.remaining_composition())
     assert sum(comp.values()) == shoe.cards_remaining
+
+
+# ---------------------------------------------------------------------------
+# M9b: fast_outcomes, the WoO count, and the EV scan harness
+# ---------------------------------------------------------------------------
+
+
+def test_fast_outcomes_bit_identical_to_exact():
+    import random
+
+    from ridefree.baccarat import fast_outcomes
+
+    comps = [fresh_composition(8)]
+    c = fresh_composition(8)
+    c[8] -= 20
+    c[9] -= 20
+    comps.append(c)
+    rng = random.Random(7300000004)
+    c = fresh_composition(8)
+    pool = [v for v in range(10) for _ in range(c[v])]
+    rng.shuffle(pool)
+    for v in pool[:350]:
+        c[v] -= 1
+    comps.append(c)
+    comps.append({0: 10, 2: 3, 4: 1, 5: 2, 7: 1})  # 17 cards, ranks exhausted
+    for comp in comps:
+        assert fast_outcomes(comp) == exact_outcomes(comp)
+
+
+def test_dragon7_count_tags_and_true_count():
+    from ridefree.baccarat import Dragon7Count
+
+    count = Dragon7Count()
+    count.observe_cards([4, 5, 6, 7])  # -4
+    assert count.running == -4
+    count.observe_cards([8, 9, 8])  # +6
+    assert count.running == 2
+    count.observe_cards([1, 2, 3, 10, 10])  # aces/2/3/tens are 0
+    assert count.running == 2
+    assert count.true_count(52) == pytest.approx(2.0)
+    assert count.true_count(26) == pytest.approx(4.0)
+    count.new_shoe()
+    assert count.running == 0
+
+
+def test_bac_ev_scan_smoke():
+    from ridefree.experiments import format_bac_ev_scan, run_bac_ev_scan
+
+    rules = BaccaratRules(penetration=0.95, banker_commission=0.0,
+                          banker_push_on_three_card_7=True)
+    res = run_bac_ev_scan(rules, seed=7300000005, rounds=3_000)
+    assert res.rounds == 3_000 and res.shoes >= 30
+    # Bet-when-positive dominates higher thresholds in round count.
+    assert res.thresholds_d7[0.0][0] >= res.thresholds_d7[0.02][0]
+    # Indicator accounting is consistent.
+    assert 0 <= res.cal_d7_all[2] <= res.rounds
+    assert res.cal_d7[2] <= res.cal_d7_all[2]
+    assert -1.0 <= res.corr_d7_tc <= 1.0
+    assert -1.0 <= res.corr_d7_p8 <= 1.0
+    # Predicted mean EV should sit near the fresh-shoe -7.61% (cut-card
+    # weighting shifts it only slightly).
+    assert -0.10 < res.pred_sum_d7 / res.rounds < -0.05
+    text = format_bac_ev_scan(res, min_cell=200)
+    assert "WoO count comparator" in text and "calibration" in text

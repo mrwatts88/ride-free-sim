@@ -51,8 +51,10 @@ suit-aware cards, M8b the bet as validated configuration, M8c the attack
 pen/cut depth, CSM, entry policy, side max, decks, H17/S17.
 **M9 IS OPEN (chosen 2026-07-17): attack the Dragon 7 (EZ Baccarat, confirmed
 on Potawatomi's floor), Panda 8 riding along.** M9a (engine + validation) ✅
-done — see below; next step is M9b (exact pre-deal EV ceiling, the E10
-analogue).
+and M9b (exact ceiling, E13) ✅ are done — combined D7+P8 ceiling
+**+1.215u/100 rounds at the baccarat-normal cut, 4.4× the 21+3 ceiling,
+toll-free**; WoO's published count reproduced same-harness to half a percent.
+Next step is M9c (human compression + the E12-style ledger verdict).
 
 ## Where the attack stands (E1–E4c, see EXPERIMENTS.md)
 
@@ -249,20 +251,38 @@ CLI: `cli bac` (sim + self-check vs enumeration), `cli bacexact`.
    incl. tableau-matrix unit deals and EZ/classic settlement); determinism
    under seed verified.
 
-Seeds consumed: 7300000001–3 (tests), 7400000001 (100k calibration),
-7500000001 / 7600000001 (gate shards). **Next unused block: 7.7e9+.**
+## M9b DONE (2026-07-17): the ceiling is 4.4× the 21+3 one, and toll-free (E13)
 
-**M9b NEXT (precise spec):** per-round exact pre-deal EV from the live
-remaining composition — `composition_from_shoe(shoe.remaining_composition())`
-→ `exact_outcomes` → `ev_dragon7`/`ev_panda8` — always-staked so realized
-settlement checks the prediction (the E10 design). Deliverables: +EV
-frequency and mean by depth; perfect-play ceiling in u/100 observed rounds at
-realistic pens (0.90 / 0.95 / cut-14 ≈ 0.966); calibration slope (realized on
-predicted ≈ 1); corr with the WoO linear count and with each other (D7 vs P8
-window collision). Comparator row: the WoO count itself, same harness — must
-reproduce ~0.6u/shoe within noise. Watch per-round enumeration cost (fresh
-shoe ~0.5s is too slow for 2M rounds — evaluate every-Nth-round sampling or
-late-shoe-only evaluation; the estimand is per-observed-round either way).
+**E13 (EXPERIMENTS.md):** exact pre-deal D7/P8 EV every round
+(`baccarat.fast_outcomes` — multiset-table restructuring of `exact_outcomes`,
+bit-identical integers differentially tested, 2.4ms/call; `cli bacev`), 600k
+rounds across pens 0.966/0.95/0.90. Headlines:
+- **Combined Dragon+Panda exact ceiling at cut-card-14 (pen 0.966, the
+  baccarat norm): +1.215u/100 observed rounds ≈ +0.99u/shoe** (D7 +0.845,
+  P8 +0.370) — 4.4× the 21+3 pen-.85 ceiling, with no main-bet toll.
+- **Pipeline cross-validated against WoO independently**: their practical
+  count scored in our harness gives +0.592 ± 0.004 u/shoe vs their published
+  0.597. The simple count captures 85.8% of the D7 ceiling (corr +0.905) —
+  headroom is ~14% of D7 plus ALL of P8 (corr(d7,p8) +0.41).
+- Depth: D7 ignites ~6.5 decks out; last half-deck P(+EV) ≈ 36–40% at mean
+  +12–19%. Pen 0.95 → combined +0.980u/100; pen 0.90 → +0.654u/100.
+- Calibration: pooled binomial z over 600k rounds — d7 −1.89, p8 +1.57
+  (watched; predictor is exact-by-construction, M9c samples will settle it).
+
+Seeds consumed: 7300000001–6 (tests + calibration), 7400000001 (M9a
+calibration), 7500000001 / 7600000001 (M9a gate), 7700000001–8200000001
+step 1e8 (E13 shards). **Next unused block: 8.3e9+.**
+
+**M9c NEXT (precise spec):** compression + the betting verdict. (1) Human
+system for the BET PAIR: score the WoO count, a re-derived optimal linear D7
+count (EOR-style, from `fast_outcomes` gradients), a P8-specific count, and
+a two-count combined system — all same-harness, exact-EV-scored, analytic
+parameters only (no in-sample fitting; the E11b lesson). (2) The E12-style
+ledger: u/100 → $/h at realistic paces, per-bet variance → N0 and bankroll
+at 5% RoR, wong-style vs seated-observer play (toll-free either way),
+side-bet caps sensitivity. (3) Replicate calibration on the accumulated
+rounds. Rack-card dependencies: D7/P8 offered + paytables (40:1/25:1
+assumed), cut depth, side maxes, sit-without-betting tolerance.
 
 ## NEXT STEPS (M8 research complete; field + polish items remain)
 
