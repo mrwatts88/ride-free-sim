@@ -1,7 +1,13 @@
 # STATUS — read this first in a new session
 
-Updated 2026-07-17. This is the resume-here document: current state, key numbers,
+Updated 2026-07-18. This is the resume-here document: current state, key numbers,
 and the precisely-specified next step. Doc map at the bottom.
+
+**Current state in one line: all three research questions are ANSWERED and
+written up (Ride Free: dominated; 21+3: beatable, grind-scale; Dragon 7 +
+Panda 8: beatable, the strongest verdict — `docs/ARTICLE_EZBAC.md`). No next
+step is scheduled; remaining items are field checks on the felt and parked
+options below.**
 
 ## ⚠ Deep-dive checkpoint (2026-07-17, late session) — read before trusting the numbers below
 
@@ -297,17 +303,31 @@ and burn-card idealizations on record in E14.
 verdict.** Conditions: 40:1/25:1 paytables, real shoe, cut ≥ ~0.95, side
 maxes ≥ $25, two written counts (scorecards are normal at baccarat).
 
+**E14b addendum (playable card + operating modes, 2026-07-17/18):** integer
+"paper" tags must be BALANCED (naive rounding drifted −4/deck and killed the
+TC triggers — lesson asserted in code). Verified card: Dragon tags
+A+1/2−1/3−1/4−3/5−3/6−3/7−4/8+5/9+5/T+1 @ TC≥10 → 89.8% capture; Panda =
+WoO appendix tags @ TC≥11 (already at the integer frontier, 79.1%). Paper
+pair ≈ +1.11u/100 ≈ 87% of ceiling. **Operating modes (ledger):** heads-up
+with $10 min main every round (required when alone; Matt confirmed sitting
+out is fine at Potawatomi when others play) → toll is 9% of gross, pace
+doubles: **~$101/h at 100 r/h vs ~$50/h crowded**. Side ≤ main cap (matched
+on triggers): −13% → $88/h; capped $25 side max: $22/h on ~$25k — still
+matches all of 21+3. Only a flat matched main all shoe kills it (never
+required). Full write-up: **`docs/ARTICLE_EZBAC.md`** (done 2026-07-18).
+
 Seeds consumed (M9c): 7300000007 (test), 8300000001 / 8400000001 (pen .966),
-8500000001 (pen .95). **Next unused block: 8.6e9+.**
+8500000001 (pen .95), 8600000001 (E14b broken-row run, discarded),
+8700000001 (E14b verification). **Next unused block: 8.8e9+.**
 
 ## NEXT STEPS (M8 research complete; field + polish items remain)
 
-1. **Rack card (Matt, real world):** ~~flat 9:1 vs tiered~~ **CONFIRMED flat
-   9:1 on the floor (Matt, 2026-07-17)** — also present: a separate 21+3
-   progressive ($5/$25, meters) and "Top 3". Still to confirm: decks,
-   penetration/cut-card depth, CSM or shoe, mid-shoe entry policy, side-bet
-   max & main min, (from M3) H17/S17 — and now the EZ Baccarat table: decks,
-   cut depth, Dragon 7 / Panda 8 maxes, sit-without-betting tolerance.
+1. **Field checks (Matt, at the felt — no rack-card homework left):** 21+3
+   flat 9:1 CONFIRMED on the floor (2026-07-17; progressive and "Top 3" also
+   present); sit-without-betting at baccarat CONFIRMED fine (2026-07-17).
+   Remaining, readable off the felt in a minute: the EZ table's Dragon/Panda
+   paytables (40:1/25:1 assumed), side-bet maxes, cut-card depth — and, only
+   if 21+3 is ever played, its pen/CSM/entry policy and H17/S17.
 2. Optional realism passes if the field checks pass: visible-cards-only
    tracker (drop hole-card assumption — expect ~nil), full-table
    cards-per-round model, tiered-paytable re-derivation (pure configuration:
@@ -436,8 +456,11 @@ uv run python -m ridefree.cli bac --shoe-mode csm --rounds 2000000 \
 - `docs/EXPERIMENTS.md` — experiment log E1–E12 (newest first), reproducible.
 - `docs/ARTICLE.md` — the Free Bet (Ride Free) write-up.
 - `docs/ARTICLE_21P3.md` — the 21+3 side bet write-up (M8 arc, quad-Q, verdict).
+- `docs/ARTICLE_EZBAC.md` — the Dragon 7 / Panda 8 write-up (M9 arc, the
+  two-count card, the toll-free ledger, verdict).
 - `src/ridefree/baccarat.py` — the M9 engine (rules, tableau, exact
-  enumeration, simulator); gates in `tests/test_baccarat.py`.
+  enumeration, simulator); gates in `tests/test_baccarat.py`; ledger
+  `data/e14_verdict.py`.
 - `docs/STATUS.md` — this file. Update it at every session checkpoint.
 - `data/` — banked grid JSONs (E2, E3 shards; additive bin stats) and
   `e12_verdict.py` (the E12 ledger arithmetic).
