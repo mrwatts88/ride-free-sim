@@ -171,6 +171,37 @@ sequences change for every seed (v1 exactly reproducible at tag `ride-free-v1`).
 - `validation.InfiniteDeckShoe` (dealer state-machine Monte Carlo only) stays
   value-based — it never feeds a side bet.
 
+## Decision record: baccarat as its own small engine (M9), shared plumbing
+
+**Decision (2026-07-17):** the Dragon 7 / Panda 8 attack (M9) gets a separate
+engine in `baccarat.py` rather than a variant of the blackjack engine. The
+one-engine doctrine exists to buy validation transfer between variants that
+share game logic; baccarat shares none of it — no player decisions, a fixed
+drawing tableau, mod-10 totals — so forcing it through `engine.py` would add
+rule conditionals with zero transfer, the exact thing working rule 1 forbids.
+What IS shared is the trusted plumbing and doctrine: the deterministic
+`cards.Shoe` + `shoe_seeds` (an 8-deck baccarat shoe is the same 416 physical
+cards; ten-values collapse to 0 via `card % 10`, so the repo's 1-10 value
+representation is already baccarat-native and the M8a suit layer is not
+needed — both side bets are rank-only), rules-as-data (`BaccaratRules`:
+decks, commission, the EZ three-card-7 push, side-bet paytables, shoe-end
+modes with the same csm-as-published-comparator semantics), the
+engine-asks/bettor-answers protocol with observer hooks, explicit ledger
+fields per wager, and the M8b two-reference validation gate.
+
+- The **tableau lives in code**, not in Rules: the player/banker drawing
+  matrix is universal across casinos (what varies is settlement and
+  paytables, and that is data).
+- `exact_outcomes(composition)` is the single exact reference: integer
+  enumeration over ordered 6-card sequences (4- and 5-card hands weighted by
+  falling-factorial fillers, matching WoO's published combination-table
+  convention exactly). It deliberately takes an arbitrary composition so the
+  M9a fresh-shoe gate and the M9b live pre-deal EV calculator are the same
+  audited function — no second implementation to trust.
+- Side bets follow the insurance/21+3 doctrine: settled by the engine only
+  when a bettor stakes them; no built-in bettor stakes them unless
+  configured, so published-edge validation is never contaminated.
+
 ## Decision record: Rust later, not now
 
 **Decision (2026-07-17):** Build the Python reference engine first; defer the Rust

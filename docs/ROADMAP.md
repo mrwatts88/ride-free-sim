@@ -12,6 +12,17 @@ parked. The v1 artifact is tagged `ride-free-v1`.
 doctrine, new question: can suit/rank composition beat 21+3? The insurance work
 is the template (side bet as Rules data + strategy hook + explicit ledger + hard
 gate vs an independently computed/published EV before any attack work).
+**M8 ANSWERED (same day): beatable — see M8c.**
+
+**M9 (2026-07-17): the Dragon 7 (EZ Baccarat), with Panda 8 riding along.**
+Third target, chosen after scouting: EZ Baccarat is confirmed on Potawatomi's
+floor; the Dragon 7 (banker three-card-7 win, 40:1, HE 7.61% at 8 decks) has
+published prior art (WoO/Jacobson: countable with a simple 8/9-vs-4-7 count at
+~0.6u/shoe) but no published exact-composition ceiling — the same gap the M8
+machinery was built to close. Structural appeal over 21+3: no main-bet toll
+(sitting out rounds is normal baccarat behavior), the deepest standard
+penetration in the house (~14-16 cards from the end of 8 decks), and native
+scorecard camouflage. Honest risk: 40:1 variance — the E12-style ledger decides.
 
 ## M8a — Suit-aware card model, one engine (the invasive step; gate hard) ✅
 
@@ -72,6 +83,49 @@ prior art: 21+3 is regarded as countable mainly via suit imbalance (flush
 richness) — side-bet EV swings are large, so this may clear the bar Ride Free
 missed. All experiments on fresh seeds (the `shoe_seeds` fix is in place);
 per-experiment log discipline unchanged (E10+).
+
+## M9a — Baccarat engine as data, validated before attacked ✅
+
+Baccarat gets its own small engine (`baccarat.py` — decision record in
+DESIGN.md): the drawing tableau is universal and lives in code; what varies
+(decks, commission, the EZ push rule, Dragon 7 / Panda 8 paytables, shoe
+retirement) is `BaccaratRules` data. Reuses `cards.Shoe`/`shoe_seeds` (the
+1-10 value collapse is baccarat-native: tens count 0 via `card % 10` — no suit
+layer needed, Dragon 7 and Panda 8 are rank-only). Bettor protocol mirrors the
+strategy doctrine: the engine asks `main_bet` / `bet_dragon7` / `bet_panda8`;
+no built-in bettor stakes a side bet unless configured.
+**Gate (the M8b two-reference pattern):** (1) exact first-principles
+enumeration (`exact_outcomes`, integer arithmetic over ordered 6-card
+sequences, arbitrary composition — deliberately doubling as the M9b pre-deal
+EV core) must equal WoO's published 8-deck combination table EXACTLY;
+(2) always-bet csm simulation must match enumeration and published edges.
+**PASSED (2026-07-17):** enumeration equals WoO exactly (banker
+2,292,252,566,437,888 / player 2,230,518,282,592,256 / tie 475,627,426,473,216
+of 4,998,398,275,503,360) and reproduces every published figure to print
+precision (classic banker −1.0579%, player −1.2351%, tie −14.3596%, EZ banker
+−1.0183%, Dragon 7 −7.6113% at p 0.022534, Panda 8 −10.1876% at p 0.034543);
+2 × 2M-round always-bet csm shards (seeds 7500000001 / 7600000001) match —
+see STATUS for per-shard σ. 208 tests green; determinism under seed verified.
+
+## M9b — Exact pre-deal EV + the ceiling (the E10 analogue)
+
+`exact_outcomes` on the live remaining composition each round → exact Dragon 7
+/ Panda 8 / main-bet EV before the bet. Measure: +EV frequency and magnitude by
+depth and penetration, the perfect-play ceiling in u/100 rounds, correlation
+with the published linear count. Gate: calibration slope of realized on
+predicted ≈ 1, published-count comparator reproduces WoO's ~0.6u/shoe within
+noise. Performance note: fresh-shoe enumeration is sub-second, and late-shoe
+(small-N) compositions enumerate faster still; late-shoe-only evaluation is
+the fallback if per-round cost bites.
+
+## M9c — Compression + the betting verdict (the E11/E12 analogue)
+
+What carries the signal (rank decomposition; there is no suit term), how much
+a human count captures (published counts as same-harness comparator rows —
+the head-to-head E12 could only do cross-harness), then the ledger verdict:
+u/100 observed rounds, $/h, N0, bankroll at 5% RoR — with baccarat's toll-free
+sit-out structure. Panda 8 as a configuration rider; do the two bets' windows
+collide?
 
 Each milestone has a validation gate; don't advance until it passes.
 

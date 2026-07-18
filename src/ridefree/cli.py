@@ -293,6 +293,119 @@ def _deviations(args: argparse.Namespace) -> None:
           f"({r.window_rounds:,} rounds in window)")
 
 
+def _bac_rules(args: argparse.Namespace):
+    import dataclasses as _dc
+
+    from ridefree.baccarat import BACCARAT_8D, EZ_BACCARAT_8D
+
+    rules = EZ_BACCARAT_8D if args.rules == "ez" else BACCARAT_8D
+    changes = {}
+    if args.decks:
+        changes["decks"] = args.decks
+    if args.penetration:
+        changes["penetration"] = args.penetration
+    if getattr(args, "shoe_mode", None):
+        changes["shoe_end_mode"] = args.shoe_mode
+    if getattr(args, "rounds_per_shoe", None):
+        changes["rounds_per_shoe"] = args.rounds_per_shoe
+    return _dc.replace(rules, **changes) if changes else rules
+
+
+def _bacexact(args: argparse.Namespace) -> None:
+    from ridefree.baccarat import exact_outcomes, fresh_composition
+
+    rules = _bac_rules(args)
+    out = exact_outcomes(fresh_composition(rules.decks))
+    print(f"exact enumeration, {rules.decks} decks "
+          f"({'EZ' if rules.banker_push_on_three_card_7 else 'classic'} settlement)")
+    print(f"total 6-card sequences: {out.total:,}")
+    for name, combos, p in [
+        ("banker", out.banker, out.p_banker),
+        ("player", out.player, out.p_player),
+        ("tie", out.tie, out.p_tie),
+        ("dragon 7", out.dragon7, out.p_dragon7),
+        ("panda 8", out.panda8, out.p_panda8),
+    ]:
+        print(f"  {name:<9} {combos:>26,}   p = {p:.6f}")
+    print(f"EV banker: {100 * out.ev_main(rules, 'banker'):+.4f}%   "
+          f"player: {100 * out.ev_main(rules, 'player'):+.4f}%   "
+          f"tie ({rules.tie_pays:g}:1): {100 * out.ev_main(rules, 'tie'):+.4f}%")
+    print(f"EV dragon 7 ({rules.dragon7_pays:g}:1): {100 * out.ev_dragon7(rules):+.4f}%   "
+          f"panda 8 ({rules.panda8_pays:g}:1): {100 * out.ev_panda8(rules):+.4f}%")
+
+
+def _bac(args: argparse.Namespace) -> None:
+    import math
+
+    from ridefree.baccarat import (
+        FlatBettor,
+        exact_outcomes,
+        fresh_composition,
+        simulate_baccarat,
+    )
+
+    rules = _bac_rules(args)
+    main_bet = None if args.main == "none" else (args.main, 1.0)
+    bettor = FlatBettor(main=main_bet, dragon7=args.dragon7, panda8=args.panda8)
+    print(f"baccarat {'EZ' if rules.banker_push_on_three_card_7 else 'classic'}, "
+          f"{rules.decks} decks, shoe mode: {rules.shoe_end_mode}"
+          + (f" (pen {rules.penetration:g})" if rules.shoe_end_mode == "cut_card" else "")
+          + f", main: {args.main}, dragon7 stake: {args.dragon7:g}, "
+          f"panda8 stake: {args.panda8:g}")
+    m = simulate_baccarat(rules, bettor, seed=args.seed, rounds=args.rounds)
+    out = exact_outcomes(fresh_composition(rules.decks))
+    n = m.rounds
+    print(f"rounds: {n:,}")
+
+    def _freq(label: str, observed: int, p: float) -> None:
+        sigma = math.sqrt(p * (1.0 - p) * n)
+        z = (observed - p * n) / sigma if sigma else 0.0
+        print(f"  {label:<22} {observed / n:>9.6f}  exact {p:.6f}  ({z:+.2f}σ)")
+
+    print("frequencies vs exact (fresh-shoe; cut_card mode carries the "
+          "round-frequency analogue of the cut-card effect):")
+    _freq("banker", m.outcomes.get("banker", 0), out.p_banker)
+    _freq("player", m.outcomes.get("player", 0), out.p_player)
+    _freq("tie", m.outcomes.get("tie", 0), out.p_tie)
+    _freq("banker 3-card 7", m.banker_three_card_7s, out.p_dragon7)
+    _freq("player 3-card 8", m.player_three_card_8s, out.p_panda8)
+
+    def _edge(label: str, profit: float, staked: float, exact_ev: float,
+              exact_var: float) -> None:
+        if not staked:
+            return
+        edge = profit / staked
+        sigma = math.sqrt(exact_var / n)
+        z = (edge - exact_ev) / sigma if sigma else 0.0
+        print(f"  {label:<22} {100 * edge:>+8.4f}%  exact {100 * exact_ev:+.4f}%  "
+              f"(±{100 * sigma:.4f}%, {z:+.2f}σ)")
+
+    print("edges per unit staked vs exact:")
+    if main_bet is not None:
+        ev = out.ev_main(rules, args.main)
+        if args.main == "tie":
+            e2 = (rules.tie_pays ** 2) * out.p_tie + (1.0 - out.p_tie)
+        elif args.main == "banker":
+            win = (out.p_banker - out.p_dragon7
+                   if rules.banker_push_on_three_card_7 else out.p_banker)
+            e2 = win * (1.0 - rules.banker_commission) ** 2 + out.p_player
+        else:
+            e2 = out.p_player + out.p_banker
+        _edge(f"main ({args.main})", m.main_profit_total, m.main_wager_total,
+              ev, e2 - ev * ev)
+    if args.dragon7:
+        ev = out.ev_dragon7(rules)
+        e2 = (rules.dragon7_pays ** 2) * out.p_dragon7 + (1.0 - out.p_dragon7)
+        _edge("dragon 7", m.dragon7_profit_total, m.dragon7_stake_total,
+              ev, e2 - ev * ev)
+    if args.panda8:
+        ev = out.ev_panda8(rules)
+        e2 = (rules.panda8_pays ** 2) * out.p_panda8 + (1.0 - out.p_panda8)
+        _edge("panda 8", m.panda8_profit_total, m.panda8_stake_total,
+              ev, e2 - ev * ev)
+    print(f"per-round profit std: {m.profit_std:.3f} units")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ridefree")
     sub = parser.add_subparsers(required=True)
@@ -413,6 +526,29 @@ def main() -> None:
                     help="paired replay only inside the window (~7x more window "
                          "rounds per second; overall stats then cover the window only)")
     dv.set_defaults(func=_deviations)
+
+    bx = sub.add_parser("bacexact", help="exact baccarat outcome table (enumeration)")
+    bx.add_argument("--rules", choices=("ez", "classic"), default="ez")
+    bx.add_argument("--decks", type=int, default=None)
+    bx.add_argument("--penetration", type=float, default=None)
+    bx.set_defaults(func=_bacexact, shoe_mode=None, rounds_per_shoe=None)
+
+    b = sub.add_parser("bac", help="simulate baccarat and check against the exact "
+                                   "enumeration (M9a gate: csm mode)")
+    b.add_argument("--rules", choices=("ez", "classic"), default="ez")
+    b.add_argument("--decks", type=int, default=None)
+    b.add_argument("--penetration", type=float, default=None)
+    b.add_argument("--shoe-mode", choices=SHOE_END_MODES, default=None)
+    b.add_argument("--rounds-per-shoe", type=int, default=None)
+    b.add_argument("--seed", type=int, default=1)
+    b.add_argument("--rounds", type=int, default=200_000)
+    b.add_argument("--main", choices=("banker", "player", "tie", "none"),
+                   default="banker")
+    b.add_argument("--dragon7", type=float, default=0.0,
+                   help="dragon 7 stake per round (0 = not played)")
+    b.add_argument("--panda8", type=float, default=0.0,
+                   help="panda 8 stake per round (0 = not played)")
+    b.set_defaults(func=_bac)
 
     args = parser.parse_args()
     args.func(args)

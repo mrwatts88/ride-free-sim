@@ -45,8 +45,14 @@ Ride Free question) are ✅ done and CONCLUDED — see the verdict section below
 **M8 (the 21+3 side bet attack) is also ✅ complete as of 2026-07-17**: M8a
 suit-aware cards, M8b the bet as validated configuration, M8c the attack
 (E10–E12) — final verdict at the top of this file; write-up in
-`docs/ARTICLE_21P3.md`. Remaining items are field confirmation (rack card)
-and optional realism passes.
+`docs/ARTICLE_21P3.md`. **Field intel (Matt, in person, 2026-07-17): the flat
+9:1 21+3 IS on Potawatomi's floor** (alongside a separate 21+3 progressive and
+"Top 3") — the verdict's most sensitive condition is confirmed; still to check:
+pen/cut depth, CSM, entry policy, side max, decks, H17/S17.
+**M9 IS OPEN (chosen 2026-07-17): attack the Dragon 7 (EZ Baccarat, confirmed
+on Potawatomi's floor), Panda 8 riding along.** M9a (engine + validation) ✅
+done — see below; next step is M9b (exact pre-deal EV ceiling, the E10
+analogue).
 
 ## Where the attack stands (E1–E4c, see EXPERIMENTS.md)
 
@@ -203,12 +209,69 @@ paytable (Xtreme tiers → nothing transfers); penetration ≥ ~0.80; no CSM;
 mid-shoe entry allowed (or ≥1:3 main:side stakes); 6 decks. Idealizations on
 record: hole card eventually visible; 100 rounds/h heads-up.
 
+## M9a DONE (2026-07-17): baccarat engine as data, gate passed on both references
+
+Target rationale (scouting session, same day): the Dragon 7 (banker
+three-card-7 win, 40:1, 8-deck HE 7.611%) has published prior art — WoO's
+simple count (8/9 = +2, 4–7 = −1, bet at TC ≥ +4) makes 0.597u/shoe ≈
+0.73u/100 hands at cut-card-14 penetration, ~3.5× quad-Q's 0.211u/100 — but
+NO published exact-composition ceiling: the same gap M8 closed for 21+3.
+Structural edge over 21+3: **no main-bet toll** (sitting out rounds is normal
+baccarat), **deepest standard penetration in the house** (~14–16 cards from
+the end ≈ 0.96), native scorecard camouflage, rank-only signal (no suit
+layer). Honest risk: 40:1 variance — E12-style ledger will decide. Panda 8
+(player three-card-8 win, 25:1, HE 10.188%) is a free configuration rider.
+
+Implementation (`baccarat.py`, decision record in DESIGN.md): separate small
+engine — the universal drawing tableau in code, everything that varies
+(`BaccaratRules`: decks, commission, EZ three-card-7 push, paytables,
+shoe-end modes with the same csm-comparator semantics) as data; reuses
+`cards.Shoe`/`shoe_seeds` (ten-values collapse to 0 via `card % 10` — the 1-10
+value model is baccarat-native); engine-asks/bettor-answers protocol
+(`main_bet`/`bet_dragon7`/`bet_panda8` + observer hooks); per-wager ledger.
+`exact_outcomes(composition)` — integer enumeration over ordered 6-card
+sequences, arbitrary composition — is BOTH the gate reference and the future
+M9b pre-deal EV calculator (one audited function, no second implementation).
+CLI: `cli bac` (sim + self-check vs enumeration), `cli bacexact`.
+
+**Gate (two references, both matched, 2026-07-17):**
+1. **Exact enumeration == WoO's published 8-deck combination table to the
+   integer**: banker 2,292,252,566,437,888 / player 2,230,518,282,592,256 /
+   tie 475,627,426,473,216 of 4,998,398,275,503,360; every published figure
+   reproduced to print precision (classic banker −1.0579%, player −1.2351%,
+   tie 8:1 −14.3596%, EZ banker −1.0183%, Dragon 7 −7.6113% @ p 0.022534,
+   Panda 8 −10.1876% @ p 0.034543). Fresh-shoe enumeration runs sub-second.
+2. **Simulator vs enumeration + published edges**: always-bet
+   (banker + D7 + P8) csm, 2 × 2M rounds (seeds 7500000001 / 7600000001) —
+   16 checks (5 frequencies + 3 edges per shard), worst |z| = 1.70σ (tie
+   freq, shard 2); Dragon 7: freq −0.00σ / +0.36σ, edge −7.6127% / −7.4548%
+   vs exact −7.6113%. 208 tests green (22 new in `tests/test_baccarat.py`,
+   incl. tableau-matrix unit deals and EZ/classic settlement); determinism
+   under seed verified.
+
+Seeds consumed: 7300000001–3 (tests), 7400000001 (100k calibration),
+7500000001 / 7600000001 (gate shards). **Next unused block: 7.7e9+.**
+
+**M9b NEXT (precise spec):** per-round exact pre-deal EV from the live
+remaining composition — `composition_from_shoe(shoe.remaining_composition())`
+→ `exact_outcomes` → `ev_dragon7`/`ev_panda8` — always-staked so realized
+settlement checks the prediction (the E10 design). Deliverables: +EV
+frequency and mean by depth; perfect-play ceiling in u/100 observed rounds at
+realistic pens (0.90 / 0.95 / cut-14 ≈ 0.966); calibration slope (realized on
+predicted ≈ 1); corr with the WoO linear count and with each other (D7 vs P8
+window collision). Comparator row: the WoO count itself, same harness — must
+reproduce ~0.6u/shoe within noise. Watch per-round enumeration cost (fresh
+shoe ~0.5s is too slow for 2M rounds — evaluate every-Nth-round sampling or
+late-shoe-only evaluation; the estimand is per-observed-round either way).
+
 ## NEXT STEPS (M8 research complete; field + polish items remain)
 
-1. **Rack card (Matt, real world):** confirm at Potawatomi — 21+3 paytable
-   (flat 9:1 vs tiered), decks, penetration/cut-card depth, CSM or shoe,
-   mid-shoe entry policy, side-bet max & main min, and (from M3) H17/S17.
-   The verdict is conditional on these.
+1. **Rack card (Matt, real world):** ~~flat 9:1 vs tiered~~ **CONFIRMED flat
+   9:1 on the floor (Matt, 2026-07-17)** — also present: a separate 21+3
+   progressive ($5/$25, meters) and "Top 3". Still to confirm: decks,
+   penetration/cut-card depth, CSM or shoe, mid-shoe entry policy, side-bet
+   max & main min, (from M3) H17/S17 — and now the EZ Baccarat table: decks,
+   cut depth, Dragon 7 / Panda 8 maxes, sit-without-betting tolerance.
 2. Optional realism passes if the field checks pass: visible-cards-only
    tracker (drop hole-card assumption — expect ~nil), full-table
    cards-per-round model, tiered-paytable re-derivation (pure configuration:
@@ -314,6 +377,9 @@ uv run python -m ridefree.cli sbev --rounds 2000000 [--penetration 0.85]
 uv run python -m ridefree.cli sbdecomp --rounds 2000000   # EV = B+S+R+X shares
 uv run python -m ridefree.cli sbtrack --rounds 2000000    # human trackers scored
 uv run python data/e12_verdict.py                         # the E12 ledger
+uv run python -m ridefree.cli bacexact                    # exact baccarat table
+uv run python -m ridefree.cli bac --shoe-mode csm --rounds 2000000 \
+    --dragon7 1 --panda8 1                    # M9a gate: sim vs exact + published
 ```
 
 ## Open items
@@ -334,6 +400,8 @@ uv run python data/e12_verdict.py                         # the E12 ledger
 - `docs/EXPERIMENTS.md` — experiment log E1–E12 (newest first), reproducible.
 - `docs/ARTICLE.md` — the Free Bet (Ride Free) write-up.
 - `docs/ARTICLE_21P3.md` — the 21+3 side bet write-up (M8 arc, quad-Q, verdict).
+- `src/ridefree/baccarat.py` — the M9 engine (rules, tableau, exact
+  enumeration, simulator); gates in `tests/test_baccarat.py`.
 - `docs/STATUS.md` — this file. Update it at every session checkpoint.
 - `data/` — banked grid JSONs (E2, E3 shards; additive bin stats) and
   `e12_verdict.py` (the E12 ledger arithmetic).
