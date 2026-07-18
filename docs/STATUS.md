@@ -34,16 +34,18 @@ all knobs configurable — unit $, pace, ramps, game, pen):**
 - **EZ Baccarat remains the project's best game by every column** (E14:
   ~$92–101/h at half the N0, native camouflage, ~2–3× these hourlies).
 
-**Follow-up sizing (same session, ledger runs):** at 200 r/h heads-up on a
-~$30k roll — $15–$500 table, 1-16 + exits: **+$84/h, N0 251h, $31.4k**
-(the money line; the $500 max only binds at ~$60k+ roll). $10–$200 table,
-"crouch" (flat $10, jump to $100/$150/$200 at TC ≥ +2): **+$58/h, $30.3k,
-corr 0.73** — beats the graduated 1-20 play-all on every column because the
-TC +1 bin is breakeven (−0.07%): dollars bet below +2 are dead weight, the
-optimal seated shape is bimodal. Field intel (Matt, ex-supervisor at
-Potawatomi): low-limit tables draw little surveillance attention (eyes are
-on the quarter games), so the corr numbers likely overstate practical heat
-at these stakes; recon planned for pen/H17/heads-up dealing.
+**Follow-up sizing (same session; E16b in EXPERIMENTS.md): the CHOSEN
+OPERATING POINT is the $10–$200 "crouch + leave"** — $10 flat below TC +2
+(the +1 rung is breakeven, −0.07%: dollars below +2 are dead weight, the
+optimal seated shape is bimodal — Matt's hypothesis, confirmed), jump to
+$100/$150/$200 at TC +2/+3/+4, leave at TC ≤ −2. At 200 r/h heads-up:
+**+$67.45/h, N0 255h, $25.8k bankroll, corr 0.76** at pen .75; pen
+sensitivity **$55.60/$67.45/$92.01 at .70/.75/.80**. Runner-up: $15–$500,
+1-16 + exits, +$83.62/h on $31.4k, corr 0.81 (equal bankroll efficiency,
+more heat, rarer table). Field intel breaking the tie (Matt, ex-supervisor
+at Potawatomi): low-limit tables draw the least surveillance attention.
+Recon pending: cut depth (the dominant lever), H17/S17, heads-up dealing.
+**Write-up: `docs/ARTICLE_BLACKJACK.md`** (a summary piece by design).
 
 New capability, gate-passed: per-TC curves with variance (`cli curve` /
 `curvecombine`), per-TC paired deviation values (`cli deviations --json`),
@@ -512,6 +514,8 @@ uv run python data/e16_ledger.py h17 p75      # the E16 cover-vs-money menu
 - `docs/ARTICLE_21P3.md` — the 21+3 side bet write-up (M8 arc, quad-Q, verdict).
 - `docs/ARTICLE_EZBAC.md` — the Dragon 7 / Panda 8 write-up (M9 arc, the
   two-count card, the toll-free ledger, verdict).
+- `docs/ARTICLE_BLACKJACK.md` — the E16 standard-blackjack summary (the
+  cover-vs-money ledger, the crouch, the chosen $10-table operating point).
 - `src/ridefree/baccarat.py` — the M9 engine (rules, tableau, exact
   enumeration, simulator); gates in `tests/test_baccarat.py`; ledger
   `data/e14_verdict.py`.

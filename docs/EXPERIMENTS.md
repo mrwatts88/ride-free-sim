@@ -96,6 +96,28 @@ STATUS claim.
    decimals); 100 r/h nominal; hi-lo only (E4a: best balanced level-1 count
    for the standard game IS hi-lo).
 
+**E16b addendum — sizing to Potawatomi's actual tables (same day).** Ledger
+gained argv overrides (`e16_ledger.py <game> <pen> <unit$> <rounds/h>`) and
+wide-spread/bimodal ramp rows. Findings at 200 r/h heads-up (weekday):
+- **The TC +1 rung is breakeven** (−0.07%/round, ins arm) — dollars bet
+  below TC +2 are dead weight, so the optimal seated shape is BIMODAL:
+  min-bet "crouch" + jump straight to a high curve. The crouch (jump 10u at
+  TC ≥ +2) beats the graduated 1-20 play-all on every column at once
+  (+$57.65 vs +$54.44/h, $30.3k vs $30.6k, N0 351h vs 375h, corr 0.73 vs
+  0.78 — while betting LESS total money). Matt's hypothesis, confirmed.
+- **Chosen operating point: $10–$200 table, crouch at +2, leave at TC ≤ −2**
+  ($10 flat → $100/$150/$200; sheds the worst 21% of rounds):
+  **+$67.45/h, N0 255h, $25.8k bankroll, corr 0.76** at pen .75 — pen
+  sensitivity **$55.60 / $67.45 / $92.01 per hour at .70/.75/.80**.
+  Runner-up: $15–$500 table, 1-16 + exits at $15 units — +$83.62/h, $31.4k,
+  N0 251h, corr 0.81 — equal bankroll efficiency, more heat, rarer table.
+  Field intel breaking the tie (Matt, ex-supervisor at the property):
+  low-limit games draw the least surveillance attention.
+- The $500 max only binds at ~$60k+ bankroll (1-33 + exits: +$177.62/h on
+  $60.9k); the binding constraint at a ~$30k roll is the roll, not the max.
+Write-up: `docs/ARTICLE_BLACKJACK.md` (deliberately a summary, not a
+discovery piece).
+
 ## E15 — Is there value beyond linear counts? Quadratic buys ~4pp on the Dragon; the Panda tail is high-order (M9 epilogue)
 
 **Date:** 2026-07-18 · **Command:** `uv run python -m ridefree.cli bacorder
