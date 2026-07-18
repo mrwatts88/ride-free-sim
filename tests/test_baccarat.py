@@ -371,3 +371,22 @@ def test_bac_track_smoke():
         ceiling = res.ceiling_d7 if row.bet == "d7" else res.ceiling_p8
         assert row.ev_sum <= ceiling + 1e-9
     assert "capture" in format_bac_track(res)
+
+
+def test_frac_probs_equals_fast_outcomes_on_integers():
+    from ridefree.baccarat import fast_outcomes, frac_probs
+
+    comps = [fresh_composition(8)]
+    c = fresh_composition(8)
+    c[8] -= 25
+    c[9] -= 20
+    c[0] -= 60
+    comps.append(c)
+    for comp in comps:
+        out = fast_outcomes(comp)
+        pd, pp = frac_probs({v: float(k) for v, k in comp.items()})
+        assert pd == pytest.approx(out.p_dragon7, rel=1e-12)
+        assert pp == pytest.approx(out.p_panda8, rel=1e-12)
+    # fractional evaluation is finite and sane
+    pd, pp = frac_probs({v: 10.7 if v else 33.3 for v in range(10)})
+    assert 0.0 < pd < 0.2 and 0.0 < pp < 0.2

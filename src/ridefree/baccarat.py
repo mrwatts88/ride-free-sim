@@ -585,6 +585,48 @@ class Dragon7Count:
         return self.running / decks if decks > 0 else 0.0
 
 
+def frac_probs(composition: Mapping[int, float]) -> tuple[float, float]:
+    """(P(dragon 7), P(panda 8)) for a possibly-FRACTIONAL composition.
+
+    The float twin of `fast_outcomes` (same identities; equal on integer
+    compositions to float precision — differentially tested), for evaluating
+    smoothed compositions in the E15 order decomposition. Falling-factorial
+    factors are clamped at zero, matching the combinatorial meaning when a
+    rank has fewer cards than a multiset demands."""
+    n = [composition.get(v, 0.0) for v in range(10)]
+    total_cards = sum(n)
+    if total_cards < 6:
+        raise ValueError("composition must hold at least 6 cards")
+    ff = []
+    for v in range(10):
+        row = [1.0] * 7
+        f = 1.0
+        for k in range(1, 7):
+            f *= max(n[v] - k + 1.0, 0.0)
+            row[k] = f
+        ff.append(row)
+    filler = {
+        4: (total_cards - 4.0) * (total_cards - 5.0),
+        5: total_cards - 5.0,
+        6: 1.0,
+    }
+    dragon7 = panda8 = 0.0
+    for pairs, length, vec in _tableau_table():
+        w = filler[length]
+        for v, k in pairs:
+            w *= ff[v][k]
+            if not w:
+                break
+        if not w:
+            continue
+        dragon7 += vec[3] * w
+        panda8 += vec[4] * w
+    total = 1.0
+    for k in range(6):
+        total *= total_cards - k
+    return dragon7 / total, panda8 / total
+
+
 def exact_outcomes(composition: Mapping[int, int]) -> ExactOutcomes:
     """Exact outcome counts by full enumeration of the tableau.
 

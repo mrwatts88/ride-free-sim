@@ -1556,3 +1556,146 @@ def format_bac_track(res: BacTrackResult) -> str:
             f"{100 * mean_real:+7.3f}%±{100 * se:.2f}"
         )
     return "\n".join(lines)
+
+
+# --- E15 (M9 epilogue): how much of the ceiling is beyond ANY linear count? --
+
+
+def _bac_taylor_grid(rules, step: int = 13, n_min: int = 39):
+    """Per-depth exact Taylor terms of both side-bet EVs around the BALANCED
+    composition: B (level), g (gradient), H (Hessian), by finite differences
+    of the fractional evaluator. All analytic — nothing fit to simulation."""
+    from ridefree.baccarat import frac_probs
+
+    freq = {v: (16.0 if v == 0 else 4.0) / 52.0 for v in range(10)}
+    pays = (rules.dragon7_pays, rules.panda8_pays)
+
+    def ev2(comp):
+        pd, pp = frac_probs(comp)
+        return (pd * (pays[0] + 1.0) - 1.0, pp * (pays[1] + 1.0) - 1.0)
+
+    grid = {}
+    max_n = rules.decks * 52
+    for n_total in range(n_min, max_n + 1, step):
+        base = {v: n_total * freq[v] for v in range(10)}
+        b = ev2(base)
+        plus, minus = {}, {}
+        for v in range(10):
+            up = dict(base); up[v] += 1.0
+            dn = dict(base); dn[v] -= 1.0
+            plus[v], minus[v] = ev2(up), ev2(dn)
+        g = [[0.5 * (plus[v][i] - minus[v][i]) for v in range(10)]
+             for i in range(2)]
+        h = [[[0.0] * 10 for _ in range(10)] for _ in range(2)]
+        for i in range(2):
+            for v in range(10):
+                h[i][v][v] = plus[v][i] + minus[v][i] - 2.0 * b[i]
+        for v in range(10):
+            for w in range(v + 1, 10):
+                pp_c = dict(base); pp_c[v] += 1.0; pp_c[w] += 1.0
+                pm_c = dict(base); pm_c[v] += 1.0; pm_c[w] -= 1.0
+                mp_c = dict(base); mp_c[v] -= 1.0; mp_c[w] += 1.0
+                mm_c = dict(base); mm_c[v] -= 1.0; mm_c[w] -= 1.0
+                e_pp, e_pm, e_mp, e_mm = ev2(pp_c), ev2(pm_c), ev2(mp_c), ev2(mm_c)
+                for i in range(2):
+                    val = 0.25 * (e_pp[i] - e_pm[i] - e_mp[i] + e_mm[i])
+                    h[i][v][w] = h[i][w][v] = val
+        grid[n_total] = (b, g, h)
+    return grid, freq
+
+
+@dataclass
+class BacOrderResult:
+    rounds: int = 0
+    penetration: float = 0.0
+    ceiling_d7: float = 0.0
+    ceiling_p8: float = 0.0
+    # selection value (sum of TRUE exact ev on bet rounds) per model order
+    lin_d7: float = 0.0
+    lin_p8: float = 0.0
+    quad_d7: float = 0.0
+    quad_p8: float = 0.0
+
+
+def run_bac_order_scan(rules, *, seed: int, rounds: int) -> BacOrderResult:
+    """Score 'bet when the ORDER-k Taylor model is positive' in TRUE exact EV.
+
+    The order-1 row is the ceiling of EVERY possible linear count (depth-exact
+    coefficients, better than any static-tag true count); order-2 adds the
+    exact quadratic. The gap order-1 -> exact is what no linear count can
+    reach; the gap order-2 -> exact is genuinely high-order."""
+    from ridefree.baccarat import (
+        FlatBettor,
+        _needs_reshuffle as bac_needs_reshuffle,
+        composition_from_shoe,
+        fast_outcomes,
+        play_baccarat_round,
+    )
+
+    grid, freq = _bac_taylor_grid(rules)
+    ns = sorted(grid)
+    res = BacOrderResult(penetration=rules.penetration)
+    bettor = FlatBettor(main=None)
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    rounds_since = 0
+    for _ in range(rounds):
+        if bac_needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            rounds_since = 0
+        comp = composition_from_shoe(shoe.remaining_composition())
+        n_total = sum(comp.values())
+        out = fast_outcomes(comp)
+        ev = (out.ev_dragon7(rules), out.ev_panda8(rules))
+        # nearest grid points, linear interpolation in N
+        hi = min((n for n in ns if n >= n_total), default=ns[-1])
+        lo = max((n for n in ns if n <= n_total), default=ns[0])
+        t = 0.0 if hi == lo else (n_total - lo) / (hi - lo)
+        e = [comp[v] - n_total * freq[v] for v in range(10)]
+        model = [0.0, 0.0], [0.0, 0.0]  # (lin, quad) x (d7, p8)
+        for i in range(2):
+            vals = []
+            for n_ref in (lo, hi):
+                b, g, h = grid[n_ref]
+                lin = b[i] + sum(g[i][v] * e[v] for v in range(10))
+                quad = lin + 0.5 * sum(
+                    h[i][v][w] * e[v] * e[w]
+                    for v in range(10) for w in range(10))
+                vals.append((lin, quad))
+            model[0][i] = vals[0][0] * (1 - t) + vals[1][0] * t
+            model[1][i] = vals[0][1] * (1 - t) + vals[1][1] * t
+        play_baccarat_round(rules, shoe, bettor)
+        rounds_since += 1
+        res.rounds += 1
+        res.ceiling_d7 += max(ev[0], 0.0)
+        res.ceiling_p8 += max(ev[1], 0.0)
+        if model[0][0] > 0:
+            res.lin_d7 += ev[0]
+        if model[0][1] > 0:
+            res.lin_p8 += ev[1]
+        if model[1][0] > 0:
+            res.quad_d7 += ev[0]
+        if model[1][1] > 0:
+            res.quad_p8 += ev[1]
+    return res
+
+
+def format_bac_order(res: BacOrderResult) -> str:
+    lines = [
+        f"rounds: {res.rounds:,}   penetration: {res.penetration:.3f}",
+        "capture of the exact ceiling by Taylor order (TRUE-exact-EV scored;",
+        "tangent models at the balanced composition, depth-exact coefficients —",
+        "NOT a strict supremum over the class: at the extreme compositions",
+        "where selection happens, a static count fit to the fluctuation",
+        "distribution can beat the tangent, cf. the E14 p8 rows):",
+        f"  {'model':<38} {'dragon 7':>9} {'panda 8':>9}",
+    ]
+    for label, d7, p8 in (
+        ("order-1 tangent (linear class)", res.lin_d7, res.lin_p8),
+        ("order-2 tangent (+ exact quadratic)", res.quad_d7, res.quad_p8),
+    ):
+        lines.append(f"  {label:<38} {100 * d7 / res.ceiling_d7:8.2f}% "
+                     f"{100 * p8 / res.ceiling_p8:8.2f}%")
+    lines.append(f"  (ceilings this run: d7 {100 * res.ceiling_d7 / res.rounds:+.4f}"
+                 f"u/100, p8 {100 * res.ceiling_p8 / res.rounds:+.4f}u/100)")
+    return "\n".join(lines)

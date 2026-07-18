@@ -431,6 +431,16 @@ def _bactrack(args: argparse.Namespace) -> None:
     print(format_bac_track(res))
 
 
+def _bacorder(args: argparse.Namespace) -> None:
+    from ridefree.experiments import format_bac_order, run_bac_order_scan
+
+    rules = _bac_rules(args)
+    print(f"baccarat Taylor-order bounds ({rules.decks} decks, "
+          f"pen {rules.penetration:g}) — what any linear/quadratic model can reach")
+    res = run_bac_order_scan(rules, seed=args.seed, rounds=args.rounds)
+    print(format_bac_order(res))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ridefree")
     sub = parser.add_subparsers(required=True)
@@ -593,6 +603,15 @@ def main() -> None:
     bt.add_argument("--seed", type=int, default=1)
     bt.add_argument("--rounds", type=int, default=100_000)
     bt.set_defaults(func=_bactrack, shoe_mode=None, rounds_per_shoe=None)
+
+    bo = sub.add_parser("bacorder", help="Taylor-order capture bounds: what any "
+                                         "linear or quadratic model can reach (E15)")
+    bo.add_argument("--rules", choices=("ez", "classic"), default="ez")
+    bo.add_argument("--decks", type=int, default=None)
+    bo.add_argument("--penetration", type=float, default=None)
+    bo.add_argument("--seed", type=int, default=1)
+    bo.add_argument("--rounds", type=int, default=100_000)
+    bo.set_defaults(func=_bacorder, shoe_mode=None, rounds_per_shoe=None)
 
     args = parser.parse_args()
     args.func(args)

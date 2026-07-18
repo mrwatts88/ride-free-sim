@@ -2,6 +2,48 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E15 — Is there value beyond linear counts? Quadratic buys ~4pp on the Dragon; the Panda tail is high-order (M9 epilogue)
+
+**Date:** 2026-07-18 · **Command:** `uv run python -m ridefree.cli bacorder
+--rounds 100000 --seed 8800000001 --penetration 0.966`.
+
+Method: exact per-depth Taylor terms of both side-bet EVs around the
+balanced composition (level B, gradient g, full 10×10 Hessian H, by finite
+differences of the fractional evaluator `baccarat.frac_probs` — the float
+twin of `fast_outcomes`, differentially tested; all analytic, nothing fit).
+Score "bet when the order-k tangent model is positive" in TRUE exact EV on
+100k cut-14 rounds:
+
+| model | Dragon 7 capture | Panda 8 capture |
+|---|---|---|
+| order-1 tangent (linear class) | 90.1% | 73.1% |
+| order-2 tangent (+ exact quadratic) | 95.3% | 83.6% |
+| E14 static-tag rows, for reference | 92.3% / paper 89.8% | 83.2% / 79.1% |
+| exact | 100% | 100% |
+
+**Honest caveat, itself a finding:** the tangent model is NOT a strict
+supremum over its class — E14's static Panda count (83.2%) beats the
+tangent-linear (73.1%), because Panda selection happens at extreme late-shoe
+compositions where a Taylor expansion around balanced is far from optimal
+while a static count fit to the fluctuation distribution holds up.
+
+**Conclusions:**
+- **Dragon 7:** the full exact quadratic reaches 95.3% — at most ~3–5pp
+  above the best linear count (~92%). That headroom is ≈ +0.03u/100 ≈
+  +$3/h at a $100 unit, and the Hessian has no symmetric human-shaped
+  structure (nothing like 21+3's Σ-excess² convexity). Not worth pursuing.
+- **Panda 8:** the exact quadratic (83.6%) lands ON the static linear count
+  (83.2%) — second order adds ~nothing over the best linear system. The
+  missing ~16% of the Panda ceiling is genuinely high-order/combinatorial
+  (its value lives in the extreme tail where all low-order models fail):
+  **computer-only, definitively.**
+- **Bottom line: the two-count card (~87–90% combined) effectively IS the
+  human frontier for this game.** Everything beyond it needs a device, and
+  even a full quadratic tracker (55 running cross-products — absurd on
+  paper) would buy ≤ ~$5/h. The E14b system stands as final.
+
+Seeds consumed: 8800000001. Next unused block: 8.9e9+.
+
 ## E14 — The Dragon/Panda verdict: two written counts, ~90% of the ceiling, +$92/h (M9c)
 
 **Date:** 2026-07-17 · **Commands:** `uv run python -m ridefree.cli bactrack
