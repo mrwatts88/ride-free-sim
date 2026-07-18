@@ -66,6 +66,10 @@ RAMPS = {
     "crouch, jump 10u at +2": ((-99, 1), (2, 10), (3, 15), (4, 20)),
     "crouch, jump 10u at +1": ((-99, 1), (1, 10), (2, 12), (3, 16), (4, 20)),
     "crouch +2, leave tc<=-2": ((-1, 1), (2, 10), (3, 15), (4, 20)),
+    # $15-min variant of the chosen card, SAME dollar jumps (run with UNIT=5):
+    # $15 floor -> $100/$150/$200, leave at tc<=-2. Floor costs 1.5x, jump
+    # bankroll unchanged — the fit for a $15-$1000 table on a ~$27k roll.
+    "crouch15: $15 floor, $100 jump": ((-1, 3), (2, 20), (3, 30), (4, 40)),
 }
 
 # Arms: which banked curve carries the playing skill.
