@@ -151,6 +151,26 @@ gate before any attack work). The 21+3 bet is placed pre-deal, so its strategy
 hook is pre-round — the natural shape for a counting bet. Accepted cost: dealt
 sequences change for every seed (v1 exactly reproducible at tag `ride-free-v1`).
 
+**Mechanism (M8a, 2026-07-17):**
+
+- A raw card is a `(rank, suit)` tuple: rank 1–13 (1 = ace, 11/12/13 = J/Q/K),
+  suit 0–3. `cards.value(card)` collapses to the blackjack value
+  (`min(rank, 10)`).
+- The collapse happens **once, at shuffle time**: `Shoe` shuffles the
+  52·decks distinct raw cards, keeps that sequence in `_raw`, and precomputes
+  the parallel values list that `deal()` reads — so `deal()` still returns
+  plain value ints, at zero per-deal cost, and the engine, hand valuation,
+  trackers, and every strategy are untouched. `remaining_composition()` and
+  `dealt_cards()` stay value-keyed (RF signals unchanged); suit-aware
+  composition queries are M8c.
+- Raw cards surface via `Shoe.raw_dealt()` (the raw twin of `dealt_cards()`).
+  In M8b the engine snapshots the deal position before the initial deal; the
+  21+3 hand is raw positions `pos` (player card 1), `pos+1` (dealer up),
+  `pos+2` (player card 2). `RoundResult` will carry those three raw cards and
+  the side bet settles inside the engine, insurance-style.
+- `validation.InfiniteDeckShoe` (dealer state-machine Monte Carlo only) stays
+  value-based — it never feeds a side bet.
+
 ## Decision record: Rust later, not now
 
 **Decision (2026-07-17):** Build the Python reference engine first; defer the Rust

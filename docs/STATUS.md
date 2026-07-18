@@ -92,34 +92,50 @@ worth +0.12% ± 0.05% overall (perfect-information ceiling; 2.1% of rounds chang
 Standard blackjack hi-lo still beats it on raw EV (~3× the playable volume at equal
 quality); Ride Free's differentiator is camouflage.
 
-## NEXT STEP (start here): M8a — suit-aware card model for the 21+3 attack
+## M8a DONE (2026-07-17): suit-aware card model, gate passed
 
 The project is REOPENED for a new question: **can the 21+3 side bet (9-to-1
 paytable) be beaten by suit/rank composition?** Full ladder in ROADMAP.md M8a–c.
-The very next chunk is **M8a only** (iterate small; do not start M8b until the
-M8a gate passes):
 
-1. Enrich `cards.py`: Shoe deals full (rank 1–13, suit 0–3) cards; add a
-   `value(card)` collapse (min(rank,10), ace=1) so the blackjack engine, hand
-   valuation, and all existing strategies consume *values* unchanged. One
-   engine — no variant forks, no game-logic edits.
-2. Decide where the raw three cards surface for the future side bet (likely:
-   RoundResult carries the raw deal; engine settles side bets itself, insurance-
-   style) — sketch in DESIGN.md before coding.
-3. Adapt tests + trackers (CompositionTracker keyed by value stays for RF
-   signals; a suit-aware tracker is M8c, not now).
-4. **Gate:** 161-test suite green (adapted), all four `validate` batteries
-   re-pass, determinism re-verified, throughput within ~2× of current
-   (~7k rounds/s RF reference path).
+**M8a is complete.** Implementation (mechanism recorded in DESIGN.md M8
+decision record): raw card = `(rank 1–13, suit 0–3)` tuple; `cards.value()`
+collapses to blackjack value; `Shoe` shuffles the 52·decks distinct raw cards
+and collapses **once at shuffle time**, so `deal()` still returns value ints —
+engine, hand valuation, strategies, trackers all untouched. Raw cards surface
+via `Shoe.raw_dealt()` (raw twin of `dealt_cards()`); in M8b the engine reads
+raw positions pos/pos+1/pos+2 (player c1, dealer up, player c2) from the
+pre-deal snapshot. `validation.InfiniteDeckShoe` stays value-only.
 
-Known consequences, accepted in advance: pre-M8 seeds will not replay
+**Gate results (all passed):**
+- 164 tests green (161 prior — none needed adaptation, no test hardcoded a
+  shuffled sequence — plus 3 new raw-layer tests in `test_shoe.py`).
+- All four `validate` batteries re-pass on the new dealt sequences: h17
+  0.646% vs 0.62 (+0.31σ), s17 0.395% vs 0.40 (−0.06σ), ridefree 1.079% vs
+  1.12 (−0.54σ), ridefree_woo 1.010% vs 1.04 (−0.39σ); every dealer-bust /
+  22-rate / natural check within ±1.9σ.
+- Determinism: same (rules, seed, strategy) → byte-identical sim output.
+- Throughput: reference path 500k rounds in ~8.5s (~59k rounds/s) — the
+  shuffle-time collapse costs nothing per deal; well inside the ~2× budget.
+
+Seeds 6300000001–6300000003 consumed for gate checks (from the 6.3e9+ block).
+
+## NEXT STEP (start here): M8b — 21+3 as configuration, validated before attacked
+
+Per ROADMAP.md M8b: `Rules` gains the 21+3 paytable as a category→payout map
+(flat 9-to-1 variant pays every winning category 9:1); bet placed PRE-deal via
+a pre-round strategy hook; explicit ledger fields per the insurance pattern;
+engine settles from the three raw cards (see DESIGN.md mechanism).
+**Gate (two independent references):** (1) closed-form fresh-shoe category
+probabilities (flush/straight/trips/straight-flush for 6 decks) as tier-1;
+(2) published Wizard of Odds house edge for the exact paytable and deck count,
+looked up at milestone time — never from memory. Always-bet in csm mode must
+match both.
+
+Known consequences, accepted in advance: pre-M8 seeds do not replay
 bit-for-bit (52-card shuffle ≠ collapsed shuffle) — the exact v1 artifact is
 preserved at git tag **`ride-free-v1`**; banked `data/*.json` remain valid as
 data. Seed hygiene: `cards.shoe_seeds()` everywhere; fresh base seeds spaced
-≥ 1e8 (next unused block: 6.3e9+). Validation doctrine unchanged: for M8b, look
-up the published 21+3 house edge for the exact paytable at milestone time AND
-derive the fresh-shoe category probabilities in closed form as the tier-1
-reference — never trust remembered figures.
+≥ 1e8 (next unused block: 6.4e9+).
 
 ## RIDE FREE QUESTION CONCLUDED (Matt, 2026-07-17)
 

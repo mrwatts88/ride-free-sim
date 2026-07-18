@@ -1,8 +1,15 @@
 """Cards and the shoe.
 
-A card is an int rank value: 1 = ace, 2-9 = pips, 10 = ten/jack/queen/king.
-Suits and face distinctions never affect blackjack play or payout, so they are not
-modeled. One deck therefore holds four of each rank 1-9 and sixteen tens.
+Two card representations coexist (DESIGN.md, M8 decision record):
+
+- A **value** is an int 1-10: 1 = ace, 2-9 = pips, 10 = ten/jack/queen/king.
+  Blackjack play and payout only ever depend on values, so the engine, hand
+  valuation, strategies, and trackers all consume values. One deck holds four
+  of each rank 1-9 and sixteen tens.
+- A **raw card** is a `(rank, suit)` tuple — rank 1-13 (1 = ace, 11/12/13 =
+  J/Q/K), suit 0-3 — needed only by side bets (21+3 flushes/straights) and
+  suit-aware trackers. The Shoe shuffles raw cards and collapses to values
+  once at shuffle time; `deal()` returns values.
 """
 
 import random
@@ -13,8 +20,16 @@ TEN = 10
 
 RANKS = tuple(range(1, 11))
 
+RAW_RANKS = tuple(range(1, 14))
+SUITS = (0, 1, 2, 3)
+
 # Count of each rank in a single 52-card deck, indexed by rank.
 _PER_DECK = {rank: 16 if rank == TEN else 4 for rank in RANKS}
+
+
+def value(card: tuple[int, int]) -> int:
+    """Blackjack value of a raw (rank, suit) card: min(rank, 10), ace = 1."""
+    return min(card[0], 10)
 
 
 def deck_composition(decks: int) -> dict[int, int]:
@@ -40,8 +55,10 @@ def shoe_seeds(base_seed: int) -> Iterator[int]:
 class Shoe:
     """A shuffled multi-deck shoe, deterministic under its seed.
 
-    The full card order is materialized up front from `random.Random(seed)`, so a
-    (decks, penetration, seed) triple always reproduces the identical sequence.
+    The full raw-card order is materialized up front from `random.Random(seed)`
+    and collapsed to values once, so a (decks, penetration, seed) triple always
+    reproduces the identical sequence. `deal()` returns values; the raw twin of
+    each dealt card is available via `raw_dealt()`.
     """
 
     def __init__(self, decks: int, penetration: float, seed: int) -> None:
@@ -52,11 +69,12 @@ class Shoe:
         self.decks = decks
         self.penetration = penetration
         self.seed = seed
-        cards = [rank for rank in RANKS for _ in range(_PER_DECK[rank] * decks)]
-        random.Random(seed).shuffle(cards)
-        self._cards = cards
+        raw = [(rank, suit) for _ in range(decks) for suit in SUITS for rank in RAW_RANKS]
+        random.Random(seed).shuffle(raw)
+        self._raw = raw
+        self._cards = [min(rank, 10) for rank, _ in raw]
         self._pos = 0
-        self._cut = round(len(cards) * penetration)
+        self._cut = round(len(raw) * penetration)
 
     def deal(self) -> int:
         if self._pos >= len(self._cards):
@@ -95,5 +113,10 @@ class Shoe:
         return counts
 
     def dealt_cards(self) -> Iterable[int]:
-        """Cards dealt so far, in order (for event logs and replay checks)."""
+        """Card values dealt so far, in order (for event logs and replay checks)."""
         return tuple(self._cards[: self._pos])
+
+    def raw_dealt(self) -> Iterable[tuple[int, int]]:
+        """Raw (rank, suit) cards dealt so far, in order — the raw twin of
+        `dealt_cards()`, for side-bet settlement and suit-aware tracking."""
+        return tuple(self._raw[: self._pos])

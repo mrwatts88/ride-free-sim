@@ -1,4 +1,4 @@
-from ridefree.cards import RANKS, TEN, Shoe, deck_composition
+from ridefree.cards import RANKS, RAW_RANKS, SUITS, TEN, Shoe, deck_composition, value
 
 
 def drain(shoe: Shoe) -> list[int]:
@@ -63,3 +63,33 @@ def test_dealt_cards_replay():
     shoe = Shoe(decks=2, penetration=0.5, seed=99)
     dealt = [shoe.deal() for _ in range(10)]
     assert list(shoe.dealt_cards()) == dealt
+
+
+def test_raw_composition_is_distinct_52_per_deck():
+    shoe = Shoe(decks=6, penetration=1.0, seed=11)
+    drain(shoe)
+    raw = list(shoe.raw_dealt())
+    assert len(raw) == 312
+    from collections import Counter
+
+    counts = Counter(raw)
+    assert set(counts) == {(r, s) for r in RAW_RANKS for s in SUITS}
+    assert all(n == 6 for n in counts.values())
+
+
+def test_raw_dealt_aligns_with_values():
+    shoe = Shoe(decks=1, penetration=1.0, seed=5)
+    dealt = drain(shoe)
+    raw = list(shoe.raw_dealt())
+    assert [value(c) for c in raw] == dealt
+    # face cards collapse to TEN, ace stays 1
+    assert all(value((r, 0)) == TEN for r in (10, 11, 12, 13))
+    assert value((1, 3)) == 1
+
+
+def test_raw_sequence_deterministic_under_seed():
+    a = Shoe(decks=6, penetration=1.0, seed=1234)
+    b = Shoe(decks=6, penetration=1.0, seed=1234)
+    drain(a)
+    drain(b)
+    assert list(a.raw_dealt()) == list(b.raw_dealt())

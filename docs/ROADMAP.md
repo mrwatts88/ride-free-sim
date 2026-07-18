@@ -13,7 +13,7 @@ doctrine, new question: can suit/rank composition beat 21+3? The insurance work
 is the template (side bet as Rules data + strategy hook + explicit ledger + hard
 gate vs an independently computed/published EV before any attack work).
 
-## M8a — Suit-aware card model, one engine (the invasive step; gate hard)
+## M8a — Suit-aware card model, one engine (the invasive step; gate hard) ✅
 
 21+3 pays on the 3-card poker hand of (player card 1, player card 2, dealer up):
 flush / straight / three-of-a-kind / straight flush. Flushes need suits; straights
@@ -26,6 +26,11 @@ bit-for-bit (banked `data/*.json` stay valid as data; `ride-free-v1` preserves
 exact reproducibility of the paper).
 **Gate:** full test suite adapted and passing; all four validation batteries
 re-pass; determinism under seed re-verified; throughput within ~2× of current.
+**PASSED (2026-07-17):** 164 tests green (3 new raw-layer tests, zero
+adaptations needed); all four batteries re-pass on the new sequences (h17
++0.31σ, s17 −0.06σ, ridefree −0.54σ, ridefree_woo −0.39σ vs references);
+byte-identical replays under seed; reference path ~59k rounds/s (collapse is
+shuffle-time, zero per-deal cost). Mechanism in DESIGN.md M8 decision record.
 
 ## M8b — 21+3 as configuration, validated before attacked
 
