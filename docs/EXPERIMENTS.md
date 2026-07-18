@@ -65,11 +65,31 @@ what do these numbers assume about insurance?
   from the combined estimate). Idealizations unchanged from E16/E17
   (pointwise exits, 200 r/h heads-up, pen .75 assumed, no burn cards).
 
-**Artifacts:** `data/e18_run.py`, `data/e18_verdict.py`,
-`data/e18_live_s01..06.json`; the card as data in
-`src/ridefree/trainer/card.py::CROUCH15_2R` (now the trainer default).
-Seeds consumed: 14.2e9 (timing study), 14.3e9–14.8e9 (live shards).
-**Next unused block: 14.9e9+.**
+**E18b addendum — the never-leave variant, certified (Matt's weekday-reality
+question: finding a fresh shoe after every walk is a real cost the pointwise
+model ignores).** Same runner/verdict with `variant=playall`
+(`data/e18b_live_s01..06.json`, 6 × 2M rounds, seeds 15.0e9–15.5e9):
+live total **+$46.69 ± 4.19/h** vs with-leave +$47.83 ± 4.18; chart-only
++$41.14 ± 4.20 vs bin prediction +$33.16 ± 2.09 (z = +1.70; second
+consecutive live run above prediction — within tolerance, direction noted);
+insurance realized +$5.55/h = 87% of ceiling on these seeds (pooled with
+E18: ~80%, ≈ +$5/h). **The leave's exact same-shoe paper value is $5.83/h;
+walk friction (1.7 walks/h × 2–5 dead min) refunds $2.50–6/h of it — net
+cost of never leaving ≈ $0–3.5/h. Verdict: the walk line is ADVISORY** —
+weekday mode plays every round (best estimate ≈ +$40/h ± 2, N0 ≈ 550–660h,
+~$36–40k at 5% RoR); walk at zero only when a fresh shoe is genuinely
+adjacent. Wong-mode context measured the same day (scratchpad, 4k shoes,
+seed 14.9e9): 85% of jump rounds come after 2+ decks dealt; 60% of shoes
+ever ripen (median first jump bet at round 24, then ~12 jump rounds) — the
+card's top half doubles as a busy-room back-count play (~$65/h per 200
+observed rounds on $23k; pace-scaled $20–29/h).
+
+**Artifacts:** `data/e18_run.py`, `data/e18_verdict.py` (both take a
+`variant` arg), `data/e18_live_s01..06.json`, `data/e18b_live_s01..06.json`;
+the card as data in `src/ridefree/trainer/card.py::CROUCH15_2R` (the trainer
+default). Seeds consumed: 14.2e9 (timing study), 14.3e9–14.8e9 (E18 shards),
+14.9e9 (wong depth), 15.0e9–15.5e9 (E18b shards).
+**Next unused block: 15.6e9+.**
 
 ## E16 — Classic blackjack next door: the cover-vs-money ledger (real dollars, real ramps)
 

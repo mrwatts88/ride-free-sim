@@ -16,7 +16,9 @@ Card (slid scale, shift +18): start +6, walk at 0, $100 at 18, $200+insure
 at 22. Pivot-scale equivalents used against the bins: leave <= -18, $100 at
 >= 0, $200+ins at >= +4, floor from -17.
 
-Usage: uv run python data/e18_verdict.py
+Usage: uv run python data/e18_verdict.py [variant]
+  variant: "locked" (default, shards e18_live_s*.json) or "playall"
+  (E18b never-leave shards, e18b_live_s*.json).
 """
 
 import glob
@@ -39,9 +41,16 @@ MIN_BIN_ROUNDS = 2_000
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # The locked card in pivot scale (bins) — floor $15 = 1.5 units.
-STEPS = ((-17, 1.5), (0, 10.0), (4, 20.0))
+VARIANT = sys.argv[1] if len(sys.argv) > 1 else "locked"
+if VARIANT == "playall":  # E18b: never leave — the floor extends all the way down
+    STEPS = ((-99, 1.5), (0, 10.0), (4, 20.0))
+    SHARD_GLOB = "e18b_live_s*.json"
+elif VARIANT == "locked":
+    STEPS = ((-17, 1.5), (0, 10.0), (4, 20.0))
+    SHARD_GLOB = "e18_live_s*.json"
+else:
+    sys.exit(f"unknown variant {VARIANT!r}")
 INS_FLOOR = 4
-LEAVE_AT = -18
 
 # ---- prediction from the banked bins --------------------------------------
 
@@ -86,9 +95,9 @@ pred_total = pred_chart + pred_ins
 
 # ---- live shards -----------------------------------------------------------
 
-shards = sorted(glob.glob(os.path.join(HERE, "e18_live_s*.json")))
+shards = sorted(glob.glob(os.path.join(HERE, SHARD_GLOB)))
 if not shards:
-    sys.exit("no e18 live shards found — run data/e18_run.py first")
+    sys.exit(f"no {SHARD_GLOB} shards found — run data/e18_run.py first")
 n = 0
 sum_p = sum_p2 = sum_pni = sum_pni2 = sum_bet = ins_profit = 0.0
 rungs: dict[str, int] = {}
@@ -123,10 +132,12 @@ z_chart = (live_chart - pred_chart) / math.sqrt(live_chart_se**2 + pred_chart_se
 n0 = (live_var / live_mean**2) / PACE if live_mean > 0 else float("inf")
 bank = (live_var / (2 * live_mean)) * math.log(1 / RUIN) if live_mean > 0 else float("inf")
 
-print(f"E18 — crouch15-2r certification: {n:,} live rounds ({len(shards)} shards, "
+tag = "E18 — crouch15-2r" if VARIANT == "locked" else "E18b — crouch15-2r NEVER-LEAVE"
+walk = "walk at 0" if VARIANT == "locked" else "never walk"
+print(f"{tag} certification: {n:,} live rounds ({len(shards)} shards, "
       f"seeds {min(seeds)}..{max(seeds)}) vs {N_BANK:,} banked rounds")
 print()
-print("card (slid scale): start +6 | walk at 0 | $100 at 18 | $200 + insure at 22")
+print(f"card (slid scale): start +6 | {walk} | $100 at 18 | $200 + insure at 22")
 print()
 print(f"{'':24s} {'prediction (bins)':>18s} {'live (literal card)':>20s}")
 print(f"{'chart-only $/h':24s} {pred_chart:+11.2f} ±{pred_chart_se:4.2f} "

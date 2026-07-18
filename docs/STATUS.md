@@ -31,7 +31,20 @@ insurance rule ("insure iff the max bet is out") measured at **+$4.67/h =
 73% of the exact ceiling** — the exact-vs-human insurance gap is now a
 number, not an assumption. **Operating numbers: ≈ +$44/h ± 2 at 200 r/h
 heads-up, σ ≈ $72/round, N0 ≈ 500h, ~$36k at 5% RoR; 1.7 walks/h (37% of
-shoes, median exit round 10).** Growth path on record: at a ~$42–52k roll
+shoes, median exit round 10).**
+
+**E18b (same day): THE WALK LINE IS ADVISORY.** Matt's weekday-reality call
+(walking 37% of shoes to hunt fresh tables is impractical) certified on 12M
+more live rounds (`variant=playall`, seeds 15.0–15.5e9): never-leave live
++$46.69 ± 4.19 vs with-leave +$47.83 ± 4.18; the leave's exact same-shoe
+value is $5.83/h, walk friction refunds $2.50–6 of it → **never leaving
+costs ≈ $0–3.5/h net. Weekday mode: play every round, ≈ +$40/h ± 2 on
+~$36–40k, zero walks.** Walk at zero only when a fresh shoe is adjacent
+(weekend/busy rooms). Same-day wong measurement (seed 14.9e9): 85% of jump
+rounds come 2+ decks deep, 60% of shoes ripen (median entry round 24, then
+~12 jump rounds) — the card's top half is also the busy-room back-count
+play (~$65/h per 200 observed rounds on $23k; $20–29/h at real crowded
+pace). Insurance pooled over 24M rounds: ~80% of ceiling, ≈ +$5/h. Growth path on record: at a ~$42–52k roll
 the 1-rung "$200 at the pivot" card is BOTH simpler and richer (115.9% of
 the 3-rung, or 94% with no walking at all); then deviations, then an
 insurance side count. Trainer default flipped to this card

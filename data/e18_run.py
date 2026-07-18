@@ -9,9 +9,13 @@ this round; the hole is NOT counted — unlike the banked arm's composition-
 exact oracle, this is the rule a human can actually play, which is the point
 of the experiment).
 
-Usage: uv run python data/e18_run.py <base_seed> <rounds> <out.json>
+Usage: uv run python data/e18_run.py <base_seed> <rounds> <out.json> [variant]
+  variant: "locked" (default) — the card as locked (walk line at 0)
+           "playall" — E18b: the same card, never leaving (weekday reality:
+           finding a fresh shoe is a real cost the pointwise model ignores)
 """
 
+import dataclasses
 import json
 import os
 import sys
@@ -44,8 +48,13 @@ class CardPlayer(BasicStrategy):
 
 def main() -> None:
     base_seed, rounds, out_path = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3]
+    variant = sys.argv[4] if len(sys.argv) > 4 else "locked"
     rules = STANDARD_6D_H17
     card = CROUCH15_2R
+    if variant == "playall":
+        card = dataclasses.replace(card, name="crouch15-2r-playall", leave_at=-(10**9))
+    elif variant != "locked":
+        sys.exit(f"unknown variant {variant!r}")
     player = CardPlayer(card)
     seeds = shoe_seeds(base_seed)
 
