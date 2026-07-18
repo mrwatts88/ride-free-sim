@@ -1,12 +1,54 @@
 # Roadmap
 
-**PROJECT CONCLUDED (2026-07-17).** M6a answered the attack question; the same-day
-deep dive (docs/DEEP_DIVE_AUDIT.md, docs/DEEP_DIVE_STRATEGY.md, E6–E9) audited and
-re-certified it on clean seeds: wong-in ≈ +1.0%/played round ceiling on 6.6% of
-rounds, strictly dominated by standard blackjack, camouflage thesis refuted by
-measurement. Insurance and deviations are modeled in-engine and gate-validated.
-Human-capture distillation deliberately not pursued. M6b/M6c/M7 permanently
-parked unless the project reopens.
+**RIDE FREE QUESTION CONCLUDED (2026-07-17).** M6a answered the attack question;
+the same-day deep dive (docs/DEEP_DIVE_AUDIT.md, docs/DEEP_DIVE_STRATEGY.md,
+E6–E9) audited and re-certified it on clean seeds: wong-in ≈ +1.0%/played round
+ceiling on 6.6% of rounds, strictly dominated by standard blackjack, camouflage
+thesis refuted by measurement. Insurance and deviations are modeled in-engine and
+gate-validated. Human-capture distillation deliberately not pursued. M6b/M6c/M7
+parked. The v1 artifact is tagged `ride-free-v1`.
+
+**REOPENED for M8 (2026-07-17): the 21+3 side bet, 9-to-1 paytable.** Same
+doctrine, new question: can suit/rank composition beat 21+3? The insurance work
+is the template (side bet as Rules data + strategy hook + explicit ledger + hard
+gate vs an independently computed/published EV before any attack work).
+
+## M8a — Suit-aware card model, one engine (the invasive step; gate hard)
+
+21+3 pays on the 3-card poker hand of (player card 1, player card 2, dealer up):
+flush / straight / three-of-a-kind / straight flush. Flushes need suits; straights
+need J/Q/K distinct — the current `card = int 1..10` collapse cannot express
+either. Plan: the Shoe deals full (rank 1–13, suit) cards; a `value()` collapse
+feeds the *unchanged* blackjack engine (one engine — the side bet and trackers
+see rich cards, the game logic sees values). Accepted consequence: shuffling 52
+distinct cards changes every seed's dealt sequence, so pre-M8 runs do not replay
+bit-for-bit (banked `data/*.json` stay valid as data; `ride-free-v1` preserves
+exact reproducibility of the paper).
+**Gate:** full test suite adapted and passing; all four validation batteries
+re-pass; determinism under seed re-verified; throughput within ~2× of current.
+
+## M8b — 21+3 as configuration, validated before attacked
+
+`Rules` gains the 21+3 paytable as data (the flat 9-to-1 version pays every
+winning category 9:1; encode as a category→payout map so the tiered variants are
+configurations). The bet is placed BEFORE the deal (unlike insurance) — the
+strategy hook is pre-round, which is exactly what a counting bet wants. Explicit
+ledger fields per the insurance pattern.
+**Gate (two independent references):** (1) exact fresh-shoe combinatorics for
+each category probability (computable in closed form — tier-1 reference);
+(2) the published Wizard of Odds house edge for the exact paytable and deck
+count, looked up at milestone time — never from memory. Always-bet strategy in
+csm mode must match both.
+
+## M8c — The attack
+
+Suit-aware CompositionTracker (per-(rank,suit) counts); exact hypergeometric
+P(flush)/P(straight)/P(trips) as pre-deal signals; reuse the conditional-EV and
+grid harness verbatim; EOR-style derivation if a linear count is wanted. Known
+prior art: 21+3 is regarded as countable mainly via suit imbalance (flush
+richness) — side-bet EV swings are large, so this may clear the bar Ride Free
+missed. All experiments on fresh seeds (the `shoe_seeds` fix is in place);
+per-experiment log discipline unchanged (E10+).
 
 Each milestone has a validation gate; don't advance until it passes.
 

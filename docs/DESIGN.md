@@ -139,6 +139,18 @@ Design consequences:
 - Bet policy is a separate pluggable piece (flat, ramp-by-true-count,
   ramp-by-probability) so any count composes with any ramp.
 
+## Decision record: suit-aware cards for M8 (21+3), engine unchanged
+
+**Decision (2026-07-17):** to model the 21+3 side bet (flush/straight/trips need
+suits and distinct J/Q/K), the Shoe will deal full (rank, suit) cards and a
+`value()` collapse will feed the existing engine — game logic keeps consuming
+blackjack values only, preserving the one-engine validation transfer. Side bets
+settle in the engine from the raw dealt cards, following the insurance pattern
+(Rules data + optional strategy hook + explicit ledger fields + hard validation
+gate before any attack work). The 21+3 bet is placed pre-deal, so its strategy
+hook is pre-round — the natural shape for a counting bet. Accepted cost: dealt
+sequences change for every seed (v1 exactly reproducible at tag `ride-free-v1`).
+
 ## Decision record: Rust later, not now
 
 **Decision (2026-07-17):** Build the Python reference engine first; defer the Rust

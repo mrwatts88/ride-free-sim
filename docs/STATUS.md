@@ -92,7 +92,36 @@ worth +0.12% ± 0.05% overall (perfect-information ceiling; 2.1% of rounds chang
 Standard blackjack hi-lo still beats it on raw EV (~3× the playable volume at equal
 quality); Ride Free's differentiator is camouflage.
 
-## PROJECT CONCLUDED (Matt, 2026-07-17)
+## NEXT STEP (start here): M8a — suit-aware card model for the 21+3 attack
+
+The project is REOPENED for a new question: **can the 21+3 side bet (9-to-1
+paytable) be beaten by suit/rank composition?** Full ladder in ROADMAP.md M8a–c.
+The very next chunk is **M8a only** (iterate small; do not start M8b until the
+M8a gate passes):
+
+1. Enrich `cards.py`: Shoe deals full (rank 1–13, suit 0–3) cards; add a
+   `value(card)` collapse (min(rank,10), ace=1) so the blackjack engine, hand
+   valuation, and all existing strategies consume *values* unchanged. One
+   engine — no variant forks, no game-logic edits.
+2. Decide where the raw three cards surface for the future side bet (likely:
+   RoundResult carries the raw deal; engine settles side bets itself, insurance-
+   style) — sketch in DESIGN.md before coding.
+3. Adapt tests + trackers (CompositionTracker keyed by value stays for RF
+   signals; a suit-aware tracker is M8c, not now).
+4. **Gate:** 161-test suite green (adapted), all four `validate` batteries
+   re-pass, determinism re-verified, throughput within ~2× of current
+   (~7k rounds/s RF reference path).
+
+Known consequences, accepted in advance: pre-M8 seeds will not replay
+bit-for-bit (52-card shuffle ≠ collapsed shuffle) — the exact v1 artifact is
+preserved at git tag **`ride-free-v1`**; banked `data/*.json` remain valid as
+data. Seed hygiene: `cards.shoe_seeds()` everywhere; fresh base seeds spaced
+≥ 1e8 (next unused block: 6.3e9+). Validation doctrine unchanged: for M8b, look
+up the published 21+3 house edge for the exact paytable at milestone time AND
+derive the fresh-shoe category probabilities in closed form as the tier-1
+reference — never trust remembered figures.
+
+## RIDE FREE QUESTION CONCLUDED (Matt, 2026-07-17)
 
 The research question is answered and re-certified on clean seeds: **Ride Free is
 beatable only by wong-in at rf_ev ≥ +0.0125 (~6.6% of rounds) for ≈ +1.0% ± 0.11%
