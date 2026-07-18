@@ -33,8 +33,10 @@ from ridefree.experiments import load_tc_curve_json, merge_tc_curves  # noqa: E4
 
 GAME = sys.argv[1] if len(sys.argv) > 1 else "h17"  # h17 (assumed) | s17 (bracket)
 PEN = sys.argv[2] if len(sys.argv) > 2 else "p75"  # p75 | p80 | p70 (banked shards)
-UNIT = 25.0  # $ per ramp unit ($25-$2000 table; set 10.0 or 15.0 for the others)
-ROUNDS_PER_HOUR = 100  # heads-up ~200-250, 2-3 players ~100, full table ~60
+# $ per ramp unit (1u = table min) and observed rounds/h, both argv-overridable:
+#   uv run python data/e16_ledger.py h17 p75 15 200
+UNIT = float(sys.argv[3]) if len(sys.argv) > 3 else 25.0
+ROUNDS_PER_HOUR = float(sys.argv[4]) if len(sys.argv) > 4 else 100.0
 RUIN = 0.05  # bankroll sized for this risk of ruin
 MIN_BIN_ROUNDS = 2_000  # ignore bins thinner than this (pooled)
 
@@ -51,6 +53,12 @@ RAMPS = {
     "1-12 aggressive": ((-99, 1), (1, 3), (2, 6), (3, 9), (4, 12)),
     "backcount, 8u at tc>=+1": ((1, 8),),
     "backcount, 8u at tc>=+2": ((2, 8),),
+    # wide-spread rows for low-min/high-max tables (e.g. $15-$500 => 1-33 legal)
+    "1-16, exit tc<=-1": ((0, 1), (1, 3), (2, 8), (3, 12), (4, 16)),
+    "1-24, exit tc<=-1": ((0, 1), (1, 4), (2, 12), (3, 18), (4, 24)),
+    "1-33, exit tc<=-1": ((0, 1), (1, 5), (2, 16), (3, 25), (4, 33)),
+    "backcount, 20u at tc>=+2": ((2, 20),),
+    "backcount, 33u at tc>=+2": ((2, 33),),
 }
 
 # Arms: which banked curve carries the playing skill.
