@@ -232,6 +232,21 @@ def _sbev(args: argparse.Namespace) -> None:
     print(format_sb_ev_scan(result, min_cell=args.min_cell))
 
 
+def _sbdecomp(args: argparse.Namespace) -> None:
+    from ridefree.experiments import format_sb_decomposition, run_sb_decomposition
+
+    name, rules, _, _ = VARIANTS[args.rules]
+    if args.penetration is not None:
+        rules = dataclasses.replace(rules, penetration=args.penetration)
+    print(f"ruleset: {name}   penetration: {rules.penetration:.2f}")
+    print("E11a decomposition: exact 21+3 EV = depth + suit + rank + interaction")
+    result = run_sb_decomposition(
+        rules, _strategy_for(rules), seed=args.seed, rounds=args.rounds,
+        paytable=PAYTABLE_21P3_9TO1, threshold=args.threshold,
+    )
+    print(format_sb_decomposition(result))
+
+
 def _combine(args: argparse.Namespace) -> None:
     from ridefree.experiments import format_grid, load_grid_json, merge_grids
 
@@ -344,6 +359,17 @@ def main() -> None:
                     help="override cut-card depth (default: ruleset's 0.75)")
     sb.add_argument("--min-cell", type=int, default=2_000)
     sb.set_defaults(func=_sbev)
+
+    sd = sub.add_parser(
+        "sbdecomp", help="21+3 EV decomposition: depth + suit + rank + interaction"
+    )
+    sd.add_argument("--rules", choices=VARIANTS, default="h17")
+    sd.add_argument("--seed", type=int, default=1)
+    sd.add_argument("--rounds", type=int, default=2_000_000)
+    sd.add_argument("--penetration", type=float, default=None)
+    sd.add_argument("--threshold", type=float, default=0.0,
+                    help="wong-in threshold the selection rules are scored at")
+    sd.set_defaults(func=_sbdecomp)
 
     c = sub.add_parser("combine", help="pool grid JSON dumps and report")
     c.add_argument("paths", nargs="+", help="grid JSON files to merge")

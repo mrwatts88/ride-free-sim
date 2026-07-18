@@ -19,7 +19,7 @@ from ridefree.cards import Shoe, shoe_seeds
 from ridefree.counting import CompositionTracker, RawCompositionTracker
 from ridefree.engine import play_round
 from ridefree.rules import Rules
-from ridefree.side_bets import ev_21p3
+from ridefree.side_bets import ev_21p3, ev_fracs_21p3
 from ridefree.simulator import _needs_reshuffle
 
 
@@ -568,6 +568,197 @@ def format_sb_ev_scan(res: SbEvScanResult, min_cell: int = 2000) -> str:
         lines.append(
             f"  {k:8.3f} {s.rounds:>10,d} {100 * mean_pred:+9.4f}% "
             f"{100 * s.ev:+9.4f}% {100 * s.stderr:7.4f}%"
+        )
+    return "\n".join(lines)
+
+
+# --- E11a: what carries the 21+3 signal? (exact decomposition) --------------
+
+_TYPES_52 = tuple((r, s) for r in range(1, 14) for s in range(4))
+
+
+def sb_ev_components(
+    counts: dict, paytable: tuple[tuple[str, float], ...]
+) -> tuple[float, float, float, float, float]:
+    """Exact decomposition of the pre-deal 21+3 EV for one shoe state.
+
+    The category identities are polynomials, so they evaluate on fractional
+    'smoothed' compositions. Define, at the same total N:
+      ev_bal  — fully balanced shoe (pure depth effect),
+      S = ev(same suit totals, ranks smoothed within suit) − ev_bal,
+      R = ev(same rank totals, suits smoothed within rank) − ev_bal,
+      X = ev_full − ev_bal − S − R (rank×suit interaction residual).
+    Returns (ev_full, ev_bal, S, R, X); ev_full ≡ ev_bal + S + R + X.
+    """
+    n_rank = [0.0] * 14
+    n_suit = [0.0, 0.0, 0.0, 0.0]
+    for (rank, suit), c in counts.items():
+        n_rank[rank] += c
+        n_suit[suit] += c
+    n = sum(n_suit)
+    ev_full = ev_21p3(counts, paytable)
+    suit_smooth = {(r, s): n_suit[s] / 13.0 for r, s in _TYPES_52}
+    rank_smooth = {(r, s): n_rank[r] / 4.0 for r, s in _TYPES_52}
+    balanced = {t: n / 52.0 for t in _TYPES_52}
+    ev_bal = ev_fracs_21p3(balanced, paytable)
+    s = ev_fracs_21p3(suit_smooth, paytable) - ev_bal
+    r = ev_fracs_21p3(rank_smooth, paytable) - ev_bal
+    x = ev_full - ev_bal - s - r
+    return ev_full, ev_bal, s, r, x
+
+
+@dataclass
+class _SelStat:
+    """One candidate selection rule: bet when its proxy signal > threshold."""
+
+    selected: int = 0
+    ev_sum: float = 0.0  # Σ TRUE ev over selected rounds (dilution included)
+    true_pos: int = 0  # overlap with the exact rule's selections
+
+
+@dataclass
+class SbDecompResult:
+    rounds: int = 0
+    penetration: float = 0.0
+    threshold: float = 0.0
+    # moment accumulators for (S, R, X) and full/baseline
+    sums: dict = field(default_factory=dict)
+    squares: dict = field(default_factory=dict)
+    crosses: dict = field(default_factory=dict)
+    rules: dict = field(default_factory=dict)  # name -> _SelStat
+    by_depth: dict = field(default_factory=dict)  # bin -> [n, Σbal, ΣS², ΣR²]
+
+    def var(self, k: str) -> float:
+        m = self.sums[k] / self.rounds
+        return max(self.squares[k] / self.rounds - m * m, 0.0)
+
+    def cov(self, a: str, b: str) -> float:
+        key = (a, b) if (a, b) in self.crosses else (b, a)
+        return (
+            self.crosses[key] / self.rounds
+            - (self.sums[a] / self.rounds) * (self.sums[b] / self.rounds)
+        )
+
+
+def run_sb_decomposition(
+    rules: Rules,
+    strategy,
+    *,
+    seed: int,
+    rounds: int,
+    paytable: tuple[tuple[str, float], ...],
+    threshold: float = 0.0,
+) -> SbDecompResult:
+    """E11a: play rounds (no side bet staked — signals are pure functions of
+    shoe states) and decompose each round's exact 21+3 EV into depth + suit +
+    rank + interaction, scoring proxy selection rules against the exact one."""
+    res = SbDecompResult(penetration=rules.penetration, threshold=threshold)
+    keys = ("F", "B", "S", "R", "X")
+    res.sums = dict.fromkeys(keys, 0.0)
+    res.squares = dict.fromkeys(keys, 0.0)
+    res.crosses = {(a, b): 0.0 for i, a in enumerate(keys) for b in keys[i + 1:]}
+    res.rules = {
+        name: _SelStat() for name in ("exact", "suit_only", "rank_only", "additive")
+    }
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    raw = RawCompositionTracker(rules.decks)
+    rounds_since = 0
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            raw.new_shoe()
+            rounds_since = 0
+        f, b, s, r, x = sb_ev_components(raw.counts, paytable)
+        depth_bin = round(math.floor(shoe.cards_remaining / 52 / 0.5) * 0.5, 1)
+        start = shoe.snapshot()
+        result = play_round(rules, shoe, strategy, bet=1.0)
+        raw.observe(shoe.raw_slice(start, shoe.snapshot()))
+        rounds_since += 1
+
+        res.rounds += 1
+        vals = dict(zip(keys, (f, b, s, r, x)))
+        for k, v in vals.items():
+            res.sums[k] += v
+            res.squares[k] += v * v
+        for (a, c) in res.crosses:
+            res.crosses[(a, c)] += vals[a] * vals[c]
+        exact_bet = f > threshold
+        for name, signal in (
+            ("exact", f),
+            ("suit_only", b + s),
+            ("rank_only", b + r),
+            ("additive", b + s + r),
+        ):
+            if signal > threshold:
+                stat = res.rules[name]
+                stat.selected += 1
+                stat.ev_sum += f
+                if exact_bet:
+                    stat.true_pos += 1
+        d = res.by_depth.setdefault(depth_bin, [0, 0.0, 0.0, 0.0])
+        d[0] += 1
+        d[1] += b
+        d[2] += s * s
+        d[3] += r * r
+    return res
+
+
+def format_sb_decomposition(res: SbDecompResult) -> str:
+    n = res.rounds
+    var_dev = res.var("F")  # F = B + S + R + X; report both raw and de-drifted
+    lines = [
+        f"rounds: {n:,}   penetration: {res.penetration:.2f}   "
+        f"threshold: ev > {res.threshold:g}",
+        "",
+        "variance of exact EV around the depth baseline (F − B = S + R + X):",
+    ]
+    total = (
+        res.var("S") + res.var("R") + res.var("X")
+        + 2 * (res.cov("S", "R") + res.cov("S", "X") + res.cov("R", "X"))
+    )
+    for label, v in (
+        ("suit term S", res.var("S")),
+        ("rank term R", res.var("R")),
+        ("interaction X", res.var("X")),
+        ("2·cov(S,R)", 2 * res.cov("S", "R")),
+        ("2·cov(S,X)+2·cov(R,X)", 2 * (res.cov("S", "X") + res.cov("R", "X"))),
+    ):
+        lines.append(f"  {label:22s} {100 * v / total:6.2f}% of Var(F−B)")
+    corr = res.cov("S", "R") / math.sqrt(res.var("S") * res.var("R"))
+    lines.append(f"  corr(S, R) = {corr:+.3f}   "
+                 f"sd(S) = {100 * math.sqrt(res.var('S')):.3f}%   "
+                 f"sd(R) = {100 * math.sqrt(res.var('R')):.3f}%   "
+                 f"sd(X) = {100 * math.sqrt(res.var('X')):.3f}%   "
+                 f"sd(F) = {100 * math.sqrt(var_dev):.3f}%")
+    lines.append("")
+    lines.append("selection rules (bet when proxy > threshold; value in TRUE ev):")
+    lines.append(f"  {'rule':>10s} {'P(bet)':>8s} {'mean ev':>9s} "
+                 f"{'u/100':>8s} {'capture':>8s} {'precision':>9s} {'recall':>7s}")
+    exact = res.rules["exact"]
+    ceiling = exact.ev_sum / n * 100
+    for name in ("exact", "suit_only", "rank_only", "additive"):
+        st = res.rules[name]
+        if st.selected == 0:
+            lines.append(f"  {name:>10s}      —")
+            continue
+        per100 = st.ev_sum / n * 100
+        lines.append(
+            f"  {name:>10s} {100 * st.selected / n:7.3f}% "
+            f"{100 * st.ev_sum / st.selected:+8.3f}% {per100:+7.3f}u "
+            f"{100 * per100 / ceiling:7.2f}% "
+            f"{100 * st.true_pos / st.selected:8.2f}% "
+            f"{100 * st.true_pos / exact.selected:6.2f}%"
+        )
+    lines.append("")
+    lines.append("by depth: baseline drift and term spreads:")
+    lines.append(f"  {'decks':>6s} {'rounds':>10s} {'ev_bal':>8s} "
+                 f"{'sd(S)':>7s} {'sd(R)':>7s}")
+    for k in sorted(res.by_depth, reverse=True):
+        cnt, b_sum, s_sq, r_sq = res.by_depth[k]
+        lines.append(
+            f"  {k:6.1f} {cnt:>10,d} {100 * b_sum / cnt:+7.3f}% "
+            f"{100 * math.sqrt(s_sq / cnt):6.3f}% {100 * math.sqrt(r_sq / cnt):6.3f}%"
         )
     return "\n".join(lines)
 

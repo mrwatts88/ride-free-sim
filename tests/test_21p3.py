@@ -170,6 +170,50 @@ def test_raw_tracker_mirrors_shoe():
     assert -0.5 < ev < 0.5
 
 
+# --- E11a decomposition -------------------------------------------------------
+
+def test_float_fracs_equal_int_combos():
+    import random
+
+    from ridefree.side_bets import category_combos_21p3, category_fracs_21p3
+
+    rng = random.Random(24680)
+    types = [(r, s) for r in range(1, 14) for s in range(4)]
+    for depth in (0, 130, 250):
+        counts = {t: 6 for t in types}
+        deck = [t for t in types for _ in range(6)]
+        rng.shuffle(deck)
+        for card in deck[:depth]:
+            counts[card] -= 1
+        ints, total_i = category_combos_21p3(counts)
+        floats, total_f = category_fracs_21p3(counts)
+        assert total_f == total_i
+        for cat, v in ints.items():
+            assert floats[cat] == v, (depth, cat)
+
+
+def test_decomposition_identities():
+    from ridefree.experiments import sb_ev_components
+
+    types = [(r, s) for r in range(1, 14) for s in range(4)]
+    # Pure suit skew (ranks uniform within each suit): R and X must vanish.
+    counts = {(r, s): (9, 5, 4, 2)[s] for r, s in types}
+    f, b, s_term, r_term, x = sb_ev_components(counts, PAYTABLE_21P3_9TO1)
+    assert abs(f - (b + s_term + r_term + x)) < 1e-12
+    assert abs(r_term) < 1e-12 and abs(x) < 1e-12
+    assert s_term > 0  # suit concentration always helps flushes (convexity)
+    # Pure rank skew (suits uniform within each rank): S and X must vanish.
+    skew = {r: 2 + (r % 3) for r in range(1, 14)}
+    counts = {(r, s): skew[r] for r, s in types}
+    f, b, s_term, r_term, x = sb_ev_components(counts, PAYTABLE_21P3_9TO1)
+    assert abs(s_term) < 1e-12 and abs(x) < 1e-12
+    # Fresh shoe: everything vanishes and F = B = published EV.
+    counts = {t: 6 for t in types}
+    f, b, s_term, r_term, x = sb_ev_components(counts, PAYTABLE_21P3_9TO1)
+    assert abs(s_term) < 1e-12 and abs(r_term) < 1e-12 and abs(x) < 1e-12
+    assert abs(f - (-162_360 / 5_013_320)) < 1e-12 and abs(f - b) < 1e-12
+
+
 # --- engine settlement -------------------------------------------------------
 
 class FakeRawShoe:

@@ -146,7 +146,8 @@ sb21p3_profit / sb21p3_category`; Metrics tracks per-category counts.
    top-3 marginal; empirical shoe-level σ) — every category within ±1.8σ.
 
 Seeds consumed: 6.4e9 block (gate + tests), 6500000001, 6600000001–2 (M8b);
-6700000001, 6800000001 (E10). Next unused block: **6.9e9+**.
+6700000001, 6800000001 (E10); 6900000001, 7000000001 (E11a).
+Next unused block: **7.1e9+**.
 
 ## M8c IN PROGRESS: E10 done — 21+3 IS beatable at the ceiling
 
@@ -159,37 +160,45 @@ stake. Signal is late-shoe (25% of rounds +EV at 1 deck left) and essentially
 orthogonal to hi-lo (corr ≈ −0.08). Calibration slope 1.03 ± 0.07 (deep run):
 the calculator prices depleted shoes correctly end to end.
 
-## NEXT STEP (start here): E11 — compress the exact signal into a human system
+**E11a DONE (2026-07-17, EXPERIMENTS.md):** exact decomposition
+EV = B(depth) + S(suit) + R(rank) + X(interaction), each term closed-form
+(`sb_ev_components`, `cli sbdecomp`). Verdict: **suit 70–72% of variance,
+rank 17–21%, interaction ~0.2% (dead — additive rule captures 99.8% of the
+ceiling)**. Suit-only selection captures 73% (pen .75) / 78% (pen .85) of
+ceiling value; rank-only alone is worthless (4–6%). Depth is first-class:
+B drifts −3.24% → −13.9% (0.5 decks) while sd(S) grows to 11.9% — per-depth
+thresholds required. Four per-suit counts compute B+S EXACTLY, so the
+suit-only row is that family's ceiling; the last ~27% needs rank
+concentration (mostly the straight term).
 
-Planned ladder (revised after E10; ChatGPT's model-comparison list absorbed
-where useful — see EXPERIMENTS.md E10 for the numbers):
+## NEXT STEP (start here): E11b — human-executable trackers
 
-1. **E11a — what carries the signal?** Decompose +EV rounds: how much of the
-   exact-EV variance (and of the +EV set) is explained by (a) suit
-   concentration alone (max-suit share / per-suit counts), (b) rank
-   concentration (Σn_r², trips/straight terms), (c) both. Note the structural
-   fact: a LINEAR rank count is blind to flush richness (suit symmetry ⇒
-   equal suit EORs) — the linear count is the control expected to fail, not
-   the candidate. Cheap: rerun sbev-style scan accumulating feature vectors,
-   or fit on logged states.
-2. **E11b — human-executable trackers.** Candidates, simplest first: four
-   per-suit counts (running count of each suit dealt, +1/card; signal =
-   f(max remaining-suit share, decks left)); suit-pairs; add a rank-repeat
-   term only if E11a says it matters. Threshold table per tracker:
-   P(bet), mean true EV when betting, capture % of the E10 ceiling.
-3. **E12 — betting verdict with the main-bet toll** (the E4c discipline):
-   side wong-in at table-legal stake ratios vs the −0.64%/round blackjack
-   toll (breakeven side:main ≈ 2.3:1 at pen 0.85 on bet-selection alone);
-   combined with hi-lo main-game play (corr −0.08 ⇒ stacks); bankroll/variance
-   (σ ≈ 2.96/staked round); camouflage/practicality notes.
+Score candidate trackers against the E10/E11a bounds (same scan harness;
+threshold table per tracker: P(bet), mean true EV, capture %):
 
-Parked (from the ChatGPT discussion, deliberately NOT next): rank-adjacency
-and rank×suit interaction models (only if E11a shows unexplained variance);
-"strange regime" hunts (the exact EV already prices every regime; we
-characterize +EV rounds instead); dealer-upcard effects (the up-card is just
-the third exchangeable card — fully priced pre-deal). Realism variants for
-later: visible-cards-only tracker (drop the hole-card assumption), burn
-cards, paytable variants (Xtreme tiers) as configurations.
+1. **4-suit counts, exact table** (upper bound of family = suit-only:
+   73–78%): four running counts + cards-seen; bet iff B(N)+S(suit totals) > 0
+   via per-depth lookup. Also: how coarse can the lookup get (max-suit share
+   bins) before capture drops?
+2. **Simplifications downward:** 2-suit and max-suit-only variants (can a
+   human track fewer than 4 counts?); imbalance-from-pairs shortcuts.
+3. **Rank add-on upward:** cheap R proxies (e.g. tens-vs-middle density or a
+   coarse Σn² proxy) — is any human-trackable statistic worth the last 27%?
+4. Threshold sweep per tracker (the >0 cut is not necessarily optimal for a
+   proxy that can't see R).
+
+Then **E12 — betting verdict with the main-bet toll** (the E4c discipline):
+side wong-in at table-legal stake ratios vs the −0.64%/round blackjack toll
+(breakeven side:main ≈ 2.3:1 at pen 0.85 on bet-selection alone); combined
+with hi-lo main play (corr −0.08 ⇒ stacks); bankroll/variance (σ ≈ 2.96 per
+staked round); camouflage/practicality notes.
+
+Parked/refuted (ChatGPT list disposition): rank×suit interaction models
+**refuted by E11a** (<0.2% of variance); rank-adjacency beyond the straight
+term subsumed in R; "strange regime" hunts unnecessary (exact EV prices all
+regimes); dealer-upcard effects empty (third exchangeable card). Realism
+variants for later: visible-cards-only tracker (drop the hole-card
+assumption), burn cards, paytable variants (Xtreme tiers) as configurations.
 
 Known consequences, accepted in advance: pre-M8 seeds do not replay
 bit-for-bit (52-card shuffle ≠ collapsed shuffle) — the exact v1 artifact is

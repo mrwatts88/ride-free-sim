@@ -2,6 +2,44 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E11a — What carries the 21+3 signal: suit 71%, rank 19%, interaction ~0.2% (dead)
+
+**Date:** 2026-07-17 · **Commands:**
+`uv run python -m ridefree.cli sbdecomp --rounds 2000000 --seed 6900000001` ·
+`uv run python -m ridefree.cli sbdecomp --rounds 2000000 --seed 7000000001
+--penetration 0.85`.
+
+Exact decomposition, no fitting: the category identities are polynomials, so
+they evaluate on fractional smoothed compositions
+(`side_bets.category_fracs_21p3`). Per round-state, EV_full = B(depth
+baseline, balanced shoe at same N) + S (suit totals, ranks smoothed) + R
+(rank totals, suits smoothed) + X (residual interaction) — an identity, each
+term exact (`experiments.sb_ev_components`; identities unit-tested to 1e-12).
+
+- **Variance shares of (F − B):** pen 0.75 → S 70.4% / R 20.6% / X 0.16% /
+  2·cov(S,R) 9.3%; pen 0.85 → S 72.4% / R 16.6% / X 0.17%. corr(S,R) ≈ +0.13.
+- **Selection-rule value (bet when proxy > 0, scored in TRUE ev):**
+  | rule | pen 0.75 capture | pen 0.85 capture |
+  |---|---|---|
+  | exact (ceiling) | 100% (+0.114u/100) | 100% (+0.276u/100) |
+  | suit-only (B+S) | **73.0%** | **77.6%** |
+  | rank-only (B+R) | 4.3% | 6.2% |
+  | additive (B+S+R) | **99.79%** | **99.78%** |
+- **The rank×suit interaction is refuted as a signal source** (<0.2% of
+  variance; additive rule loses 0.2% of the ceiling). Straight-flush terms
+  just don't matter at 9:1 weights.
+- **Depth is a first-class variable:** the balanced-shoe baseline B drifts
+  −3.24% (fresh) → −8.2% (1.5 decks) → −13.9% (0.5 decks) while sd(S) grows
+  0 → 5.5% → 11.9%. A human system needs B(N) as a per-depth threshold
+  lookup, not a constant.
+
+**E11b design implications:** four per-suit running counts SUFFICE to compute
+B+S exactly (S depends only on suit totals + N) — that family's ceiling is
+the suit-only row (73–78%). The remaining ~27% needs rank concentration
+(mostly the straight term Σ n_a·n_b·n_c) — full 13-rank tracking is
+computer-territory; E11b should quantify cheap R proxies and simplified suit
+trackers (max-suit share bins, 2-count compressions) against these bounds.
+
 ## E10 — 21+3 exact pre-deal EV: the side bet IS beatable (perfect-info ceiling)
 
 **Date:** 2026-07-17 · **Commands:**

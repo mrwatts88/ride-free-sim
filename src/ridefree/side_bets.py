@@ -74,6 +74,55 @@ def category_combos_21p3(
     )
 
 
+def _c3(n: float) -> float:
+    """n choose 3 as a polynomial — identical to comb(n, 3) on integers, and
+    well-defined on the fractional 'smoothed' compositions the E11
+    decomposition evaluates (the category identities are polynomials)."""
+    return n * (n - 1.0) * (n - 2.0) / 6.0
+
+
+def category_fracs_21p3(
+    counts: dict[RawCard, float],
+) -> tuple[dict[str, float], float]:
+    """Float-tolerant twin of `category_combos_21p3` (same identities via
+    `_c3`); equal to it on integer compositions (tested differentially)."""
+    n_rank = [0.0] * 14
+    n_suit = [0.0, 0.0, 0.0, 0.0]
+    for (rank, suit), c in counts.items():
+        n_rank[rank] += c
+        n_suit[suit] += c
+    n = sum(n_suit)
+    total = _c3(n)
+    trips = sum(_c3(n_rank[r]) for r in range(1, 14))
+    straights_all = sum(n_rank[a] * n_rank[b] * n_rank[c] for a, b, c in _SEQUENCES)
+    sf = sum(
+        counts[(a, s)] * counts[(b, s)] * counts[(c, s)]
+        for a, b, c in _SEQUENCES
+        for s in range(4)
+    )
+    suited_trips = sum(_c3(c) for c in counts.values())
+    flush = sum(_c3(ns) for ns in n_suit) - sf - suited_trips
+    return (
+        {
+            "straight_flush": sf,
+            "three_of_a_kind": trips,
+            "straight": straights_all - sf,
+            "flush": flush,
+        },
+        total,
+    )
+
+
+def _ev_from(
+    combos: dict[str, float], total: float, paytable: tuple[tuple[str, float], ...]
+) -> float:
+    if total == 0:
+        return 0.0
+    pays = dict(paytable)
+    won = sum((pays[c] + 1.0) * combos[c] for c in combos if c in pays)
+    return won / total - 1.0
+
+
 def ev_21p3(
     counts: dict[RawCard, int], paytable: tuple[tuple[str, float], ...]
 ) -> float:
@@ -83,11 +132,15 @@ def ev_21p3(
     contributes nothing (it loses the stake), matching `settle_21p3`.
     """
     combos, total = category_combos_21p3(counts)
-    if total == 0:
-        return 0.0
-    pays = dict(paytable)
-    won = sum((pays[c] + 1.0) * combos[c] for c in combos if c in pays)
-    return won / total - 1.0
+    return _ev_from(combos, total, paytable)
+
+
+def ev_fracs_21p3(
+    counts: dict[RawCard, float], paytable: tuple[tuple[str, float], ...]
+) -> float:
+    """EV of a (possibly fractional) composition via the polynomial identities."""
+    combos, total = category_fracs_21p3(counts)
+    return _ev_from(combos, total, paytable)
 
 
 def settle_21p3(
