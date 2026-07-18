@@ -44,13 +44,20 @@ costs ≈ $0–3.5/h net. Weekday mode: play every round, ≈ +$40/h ± 2 on
 rounds come 2+ decks deep, 60% of shoes ripen (median entry round 24, then
 ~12 jump rounds) — the card's top half is also the busy-room back-count
 play (~$65/h per 200 observed rounds on $23k; $20–29/h at real crowded
-pace). Insurance pooled over 24M rounds: ~80% of ceiling, ≈ +$5/h. Growth path on record: at a ~$42–52k roll
+pace). Insurance pooled over 24M rounds: ~80% of ceiling, ≈ +$5/h.
+**Trainer default matches the doctrine (`Config.score_leave=False`):
+betting through the walk line expects the $15 floor and walking is never
+scored; a settings toggle restores strict walk-line scoring for weekend
+drilling. No wong mode in the trainer yet — the natural next build if
+wonging gets pursued.**
+
+Growth path on record: at a ~$42–52k roll
 the 1-rung "$200 at the pivot" card is BOTH simpler and richer (115.9% of
 the 3-rung, or 94% with no walking at all); then deviations, then an
 insurance side count. Trainer default flipped to this card
 (`CROUCH15_2R`); honest E17 correction: the $15-floor toll makes the old
 3-rung card $54.70/h, not the ~$60 the ×0.935 shorthand implied.
-**Next unused seed block: 14.9e9+.**
+**Next unused seed block: 15.6e9+** (14.9e9 wong depth, 15.0–15.5e9 E18b).
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 

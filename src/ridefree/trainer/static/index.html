@@ -14,8 +14,9 @@
     <div class="start-box">
       <h1>crouch15-2r <span class="dim">/ Red 7 trainer</span></h1>
       <p class="dim">6-deck H17 DAS &middot; pen .75 &middot; $15&ndash;$1,000 &middot;
-         start each shoe at <b>+6</b> &middot; count hits <b>0</b> &rarr; walk &middot;
-         <b>$100</b> at 18 &middot; <b>$200 + insure</b> at 22</p>
+         start each shoe at <b>+6</b> &middot; <b>$100</b> at 18 &middot;
+         <b>$200 + insure</b> at 22 &middot; at <b>0</b> walking is allowed
+         (optional &mdash; never-leave is the weekday mode)</p>
       <div class="row">
         <input id="seed-input" type="number" placeholder="seed (blank = clock)">
         <button id="start-btn" class="primary">Start session</button>
@@ -98,6 +99,8 @@
       <label>random quiz about every
         <input type="number" id="cfg-quiz-mean" min="0" style="width:4em"> rounds (0 = off)</label>
       <label><input type="checkbox" id="cfg-reveal"> reveal true RC on errors</label>
+      <label><input type="checkbox" id="cfg-score-leave"> score the walk line
+        (weekend mode &mdash; default off: never-leave is &asymp; free, E18b)</label>
       <div class="row"><button id="settings-close" class="primary">Done</button></div>
     </div>
 

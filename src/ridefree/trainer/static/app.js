@@ -452,12 +452,14 @@ $("settings-btn").onclick = () => {
   $("cfg-quiz-shuffle").checked = state.config.quiz_on_shuffle;
   $("cfg-quiz-mean").value = state.config.random_quiz_mean_rounds;
   $("cfg-reveal").checked = state.config.reveal_on_error;
+  $("cfg-score-leave").checked = state.config.score_leave;
 };
 $("settings-close").onclick = async () => {
   await api("/api/config", {
     quiz_on_shuffle: $("cfg-quiz-shuffle").checked,
     random_quiz_mean_rounds: parseInt($("cfg-quiz-mean").value, 10) || 0,
     reveal_on_error: $("cfg-reveal").checked,
+    score_leave: $("cfg-score-leave").checked,
   });
   closeModals();
   await refresh();

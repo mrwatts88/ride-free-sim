@@ -104,7 +104,7 @@ class TrainerApp:
 
     def config(self, body: dict) -> tuple[int, dict]:
         session = self._require()
-        for key in ("quiz_on_shuffle", "reveal_on_error"):
+        for key in ("quiz_on_shuffle", "reveal_on_error", "score_leave"):
             if key in body:
                 setattr(session.config, key, bool(body[key]))
         if "random_quiz_mean_rounds" in body:

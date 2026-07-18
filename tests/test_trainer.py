@@ -134,7 +134,7 @@ def test_locked_card_tags_unchanged_by_the_slide():
 
 
 def test_session_on_locked_card_scores_leave_at_zero():
-    session = TrainerSession(RULES, CROUCH15_2R, seed=31, config=quiet_config())
+    session = TrainerSession(RULES, CROUCH15_2R, seed=31, config=weekend_config())
     assert session.rc_committed() == 6
     session._rc_committed = 0
     feedback = session.leave_table()
@@ -253,6 +253,11 @@ def quiet_config():
     return Config(quiz_on_shuffle=False, random_quiz_mean_rounds=0)
 
 
+def weekend_config():
+    """Quiet + the walk line scored (E18 weekend mode)."""
+    return Config(quiz_on_shuffle=False, random_quiz_mean_rounds=0, score_leave=True)
+
+
 @pytest.mark.parametrize("card", [CROUCH15_RED7, CROUCH15_2R], ids=lambda c: c.name)
 def test_oracle_player_is_error_free(card):
     """A bot that answers exactly what the card and BasicStrategy prescribe
@@ -306,7 +311,7 @@ def test_wrong_bet_and_wrong_play_are_flagged():
 
 
 def test_leave_scoring_both_ways():
-    session = TrainerSession(RULES, CARD, seed=7, config=quiet_config())
+    session = TrainerSession(RULES, CARD, seed=7, config=weekend_config())
     session._rc_committed = -14
     feedback = session.leave_table()
     assert feedback[0].kind == "leave" and feedback[0].correct is True
@@ -318,11 +323,33 @@ def test_leave_scoring_both_ways():
 
 
 def test_betting_into_a_leave_count_is_flagged():
-    session = TrainerSession(RULES, CARD, seed=8, config=quiet_config())
+    session = TrainerSession(RULES, CARD, seed=8, config=weekend_config())
     session._rc_committed = -15
     feedback = session.place_bet(15.0)
     assert feedback[0].kind == "leave" and feedback[0].correct is False
     assert feedback[0].expected == "leave"
+
+
+def test_advisory_walk_line_is_the_default():
+    """E18b weekday mode: betting the floor through the walk line is correct,
+    a jump bet there is still a bet error, and walking is never scored."""
+    session = TrainerSession(RULES, CROUCH15_2R, seed=9, config=quiet_config())
+    assert session.config.score_leave is False
+    session._rc_committed = -3  # below the walk line (slid scale zero)
+    feedback = session.place_bet(15.0)
+    assert feedback[0].kind == "bet" and feedback[0].correct is True
+
+    session2 = TrainerSession(RULES, CROUCH15_2R, seed=10, config=quiet_config())
+    session2._rc_committed = -3
+    feedback = session2.place_bet(100.0)  # jumping below the pivot is still wrong
+    assert feedback[0].kind == "bet" and feedback[0].correct is False
+    assert feedback[0].expected == "$15"
+
+    session3 = TrainerSession(RULES, CROUCH15_2R, seed=11, config=quiet_config())
+    feedback = session3.leave_table()  # walking at +6: allowed, unscored
+    assert feedback == []
+    assert session3.shoe_no == 2
+    assert "leave" not in session3.tally
 
 
 def test_shuffle_quiz_blocks_betting_and_resets_count():

@@ -54,6 +54,11 @@ class Config:
     quiz_on_shuffle: bool = True
     random_quiz_mean_rounds: int = 15  # 0 = off
     reveal_on_error: bool = True  # include the true RC in error feedback
+    # E18b: the walk line is ADVISORY (never-leave costs ~$0-3.5/h net after
+    # walk friction). Default drills weekday mode: betting through the line
+    # expects the floor bet and walking is never scored. Turn on for weekend
+    # drilling (walk-at-zero scored as the E18 card wrote it).
+    score_leave: bool = False
 
 
 class TrainerSession:
@@ -122,6 +127,8 @@ class TrainerSession:
         feedback = []
         rc = self._rc_committed
         card_bet = self.card.bet_for(rc)
+        if card_bet is None and not self.config.score_leave:
+            card_bet = self.card.floor_bet  # advisory walk line: crouch through it
         if card_bet is None:
             feedback.append(
                 self._event("leave", False, "leave", f"bet ${amount:g}", {"rc": rc})
@@ -145,12 +152,16 @@ class TrainerSession:
         self._require_phase(PHASE_BET)
         if self.pending_quiz is not None:
             raise SessionError("answer the count check first")
-        rc = self._rc_committed
-        correct = self.card.bet_for(rc) is None
-        expected = "leave" if correct else "stay"
-        event = self._event("leave", correct, expected, "leave", {"rc": rc})
+        feedback: list[Event] = []
+        if self.config.score_leave:
+            rc = self._rc_committed
+            correct = self.card.bet_for(rc) is None
+            expected = "leave" if correct else "stay"
+            feedback.append(self._event("leave", correct, expected, "leave", {"rc": rc}))
+        # advisory mode: walking is always allowed, never scored — it just
+        # moves you to a fresh shoe (the mechanical table change)
         self._begin_shuffle(reason="leave")
-        return [event]
+        return feedback
 
     def answer_insurance(self, take: bool) -> list[Event]:
         self._require_phase(PHASE_INSURANCE)
