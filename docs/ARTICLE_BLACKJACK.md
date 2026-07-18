@@ -102,6 +102,36 @@ restlessness, not as a system):
 | **.75 (assumed)** | **+$67.45** | **255h** | **$25.8k** | **0.76** |
 | .80 | +$92.01 | 151h | $20.8k | 0.76 |
 
+### The card, explicitly
+
+**Count:** plain hi-lo — 2, 3, 4, 5, 6 count **+1**; 7, 8, 9 count **0**;
+tens, faces, aces count **−1**. True count = running count ÷ decks remaining
+(half-deck estimation is fine). E4a showed hi-lo is the best balanced
+level-1 count for this game, so the tags are not a compromise.
+
+**Bet ramp, $10–$200 table** (thresholds are half-integers because the
+priced bins are rounded TCs — "TC rounds to +2" means TC ≥ +1.5):
+
+| true count | bet / action |
+|---|---|
+| TC ≤ −1.5 (rounds to −2 or worse) | **leave** — color up, wander, come back on a fresh shoe |
+| −1.5 < TC < +1.5 | **$10** (the crouch) |
+| +1.5 ≤ TC < +2.5 (rounds to +2) | **$100** |
+| +2.5 ≤ TC < +3.5 (rounds to +3) | **$150** |
+| TC ≥ +3.5 (rounds to +4+) | **$200** (table max) |
+
+**Insurance:** take it at TC ≥ +3, never below. (The priced arm uses
+composition-exact insurance, worth ≈ +$6/h of the total; the TC +3 index is
+the standard human approximation and captures most of it.)
+
+**Playing decisions:** straight basic strategy for 6-deck H17 DAS, every
+hand, at every count. No playing indexes — their value was priced
+separately (the `ceiling` rows) and deliberately left off this card.
+
+Runner-up card, for reference ($15–$500 table, 1-16 + exits): $15 below
++1.5, then $45 / $120 / $180 / $240 at TC rounding to +1 / +2 / +3 / +4+,
+leave at TC ≤ −0.5 — +$83.62/h on $31.4k, corr 0.81.
+
 Runner-up: $15–$500 table, 1-16 spread + exits — +$83.62/h on $31.4k at pen
 .75 — more money, but corr 0.81, twice the walking, and a rarer table. The
 crouch matches its N0 (255h vs 251h) and its bankroll efficiency ($2.6/h per
