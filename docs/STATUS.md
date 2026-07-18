@@ -182,22 +182,35 @@ max-excess rules capture only ~half the suit value (two-moderate-suit states
 matter). Index curve: T1 = 4.0 / 5.9 / 8.7 / 11.2 / 13.5 excess cards at
 0.5 / 1 / 2 / 3 / 4 decks left; T_Q = 4/3·T1².
 
-## NEXT STEP (start here): E12 — betting verdict with the main-bet toll
+## M8 FINAL VERDICT (E12 done, 2026-07-17): 21+3 is beatable — first positive verdict
 
-The E4c discipline, now with measured inputs:
-1. Per-100-rounds ledger for the systems {exact, quad-Q, quad-Q+linrank} ×
-   pen {0.75, 0.85}: side value (E11b) minus the blackjack toll at the
-   required main bet (basic strategy −0.64%/round h17; also compute with
-   hi-lo main play — corr(sb_ev, hilo) ≈ −0.08, so terms stack ≈ additively).
-   Table-legal stake ratios: breakeven side:main and value at 1:1, 2:1, 3:1,
-   and side-capped-at-$X scenarios.
-2. Variance/bankroll: σ ≈ 2.96/staked round on the side leg; combined-leg
-   variance and N0 for the full system.
-3. Practicality notes: bet frequency vs depth (all value is late-shoe —
-   pattern visible to surveillance), hole-card visibility assumption,
-   rack-card confirmation list (paytable, decks, penetration, side-bet max).
-4. Output: the final M8 verdict paragraph — is 21+3 at Potawatomi worth
-   playing, for whom, at what stakes?
+**The 21+3 flat-9:1 side bet (6 decks) is genuinely beatable by suit
+composition.** Ledger arithmetic in `data/e12_verdict.py` (E12,
+EXPERIMENTS.md). Operating point: **quad-Q wong-in at pen 0.85 ≈ +0.206
+side-units per 100 observed rounds ≈ +$21/h per $100 side unit (σ ≈ $716/h,
+N0 ≈ 1,200 h, ~$37k bankroll for 5% RoR)**. Seated play viable only at
+min-main:max-side stakes AND deep pen (+$11.5/h at $15:$100, pen 0.85);
+pen 0.75 is thin (wong-in +$8/h, seated dead — breakeven 7.4:1). Unlike Ride
+Free, this does NOT lose to the game next door: it is orthogonal to hi-lo
+(corr −0.08) and stacks with a counted main game.
+
+**Verdict conditions (rack-card checklist, by sensitivity):** flat 9:1
+paytable (Xtreme tiers → nothing transfers); penetration ≥ ~0.80; no CSM;
+mid-shoe entry allowed (or ≥1:3 main:side stakes); 6 decks. Idealizations on
+record: hole card eventually visible; 100 rounds/h heads-up.
+
+## NEXT STEPS (M8 research complete; field + polish items remain)
+
+1. **Rack card (Matt, real world):** confirm at Potawatomi — 21+3 paytable
+   (flat 9:1 vs tiered), decks, penetration/cut-card depth, CSM or shoe,
+   mid-shoe entry policy, side-bet max & main min, and (from M3) H17/S17.
+   The verdict is conditional on these.
+2. Optional realism passes if the field checks pass: visible-cards-only
+   tracker (drop hole-card assumption — expect ~nil), full-table
+   cards-per-round model, tiered-paytable re-derivation (pure configuration:
+   rerun sbev/sbdecomp/sbtrack with the actual paytable).
+3. Optional write-up: extend `docs/ARTICLE.md` with the 21+3 chapters
+   (M8a–E12 arc: engine → gates → ceiling → decomposition → quad-Q → verdict).
 
 Parked/refuted (ChatGPT list disposition): rank×suit interaction models
 **refuted by E11a** (<0.2% of variance); rank-adjacency beyond the straight

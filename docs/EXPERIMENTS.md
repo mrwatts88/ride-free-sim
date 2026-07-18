@@ -2,6 +2,58 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E12 — The 21+3 betting verdict: beatable for real, wong-in at deep penetration
+
+**Date:** 2026-07-17 · **Command:** `uv run python data/e12_verdict.py`
+(pure ledger arithmetic from E10/E11b measured inputs — no new simulation,
+no new seeds; the E4c pattern).
+
+The toll structure decides everything. Playing 21+3 requires a live main
+wager, so: **seated** = pay −0.64%/round (h17 basic) on the main bet every
+round; **wong-in** = back-count standing behind, enter only on trigger
+rounds → the toll shrinks by the trigger rate (~5–7%).
+
+Net EV per 100 observed rounds, in side-stake units (quad-Q system):
+
+| pen | mode | net | notes |
+|---|---|---|---|
+| 0.75 | seated $15:$100 | **−0.010u** | seated breakeven needs side:main > 7.4:1 — dead at typical limits |
+| 0.75 | wong-in | +0.083u | positive but thin |
+| 0.85 | seated $15:$100 | +0.115u | viable ONLY at min-main:max-side stakes |
+| 0.85 | wong-in | **+0.206u** | the operating point |
+
+$ illustration ($100 side unit, $15 main, 100 observed rounds/h):
+**quad-Q @ pen 0.85 wong-in ≈ +$21/h, σ ≈ $716/h, N0 ≈ 1,200 hours**;
+seated ≈ +$11.5/h, N0 ≈ 4,100 h; pen 0.75 wong-in ≈ +$8/h, N0 ≈ 4,700 h.
+Perfect (computer) play @ 0.85 wong-in: +$26/h, N0 ≈ 950 h. Bankroll for 5%
+risk-of-ruin at the operating point ≈ σ²/(2μ)·ln(20) ≈ **$37k**. Grind-scale
+— comparable to legitimate hi-lo counting, not a bonanza.
+
+**Interactions:** corr(sb_ev, hilo) ≈ −0.08 ⇒ a hi-lo main game stacks
+≈ additively — the strongest configuration is hi-lo main + quad-Q side
+(replaces the toll with a positive main leg; both windows rarely collide).
+
+**Conditions for the verdict to hold (rack-card checklist, in order of
+sensitivity):** (1) flat 9-to-1 paytable — tiered "Xtreme" versions have
+~13% HE and different category weights, nothing transfers; (2) penetration —
+0.75→0.85 is 2.5× the net edge; below ~0.75 wong-in only, marginal;
+(3) no CSM (kills everything); (4) mid-shoe entry allowed (else seated mode
+needs main-min:side-max ≥ ~1:3); (5) 6 decks (thresholds are 6-deck-derived).
+Known idealizations: hole card assumed eventually visible (minor); 100
+rounds/h heads-up (a full table cuts $/h roughly proportionally; per-shoe
+trigger counts are similar). Surveillance note: max side bets appearing only
+late-shoe is a legible pattern — 21+3 suit-counting is published prior art
+(Jacobson) and known to surveillance where they care.
+
+**M8 FINAL VERDICT: the 21+3 flat-9:1 side bet at 6 decks is genuinely
+beatable by suit composition — the first positive verdict of this project.
+Best human system: quad-Q (four suit counts + one analytic depth curve),
+74–78% of the exact ceiling. Worth playing when: deep penetration (≥0.80),
+flat 9:1 paytable, wong-in possible or min-main:max-side stakes, ideally
+stacked on hi-lo main play. Expect ~+$20/h per $100 side unit at ~$37k
+bankroll — real advantage play, grind-scale.** Unlike Ride Free, this is NOT
+dominated by the game next door: it is orthogonal to it and stacks with it.
+
 ## E11b — Human trackers scored: quad-Q (4 suit counts) captures 74–78% of the ceiling
 
 **Date:** 2026-07-17 · **Commands:**

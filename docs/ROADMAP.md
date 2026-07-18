@@ -52,7 +52,18 @@ within ±1.3σ; independent 62.4M-triple card-level check within ±1.8σ.
 Implementation: `Rules.side_bet_21p3` + `side_bets.py` + `bet_21p3` hook +
 `sb21p3_*` ledger fields + `cli sim --21p3`. 176 tests.
 
-## M8c — The attack
+## M8c — The attack ✅ (E10–E12, 2026-07-17)
+
+**Answered: yes — the flat-9:1 21+3 is beatable by suit composition.**
+E10: exact closed-form pre-deal EV → ceiling +0.116u/100 rounds (pen .75) /
++0.269u (pen .85), late-shoe, orthogonal to hi-lo. E11a: exact decomposition
+— suit 71% / rank 19% / interaction dead. E11b: quad-Q human system (four
+suit counts, Σ excess² vs one analytic depth curve) captures 74–78% of the
+ceiling with zero in-sample fitting. E12: verdict — wong-in at deep pen ≈
++$21/h per $100 side unit (N0 ≈ 1,200 h, ~$37k bankroll @5% RoR); seated
+only at min-main:max-side; conditional on rack-card confirmation (paytable /
+pen / no-CSM / entry policy). First positive verdict of the project; stacks
+with hi-lo main play rather than being dominated by it.
 
 Suit-aware CompositionTracker (per-(rank,suit) counts); exact hypergeometric
 P(flush)/P(straight)/P(trips) as pre-deal signals; reuse the conditional-EV and
