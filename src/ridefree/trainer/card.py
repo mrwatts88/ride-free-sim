@@ -17,16 +17,21 @@ RED_SUITS = (0, 1)
 @dataclass(frozen=True)
 class PlayCard:
     name: str
-    irc_per_deck: int  # IRC = irc_per_deck * decks (Red 7: −2/deck)
+    irc_per_deck: int  # Red 7 imbalance: −2/deck before the display shift
     red7: bool  # count red sevens +1 on top of hi-lo tags
     floor_bet: float  # the crouch
     jumps: tuple[tuple[int, float], ...]  # (rc_threshold, bet), ascending
     insure_at: int  # take insurance at RC >= this
     leave_at: int  # leave (fresh shoe elsewhere) at RC <= this
     table_max: float = 1000.0  # the $15-$1,000 tables confirmed on recon
+    # Cosmetic scale slide (Matt, 2026-07-18): add a constant so the numbers a
+    # human holds are never negative — the leave line sits AT zero ("hit zero,
+    # walk"). Pure relabeling: every threshold above is in the slid scale, and
+    # slid RC = pivot-scale RC + shift (E17's pivot RC 0 = TC +2 is `shift`).
+    shift: int = 0
 
     def irc(self, decks: int) -> int:
-        return self.irc_per_deck * decks
+        return self.irc_per_deck * decks + self.shift
 
     def tag(self, raw_card: tuple[int, int]) -> int:
         """Count tag of a raw (rank, suit) card. Rank 1=A, 11/12/13=J/Q/K."""
@@ -53,8 +58,24 @@ class PlayCard:
         return rc >= self.insure_at
 
 
-# The chosen card: $15-$1,000 tables confirmed on the floor 2026-07-18
-# (STATUS.md recon note). +$59.07/h x ~0.935 floor-adjusted, N0 ~307h, ~$27k.
+# THE LOCKED CARD (Matt, 2026-07-18, E18): the 2-rung collapse in the slid
+# scale. Start each shoe at +6; count hits 0 -> walk; $100 at 18 (the
+# depth-exact pivot, TC +2); $200 AND insurance at 22. Bin-priced +$45.39/h
+# on $34.4k at pen .75, 200 r/h ($15 floor); certification run in E18.
+# Pivot-scale equivalents (the E17 ledger/bins): IRC -12, leave <= -18,
+# $100 at >= 0, $200+ins at >= +4.
+CROUCH15_2R = PlayCard(
+    name="crouch15-2r",
+    irc_per_deck=-2,
+    red7=True,
+    floor_bet=15.0,
+    jumps=((18, 100.0), (22, 200.0)),
+    insure_at=22,
+    leave_at=0,
+    shift=18,
+)
+
+# The E17 3-rung card it superseded (kept for comparison drills).
 CROUCH15_RED7 = PlayCard(
     name="crouch15-red7",
     irc_per_deck=-2,
@@ -65,4 +86,5 @@ CROUCH15_RED7 = PlayCard(
     leave_at=-14,
 )
 
-CARDS = {CROUCH15_RED7.name: CROUCH15_RED7}
+DEFAULT_CARD = CROUCH15_2R
+CARDS = {CROUCH15_2R.name: CROUCH15_2R, CROUCH15_RED7.name: CROUCH15_RED7}

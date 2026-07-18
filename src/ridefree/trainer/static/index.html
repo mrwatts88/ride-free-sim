@@ -12,15 +12,16 @@
   <!-- ============ start screen ============ -->
   <section id="start-screen" class="screen">
     <div class="start-box">
-      <h1>crouch15 <span class="dim">/ Red 7 trainer</span></h1>
-      <p class="dim">6-deck H17 DAS &middot; pen .75 &middot; $15&ndash;$1,000 &middot; IRC &minus;12 &middot;
-         $100 at RC 0 &middot; $150 + insure at +2 &middot; $200 at +5 &middot; leave at &minus;14</p>
+      <h1>crouch15-2r <span class="dim">/ Red 7 trainer</span></h1>
+      <p class="dim">6-deck H17 DAS &middot; pen .75 &middot; $15&ndash;$1,000 &middot;
+         start each shoe at <b>+6</b> &middot; count hits <b>0</b> &rarr; walk &middot;
+         <b>$100</b> at 18 &middot; <b>$200 + insure</b> at 22</p>
       <div class="row">
         <input id="seed-input" type="number" placeholder="seed (blank = clock)">
         <button id="start-btn" class="primary">Start session</button>
         <button id="stats-btn">Lifetime stats</button>
       </div>
-      <p class="dim small">Keys: <b>1&ndash;4</b> bet 15/100/150/200 &middot; <b>Enter</b> rebet &middot;
+      <p class="dim small">Keys: <b>1&ndash;3</b> bet the card's rungs &middot; <b>Enter</b> rebet &middot;
         <b>H</b>it <b>S</b>tand <b>D</b>ouble s<b>P</b>lit &middot; <b>Y/N</b> insurance &middot;
         <b>L</b>eave &middot; <b>C</b>ount check &middot; <b>K</b> peek</p>
     </div>
@@ -54,10 +55,7 @@
       <!-- bet bar -->
       <div id="bet-bar" class="control-bar hidden">
         <span class="bar-label">bet</span>
-        <button class="chip" data-bet="15">$15</button>
-        <button class="chip jump" data-bet="100">$100</button>
-        <button class="chip jump" data-bet="150">$150</button>
-        <button class="chip jump" data-bet="200">$200</button>
+        <span id="chip-row" class="control-bar"></span>
         <input id="custom-bet" type="number" min="15" max="1000" placeholder="$">
         <button id="custom-bet-btn">bet</button>
         <button id="rebet-btn" class="primary hidden"></button>

@@ -18,7 +18,7 @@ from ridefree.cards import Shoe
 from ridefree.engine import Action
 from ridefree.rules import STANDARD_6D_H17
 from ridefree.trainer import driver
-from ridefree.trainer.card import CROUCH15_RED7
+from ridefree.trainer.card import CROUCH15_2R, CROUCH15_RED7, DEFAULT_CARD
 from ridefree.trainer.driver import ACTION, INSURANCE, drive
 from ridefree.trainer.session import Config, SessionError, TrainerSession
 from ridefree.trainer.store import Store
@@ -95,6 +95,53 @@ def test_bet_rungs(rc, bet):
 def test_insurance_threshold():
     assert not CARD.insures(1)
     assert CARD.insures(2)
+
+
+# --- the locked E18 card (crouch15-2r, slid scale: walk line AT zero) ------
+
+
+def test_locked_card_is_the_default():
+    assert DEFAULT_CARD is CROUCH15_2R
+
+
+def test_locked_card_starts_at_plus_6():
+    # shift +18 over the pivot scale's IRC -12
+    assert CROUCH15_2R.irc(RULES.decks) == 6
+
+
+@pytest.mark.parametrize(
+    "rc,bet",
+    [
+        (-3, None), (0, None),  # the walk line IS zero
+        (1, 15.0), (17, 15.0),  # the crouch
+        (18, 100.0), (21, 100.0),  # the pivot rung (TC +2, depth-exact)
+        (22, 200.0), (40, 200.0),  # max bet
+    ],
+)
+def test_locked_card_rungs(rc, bet):
+    assert CROUCH15_2R.bet_for(rc) == bet
+
+
+def test_locked_card_insures_only_at_max_bet():
+    assert not CROUCH15_2R.insures(21)
+    assert CROUCH15_2R.insures(22)
+
+
+def test_locked_card_tags_unchanged_by_the_slide():
+    for rank in range(1, 14):
+        for suit in range(4):
+            assert CROUCH15_2R.tag((rank, suit)) == CROUCH15_RED7.tag((rank, suit))
+
+
+def test_session_on_locked_card_scores_leave_at_zero():
+    session = TrainerSession(RULES, CROUCH15_2R, seed=31, config=quiet_config())
+    assert session.rc_committed() == 6
+    session._rc_committed = 0
+    feedback = session.leave_table()
+    assert feedback[0].kind == "leave" and feedback[0].correct is True
+    assert session.rc_committed() == 6  # fresh shoe restarts at +6
+    feedback = session.leave_table()  # +6 is comfortably above the walk line
+    assert feedback[0].correct is False and feedback[0].expected == "stay"
 
 
 # --- the replay driver ----------------------------------------------------
@@ -206,19 +253,20 @@ def quiet_config():
     return Config(quiz_on_shuffle=False, random_quiz_mean_rounds=0)
 
 
-def test_oracle_player_is_error_free():
+@pytest.mark.parametrize("card", [CROUCH15_RED7, CROUCH15_2R], ids=lambda c: c.name)
+def test_oracle_player_is_error_free(card):
     """A bot that answers exactly what the card and BasicStrategy prescribe
     must be scored 100% correct — the checker checked against itself."""
-    session = TrainerSession(RULES, CARD, seed=414243, config=quiet_config())
+    session = TrainerSession(RULES, card, seed=414243, config=quiet_config())
     for _ in range(300):
         if session.phase == "bet":
-            expected = CARD.bet_for(session.rc_committed())
+            expected = card.bet_for(session.rc_committed())
             if expected is None:
                 session.leave_table()
             else:
                 session.place_bet(expected)
         elif session.phase == "insurance":
-            session.answer_insurance(CARD.insures(session.rc_visible()))
+            session.answer_insurance(card.insures(session.rc_visible()))
         elif session.phase == "action":
             view = session._state.pending.view
             session.answer_action(session.oracle.choose(view, RULES))

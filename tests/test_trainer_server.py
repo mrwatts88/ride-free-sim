@@ -12,7 +12,7 @@ def test_app_flow(tmp_path):
     app = TrainerApp(str(tmp_path / "t.db"))
     status, state = app.new_session({"seed": 424344})
     assert status == 200 and state["phase"] == "bet"
-    assert state["card"]["name"] == "crouch15-red7"
+    assert state["card"]["name"] == "crouch15-2r"
 
     status, state = app.bet({"amount": 5})
     assert status == 400  # below the table minimum

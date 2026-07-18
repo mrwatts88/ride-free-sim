@@ -13,7 +13,7 @@ from threading import Lock
 
 from ridefree.engine import Action
 from ridefree.rules import STANDARD_6D_H17
-from ridefree.trainer.card import CARDS, CROUCH15_RED7
+from ridefree.trainer.card import CARDS, DEFAULT_CARD
 from ridefree.trainer.session import Config, SessionError, TrainerSession
 from ridefree.trainer.store import Store
 
@@ -41,7 +41,7 @@ class TrainerApp:
         seed = body.get("seed")
         if seed is None:
             seed = self.default_seed if self.default_seed is not None else int(time.time())
-        card = CARDS.get(body.get("card", CROUCH15_RED7.name))
+        card = CARDS.get(body.get("card", DEFAULT_CARD.name))
         if card is None:
             return 400, {"error": f"unknown card {body.get('card')!r}"}
         session = TrainerSession(STANDARD_6D_H17, card, int(seed), Config())

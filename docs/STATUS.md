@@ -5,10 +5,39 @@ and the precisely-specified next step. Doc map at the bottom.
 
 **Current state in one line: all three research questions are ANSWERED and
 written up (Ride Free: dominated; 21+3: beatable, grind-scale; Dragon 7 +
-Panda 8: beatable, the strongest verdict — `docs/ARTICLE_EZBAC.md`), and E16
-has now priced classic blackjack next door in real dollars (cover-vs-money
-ledger, below). No next step is scheduled; remaining items are field checks
-on the felt and parked options below.**
+Panda 8: beatable, the strongest verdict — `docs/ARTICLE_EZBAC.md`); E16
+priced classic blackjack in real dollars; and the PLAYING CARD IS NOW LOCKED
+(E18, below): crouch15-2r, certified ≈ +$44/h ± 2 on ~$36k, drilled by the
+trainer web app. Remaining items are field checks on the felt and parked
+options below.**
+
+## E18 DONE (2026-07-18): THE LOCKED CARD — crouch15-2r, certified live
+
+**Matt's practicality critique of the E17 card, measured and answered: the
+−14 leave fired in 73% of shoes (3.4 walks/h, median exit round 4 — the
+algebra: RC ≈ decks_remaining × (TC − 2), so fixed off-pivot thresholds are
+hair-triggers early and dead late), and 74% of the insurance value sits at
+the top rung. The card collapsed to 2 rungs and slid +18 so no number a
+human holds is ever negative — the walk line IS zero:**
+
+> **Start each shoe at +6. Count hits 0 → walk. $100 at 18. $200 AND
+> insurance at 22.** ($15 floor everywhere else; straight basic strategy;
+> red sevens +1.)
+
+Certified end-to-end by 12M live rounds of the LITERAL card (E18,
+`data/e18_run.py` / `e18_verdict.py`, seeds 14.3–14.8e9): chart-only z =
++0.89 vs the bin prediction, rung occupancy ≤1.3σ everywhere, and the human
+insurance rule ("insure iff the max bet is out") measured at **+$4.67/h =
+73% of the exact ceiling** — the exact-vs-human insurance gap is now a
+number, not an assumption. **Operating numbers: ≈ +$44/h ± 2 at 200 r/h
+heads-up, σ ≈ $72/round, N0 ≈ 500h, ~$36k at 5% RoR; 1.7 walks/h (37% of
+shoes, median exit round 10).** Growth path on record: at a ~$42–52k roll
+the 1-rung "$200 at the pivot" card is BOTH simpler and richer (115.9% of
+the 3-rung, or 94% with no walking at all); then deviations, then an
+insurance side count. Trainer default flipped to this card
+(`CROUCH15_2R`); honest E17 correction: the $15-floor toll makes the old
+3-rung card $54.70/h, not the ~$60 the ×0.935 shorthand implied.
+**Next unused seed block: 14.9e9+.**
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 

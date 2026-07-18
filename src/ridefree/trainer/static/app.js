@@ -119,6 +119,28 @@ function renderTable() {
   }
 }
 
+function chipAmounts() {
+  if (!state || !state.card) return [];
+  return [state.card.floor, ...state.card.jumps.map((j) => j[1])];
+}
+
+function renderChips() {
+  const row = $("chip-row");
+  const amounts = chipAmounts();
+  const want = amounts.join(",");
+  if (row.dataset.amounts === want) return;
+  row.dataset.amounts = want;
+  row.textContent = "";
+  amounts.forEach((amount, i) => {
+    const btn = document.createElement("button");
+    btn.className = "chip" + (i > 0 ? " jump" : "");
+    btn.dataset.bet = amount;
+    btn.textContent = `$${amount}`;
+    btn.onclick = () => placeBet(amount);
+    row.appendChild(btn);
+  });
+}
+
 function renderControls() {
   const phase = state.phase;
   $("bet-bar").classList.toggle("hidden", phase !== "bet");
@@ -126,6 +148,7 @@ function renderControls() {
   $("insurance-bar").classList.toggle("hidden", phase !== "insurance");
 
   if (phase === "bet") {
+    renderChips();
     const rebet = $("rebet-btn");
     if (lastBet !== null) {
       rebet.classList.remove("hidden");
@@ -397,9 +420,6 @@ $("stats-back").onclick = () => {
   state && state.phase !== "none" ? show("play-screen") : show("start-screen");
 };
 
-document.querySelectorAll("#bet-bar .chip").forEach((btn) => {
-  btn.onclick = () => placeBet(parseFloat(btn.dataset.bet));
-});
 $("custom-bet-btn").onclick = () => {
   const v = parseFloat($("custom-bet").value);
   if (!Number.isNaN(v)) placeBet(v);
@@ -451,10 +471,9 @@ document.addEventListener("keydown", (e) => {
   if (!$("modal-backdrop").classList.contains("hidden")) return;
   const key = e.key.toLowerCase();
   if (state.phase === "bet" && !state.pending_quiz) {
-    if (key === "1") placeBet(15);
-    else if (key === "2") placeBet(100);
-    else if (key === "3") placeBet(150);
-    else if (key === "4") placeBet(200);
+    const amounts = chipAmounts();
+    const idx = "123456789".indexOf(key);
+    if (idx >= 0 && idx < amounts.length) placeBet(amounts[idx]);
     else if (key === "enter" && lastBet !== null) placeBet(lastBet);
     else if (key === "l") $("leave-btn").click();
   } else if (state.phase === "action") {

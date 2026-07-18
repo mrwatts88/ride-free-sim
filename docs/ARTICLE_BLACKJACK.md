@@ -192,6 +192,48 @@ overlay, worth ~$17–42/h more depending on cut — E12 numbers, side-max and
 cognitive load pending). Last big unknown: weekday pace — every $/h here
 assumes ~200 rounds/h heads-up; a crowded table pays a third.
 
+### The locked card (E18 addendum, same day): two rungs, and zero is the exit
+
+Drilling the Red 7 card in the trainer surfaced two practicality problems the
+$/h tables don't show, and both trace to one identity: **RC ≈ decks-remaining
+× (TC − 2)**. Off-pivot thresholds are depth-blurred — the −14 leave meant
+TC −0.4 early in the shoe (measured: abandoning 73% of shoes, 3.4 walks an
+hour, median exit round four — conduct no $15 player can sustain), while the
+rungs crowd together as the shoe depletes. Pricing the collapse from the
+banked bins settled it: 74% of the insurance value lives at the top rung
+(and "insure at +2" takes theoretically bad insurance early-shoe, TC +2.4
+against the true +3 index), the middle bet rung buys ~5% of the hourly, and
+the leave can deepen to a once-every-35-minutes walk for ~$3/h — less than
+the walking friction the ledger never charges.
+
+The locked card, with the whole scale slid +18 so no number is ever
+negative — zero is simply the eject line:
+
+> **Start each shoe at +6. If the count ever hits 0, color up and walk.
+> $100 at 18. $200 — and take insurance — at 22.** $15 floor everywhere
+> else; straight basic strategy; red sevens +1; never divide anything.
+
+(In the old pivot scale: IRC −12, leave ≤ −18, jump at 0, max and insure at
++4. The jump threshold, 18, is the depth-exact pivot = TC +2.)
+
+E18 then certified the *literal* card — 12M live rounds of chart play, bet
+by running count, sit-out at the line, and the human insurance rule —
+against the bin arithmetic: chart-only agreement z = +0.89, rung occupancy
+matching to a tenth of a percent, and the first *measured* value of the
+"insure when the max bet is out" rule: **+$4.67/h, 73% of the
+composition-exact ceiling**. Operating numbers: **≈ +$44/h ± 2 at 200
+rounds/h heads-up, N0 ≈ 500h, ~$36k bankroll at 5% RoR, 1.7 walks/h.**
+About $10/h of the 3-rung card's paper value buys: one fewer bet rung, one
+fewer memorized number, insurance welded to the max bet, a third the
+walking, and a count that never goes negative. Human error is the biggest
+edge-killer this model doesn't price; the card was collapsed accordingly.
+
+The growth path got cleaner too: at a ~$42–52k roll the right card is
+*simpler still* — $200 flat at the pivot (one number), worth 116% of the
+3-rung card with walks, or 94% with no walking at all. After that:
+playing deviations, then an insurance side count — in that order, only
+once the drill-room error rates say the current card is clean.
+
 ## Where it sits in the portfolio
 
 | play | $/h | bankroll | N0 | camouflage |

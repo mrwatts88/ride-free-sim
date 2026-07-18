@@ -2,6 +2,75 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E18 — Collapsing the card: the locked crouch15-2r (2 rungs, insure at max bet, walk line at zero)
+
+**Date:** 2026-07-18 · **Question (Matt, after drilling the E17 card):** the
+leave triggers absurdly early, and the rungs at RC 0/+2/+5 sit too close
+together — how far can the card be collapsed without giving up too much? And
+what do these numbers assume about insurance?
+
+**Method (three parts, no new engine code):**
+
+1. **Collapse menu — arithmetic over the banked E17 bins** (48M rounds,
+   `data/e17_h17_ins_p75_s*.json`). New wrinkle: the bins' `ins_profit`
+   attribution makes insurance separable per RC bin, so "no insurance below
+   RC X" is priced by stripping the overlay from bins below the threshold
+   (the banked overlay is composition-exact ⇒ these insurance terms are
+   ceilings). $15 floor throughout (the honest crouch15 floor toll ≈ −$4/h
+   vs the $10-table rows: the "Red 7 ≈ ×0.935" shorthand in E17/STATUS
+   overstated the $15-floor hourly by ~$5 — corrected here).
+2. **Practicality measurement** — 8,000 real shoes (343,662 engine rounds,
+   heads-up BasicStrategy, seed base 14200000001): leave-trigger frequency,
+   timing, and rung churn under the absorbing-walk reading.
+3. **Live certification of the literal locked card** — `data/e18_run.py`,
+   6 × 2M rounds (seed bases 14300000001–14800000001 step 1e8):
+   chart play + bet-by-RC + pointwise sit-out at the leave line + the HUMAN
+   insurance rule (insure iff decision-time visible RC ≥ threshold; hole not
+   counted). This measures what the exact-insurance bins cannot: the realized
+   value of the threshold rule. Verdict: `data/e18_verdict.py`.
+
+**Findings:**
+
+- **The algebra behind both complaints:** RC ≈ decks_remaining × (TC − 2)
+  (pivot scale). Fixed off-pivot thresholds are depth-blurred: the −14 leave
+  = TC −0.4 with 5.5 decks left (hair-trigger) but TC −5 at 1 deck (never).
+  Measured: leave −14 fires in **73% of shoes, 3.4 walks/h, median exit
+  round 4, 81% of walks within 10 rounds** — impractical, and the ledger's
+  preference for shallow leaves prices exits as free (real walks cost 2–5
+  dead minutes ≈ $7–17/h at that rate, plus optics). Leave −18: 37% of
+  shoes, 1.7 walks/h, median round 10.
+- **Insurance concentrates at the top:** of the +$7.67/h exact-insurance
+  ceiling on the 3-rung card, +$5.70 sits at RC ≥ +5 and only +$1.48 in
+  +2..+4. Tying insurance to the max-bet rung costs ~$2/h ceiling and
+  removes a real failure mode (the old "insure at +2" takes theoretically
+  bad insurance early-shoe, TC +2.4 < the true +3 index; the max-bet rung
+  implies TC ≥ +3 at every depth).
+- **The collapse menu** (bins, $15 floor, 200 r/h, pen .75): current 3-rung
+  $54.70/h on $29.9k = ref; 2-rung ($100 at pivot, $200+ins at pivot+4)
+  94.7% at the same bank; 1-rung $150 81–85%; **1-rung $200 at the pivot
+  115.9% but $41.5k bank** (the growth-path card: simplest AND richest once
+  the roll clears ~$42–52k; play-all version needs $51.8k and still keeps
+  94%). Churn: 20 → 15 → 10 bet changes/hour for 3/2/1 rungs.
+- **THE LOCKED CARD (Matt's pick + a cosmetic slide so no number is ever
+  negative — the walk line sits AT zero): start each shoe at +6; count ≤ 0
+  → walk; $100 at 18 (the depth-exact pivot, TC +2); $200 AND insure at 22.**
+  Pivot-scale equivalents: IRC −12, leave ≤ −18, jump 0, max/ins +4.
+- **Certification (12M live rounds):** chart-only live +$43.16 ± 4.18 vs bin
+  prediction +$39.00 ± 2.08 (**z = +0.89**); rung occupancy matches to
+  ≤1.3σ in all four bands (sit-out 7.46% vs 7.47% predicted); avg bet
+  $35.39 vs $35.37. **The human insurance rule realizes +$4.67/h = 73% of
+  the +$6.40 exact ceiling.** Certified operating numbers: **≈ +$44/h ± 2
+  (best estimate: bins chart + measured insurance), σ ≈ $72/round, N0 ≈
+  500h, bankroll ≈ $36k at 5% RoR** (live-sample sizing $32.8k; quote $36k
+  from the combined estimate). Idealizations unchanged from E16/E17
+  (pointwise exits, 200 r/h heads-up, pen .75 assumed, no burn cards).
+
+**Artifacts:** `data/e18_run.py`, `data/e18_verdict.py`,
+`data/e18_live_s01..06.json`; the card as data in
+`src/ridefree/trainer/card.py::CROUCH15_2R` (now the trainer default).
+Seeds consumed: 14.2e9 (timing study), 14.3e9–14.8e9 (live shards).
+**Next unused block: 14.9e9+.**
+
 ## E16 — Classic blackjack next door: the cover-vs-money ledger (real dollars, real ramps)
 
 **Date:** 2026-07-18 · **Question (Matt):** what does MY standard game actually
