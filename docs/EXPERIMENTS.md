@@ -45,6 +45,20 @@ trigger counts are similar). Surveillance note: max side bets appearing only
 late-shoe is a legible pattern — 21+3 suit-counting is published prior art
 (Jacobson) and known to surveillance where they care.
 
+**Prior art (fetched 2026-07-17, bjinsider.com newsletter 164, Eliot
+Jacobson):** same game (flat 9:1, 6 decks, HE 3.239%), cut card at 260 cards
+(pen 0.833 ≈ our 0.85 runs). His perfect-play ceiling: **0.2748u/100 hands —
+matching our E10 exact ceiling (+0.269/+0.276u/100) within noise**: strong
+independent validation of the whole pipeline. His count is a SPREAD count
+(max suit − min suit, true-counted): 0.1777u/100 = 64.7% efficiency, vs
+**quad-Q's 0.211u/100 = 78.3% (+19% more value)** — consistent with our E11
+finding that one-dimensional shadows of the suit configuration undercapture
+the quadratic form. His "minimal vulnerability" verdict rests on era-specific
+practicalities (low side-bet caps, device risk), not on different math; at
+modern $100 caps his own figure reads ≈ $18/h beside our $21/h. The
+widely-quoted "suit count is essentially worthless" line refers to the
+single-suit variant (his and our spades-only: ~10% capture).
+
 **M8 FINAL VERDICT: the 21+3 flat-9:1 side bet at 6 decks is genuinely
 beatable by suit composition — the first positive verdict of this project.
 Best human system: quad-Q (four suit counts + one analytic depth curve),
