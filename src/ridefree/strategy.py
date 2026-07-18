@@ -137,3 +137,22 @@ class FreeBetStrategy(BasicStrategy):
         if view.free_double_available:
             return Action.DOUBLE
         return super().choose(view, rules)
+
+
+class AlwaysSideBet:
+    """Wraps any strategy and stakes the 21+3 side bet every round (flat stake).
+
+    The always-bet comparator for the M8b validation gate (csm mode vs the
+    published house edge). Everything except `bet_21p3` — including the
+    optional observer/insurance hooks — delegates to the wrapped strategy.
+    """
+
+    def __init__(self, inner, stake: float = 1.0) -> None:
+        self._inner = inner
+        self._stake = stake
+
+    def bet_21p3(self, rules: Rules) -> float:
+        return self._stake
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)

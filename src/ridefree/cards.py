@@ -120,3 +120,9 @@ class Shoe:
         """Raw (rank, suit) cards dealt so far, in order — the raw twin of
         `dealt_cards()`, for side-bet settlement and suit-aware tracking."""
         return tuple(self._raw[: self._pos])
+
+    def raw_slice(self, start: int, stop: int) -> tuple[tuple[int, int], ...]:
+        """Raw cards at deal positions [start, stop) — for the engine to read a
+        settled deal (e.g. the three 21+3 cards) without copying the whole
+        dealt prefix."""
+        return tuple(self._raw[start:stop])

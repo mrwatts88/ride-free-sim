@@ -13,6 +13,7 @@ from enum import Enum
 from ridefree.cards import ACE, TEN
 from ridefree.hand import hand_total, is_blackjack, is_soft
 from ridefree.rules import Rules
+from ridefree.side_bets import settle_21p3
 
 
 class Action(Enum):
@@ -87,6 +88,12 @@ class RoundResult:
     # includes insurance_profit; per-hand HandResults never do.
     insurance_stake: float = 0.0
     insurance_profit: float = 0.0
+    # 21+3 side bet (0 unless the strategy staked it pre-deal): resolved on the
+    # raw (player c1, player c2, dealer up) regardless of how the round ends.
+    # Round `profit` includes sb21p3_profit; per-hand HandResults never do.
+    sb21p3_stake: float = 0.0
+    sb21p3_profit: float = 0.0
+    sb21p3_category: str | None = None  # winning/losing class, None = no bet or no class
 
 
 def _name(card: int) -> str:
@@ -189,14 +196,33 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
         if log:
             events.append(msg)
 
+    # 21+3: staked strictly BEFORE the deal (the hook may know the shoe
+    # composition but never the coming cards); resolved on the raw
+    # (player c1, dealer up, player c2) as soon as they are dealt.
+    sb_stake = 0.0
+    sb_profit = 0.0
+    sb_category = None
+    deal_pos = 0
+    if rules.side_bet_21p3:
+        bet_hook = getattr(strategy, "bet_21p3", None)
+        if bet_hook is not None:
+            sb_stake = bet_hook(rules)
+            if sb_stake > 0:
+                deal_pos = shoe.snapshot()
+
     # Deal order is fixed for replay determinism: player, dealer up, player, hole.
     first = shoe.deal()
     up = shoe.deal()
     second = shoe.deal()
     hole = shoe.deal()
+
     player = _Hand(cards=[first, second], wager=bet)
     dealer_cards = [up, hole]
     note(f"player dealt {_desc(player.cards)}, dealer shows {_name(up)}")
+    if sb_stake > 0:
+        raw3 = shoe.raw_slice(deal_pos, deal_pos + 3)
+        sb_profit, sb_category = settle_21p3(rules.side_bet_21p3, raw3, sb_stake)
+        note(f"21+3 stake {sb_stake:g} — {sb_category or 'no hand'}, {sb_profit:+g}")
 
     player_bj = is_blackjack(player.cards)
     was_pair = player.cards[0] == player.cards[1]
@@ -230,20 +256,24 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
         note(f"hand 1: {outcome} {hand_profit:+g}")
         hand_result = HandResult(tuple(player.cards), bet, 0.0, outcome, hand_profit)
         return RoundResult(
-            hand_profit + insurance_profit, (hand_result,), tuple(dealer_cards),
-            tuple(events), dealer_played_out=False, player_natural=player_bj,
-            was_pair=was_pair, insurance_stake=insurance_stake,
-            insurance_profit=insurance_profit,
+            hand_profit + insurance_profit + sb_profit, (hand_result,),
+            tuple(dealer_cards), tuple(events), dealer_played_out=False,
+            player_natural=player_bj, was_pair=was_pair,
+            insurance_stake=insurance_stake, insurance_profit=insurance_profit,
+            sb21p3_stake=sb_stake, sb21p3_profit=sb_profit,
+            sb21p3_category=sb_category,
         )
     if player_bj:
         hand_profit = bet * rules.blackjack_payout
         note(f"player blackjack {hand_profit:+g}")
         hand_result = HandResult(tuple(player.cards), bet, 0.0, "blackjack", hand_profit)
         return RoundResult(
-            hand_profit + insurance_profit, (hand_result,), tuple(dealer_cards),
-            tuple(events), dealer_played_out=False, player_natural=True,
-            was_pair=was_pair, insurance_stake=insurance_stake,
-            insurance_profit=insurance_profit,
+            hand_profit + insurance_profit + sb_profit, (hand_result,),
+            tuple(dealer_cards), tuple(events), dealer_played_out=False,
+            player_natural=True, was_pair=was_pair,
+            insurance_stake=insurance_stake, insurance_profit=insurance_profit,
+            sb21p3_stake=sb_stake, sb21p3_profit=sb_profit,
+            sb21p3_category=sb_category,
         )
 
     hands = [player]
@@ -400,7 +430,7 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
             HandResult(tuple(hand.cards), hand.wager, hand.free_wager, outcome, delta)
         )
         profit += delta
-    profit += insurance_profit
+    profit += insurance_profit + sb_profit
     note(f"round profit {profit:+g}")
     return RoundResult(
         profit, tuple(results), tuple(dealer_cards), tuple(events),
@@ -408,4 +438,5 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
         did_split=len(hands) > 1, did_double=any(h.doubled for h in hands),
         free_splits=free_splits, free_doubles=free_doubles, dealer_22_push=dealer_22,
         insurance_stake=insurance_stake, insurance_profit=insurance_profit,
+        sb21p3_stake=sb_stake, sb21p3_profit=sb_profit, sb21p3_category=sb_category,
     )

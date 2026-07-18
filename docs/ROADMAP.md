@@ -32,7 +32,7 @@ adaptations needed); all four batteries re-pass on the new sequences (h17
 byte-identical replays under seed; reference path ~59k rounds/s (collapse is
 shuffle-time, zero per-deal cost). Mechanism in DESIGN.md M8 decision record.
 
-## M8b — 21+3 as configuration, validated before attacked
+## M8b — 21+3 as configuration, validated before attacked ✅
 
 `Rules` gains the 21+3 paytable as data (the flat 9-to-1 version pays every
 winning category 9:1; encode as a category→payout map so the tiered variants are
@@ -44,6 +44,13 @@ each category probability (computable in closed form — tier-1 reference);
 (2) the published Wizard of Odds house edge for the exact paytable and deck
 count, looked up at milestone time — never from memory. Always-bet strategy in
 csm mode must match both.
+**PASSED (2026-07-17):** in-test exhaustive 6-deck enumeration equals WoO's
+combination table exactly (SF 10,368 / trips 26,312 / straight 155,520 /
+flush 292,896 of 5,013,320; EV −3.2386%); always-bet csm 6M rounds gives
+−3.128% ± 0.121% (+0.92σ vs published −3.2386%), all category frequencies
+within ±1.3σ; independent 62.4M-triple card-level check within ±1.8σ.
+Implementation: `Rules.side_bet_21p3` + `side_bets.py` + `bet_21p3` hook +
+`sb21p3_*` ledger fields + `cli sim --21p3`. 176 tests.
 
 ## M8c — The attack
 

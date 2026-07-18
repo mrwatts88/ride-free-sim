@@ -27,6 +27,13 @@ class Metrics:
     insured_rounds: int = 0
     insurance_stake_total: float = 0.0
     insurance_profit_total: float = 0.0
+    # 21+3 side bet (nonzero only when the strategy stakes it). Same convention
+    # as insurance: its profit is inside total_profit; these make it explainable
+    # and give the category frequencies the M8b validation gate checks.
+    sb21p3_rounds: int = 0
+    sb21p3_stake_total: float = 0.0
+    sb21p3_profit_total: float = 0.0
+    sb21p3_categories: dict[str, int] = field(default_factory=dict)
     pairs_dealt: int = 0
     splits: int = 0
     doubles: int = 0
@@ -50,6 +57,12 @@ class Metrics:
             self.insured_rounds += 1
             self.insurance_stake_total += result.insurance_stake
             self.insurance_profit_total += result.insurance_profit
+        if result.sb21p3_stake:
+            self.sb21p3_rounds += 1
+            self.sb21p3_stake_total += result.sb21p3_stake
+            self.sb21p3_profit_total += result.sb21p3_profit
+            key = result.sb21p3_category or "none"
+            self.sb21p3_categories[key] = self.sb21p3_categories.get(key, 0) + 1
         if result.was_pair:
             self.pairs_dealt += 1
         if result.did_split:

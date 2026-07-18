@@ -12,6 +12,7 @@ import dataclasses
 from ridefree.cards import Shoe, shoe_seeds
 from ridefree.engine import play_round
 from ridefree.rules import (
+    PAYTABLE_21P3_9TO1,
     RIDE_FREE,
     RIDE_FREE_WOO,
     SHOE_END_MODES,
@@ -86,6 +87,12 @@ def _sim(args: argparse.Namespace) -> None:
         strategy = _strategy_for(rules)
         print("strategy: fixed reference (chart play, no insurance) — "
               "the published-edge comparator")
+    if args.sb_21p3:
+        from ridefree.strategy import AlwaysSideBet
+
+        rules = dataclasses.replace(rules, side_bet_21p3=PAYTABLE_21P3_9TO1)
+        strategy = AlwaysSideBet(strategy)
+        print("21+3: always-bet 1 unit, flat 9-to-1 paytable")
     m = simulate(rules, strategy, seed=args.seed, rounds=args.rounds, bet=1.0)
     edge_pct = m.edge * 100
     err_pct = m.edge_stderr * 100
@@ -102,6 +109,17 @@ def _sim(args: argparse.Namespace) -> None:
               f"staked {m.insurance_stake_total:g}, "
               f"profit {m.insurance_profit_total:+.1f} "
               f"({100 * m.insurance_profit_total / m.rounds:+.4f}%/round)")
+    if m.sb21p3_rounds:
+        sb_edge = m.sb21p3_profit_total / m.sb21p3_stake_total
+        n = m.sb21p3_rounds
+        print(f"21+3 side bet:     {n:,} rounds staked, "
+              f"total {m.sb21p3_stake_total:g}, profit {m.sb21p3_profit_total:+.1f}")
+        print(f"21+3 edge:         {100 * sb_edge:+.4f}% per unit staked "
+              f"(published 9:1 six-deck: -3.2386%)")
+        for cat in ("straight_flush", "three_of_a_kind", "straight", "flush", "none"):
+            if cat in m.sb21p3_categories:
+                v = m.sb21p3_categories[cat]
+                print(f"  {cat:16s} {v:9,} ({100 * v / n:7.4f}%)")
     if m.free_splits or m.free_doubles or m.dealer_22_pushes:
         print(f"free splits:       {m.free_splits:,} "
               f"({100 * m.free_splits / m.rounds:.2f}% of rounds)")
@@ -247,6 +265,8 @@ def main() -> None:
     s.add_argument("--insurance", action=argparse.BooleanOptionalAction, default=True,
                    help="take insurance when the tracked composition makes it +EV "
                         "(default on; --no-insurance for the published-edge comparator)")
+    s.add_argument("--21p3", dest="sb_21p3", action="store_true",
+                   help="stake the 21+3 side bet (flat 9-to-1 paytable) every round")
     s.add_argument("--deviations", action=argparse.BooleanOptionalAction, default=True,
                    help="composition-based playing deviations (default on; slower "
                         "~0.5k rounds/s; --no-deviations for fixed chart play)")

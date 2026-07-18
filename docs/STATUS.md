@@ -119,23 +119,49 @@ pre-deal snapshot. `validation.InfiniteDeckShoe` stays value-only.
 
 Seeds 6300000001–6300000003 consumed for gate checks (from the 6.3e9+ block).
 
-## NEXT STEP (start here): M8b — 21+3 as configuration, validated before attacked
+## M8b DONE (2026-07-17): 21+3 as configuration, gate passed on both references
 
-Per ROADMAP.md M8b: `Rules` gains the 21+3 paytable as a category→payout map
-(flat 9-to-1 variant pays every winning category 9:1); bet placed PRE-deal via
-a pre-round strategy hook; explicit ledger fields per the insurance pattern;
-engine settles from the three raw cards (see DESIGN.md mechanism).
-**Gate (two independent references):** (1) closed-form fresh-shoe category
-probabilities (flush/straight/trips/straight-flush for 6 decks) as tier-1;
-(2) published Wizard of Odds house edge for the exact paytable and deck count,
-looked up at milestone time — never from memory. Always-bet in csm mode must
-match both.
+Implementation (insurance pattern throughout): `Rules.side_bet_21p3` is a
+category→payout tuple (`PAYTABLE_21P3_9TO1` = flat 9:1; tiered variants are
+configurations); the bet is staked PRE-deal via the strategy hook
+`bet_21p3(rules)` (no built-in strategy stakes it, so published-edge
+validation is untouched); the engine settles from the three raw cards
+(pre-deal snapshot positions pos/pos+1/pos+2) in `side_bets.py`
+(`classify_21p3`, precedence SF > trips > straight > flush; suited trips are
+trips, matching WoO; ace high AND low). Ledger: `RoundResult.sb21p3_stake /
+sb21p3_profit / sb21p3_category`; Metrics tracks per-category counts.
+`strategy.AlwaysSideBet` wraps any strategy for the always-bet comparator;
+`cli sim --21p3` enables it. 176 tests green (12 new in `tests/test_21p3.py`).
+
+**Gate (two independent references, both matched):**
+1. **Tier-1 closed form:** exhaustive 6-deck enumeration (in-test, first
+   principles) equals WoO's combination table EXACTLY — SF 10,368; trips
+   26,312 (incl. suited trips); straight 155,520; flush 292,896 (their
+   236,736 + 56,160 rows); total C(312,3) = 5,013,320; EV −3.2386%.
+2. **Published edge (WoO, fetched 2026-07-17, flat 9:1 six decks: −3.2386%):**
+   always-bet csm, 2 × 3M rounds (seeds 6400000003, 6500000001) combined:
+   **−3.128% ± 0.121% (+0.92σ)**; combined categories vs closed form: SF
+   +0.02σ, trips +0.68σ, straight +1.21σ, flush +0.05σ. Cross-check at the
+   card layer: 62.4M disjoint shuffled-shoe triples (exchangeability ⇒ exact
+   top-3 marginal; empirical shoe-level σ) — every category within ±1.8σ.
+
+Seeds consumed: 6.4e9 block (gate + tests), 6500000001, 6600000001–2.
+Next unused block: **6.7e9+**.
+
+## NEXT STEP (start here): M8c — the 21+3 attack
+
+Per ROADMAP.md M8c: suit-aware CompositionTracker (per-(rank,suit) counts of
+the remaining shoe); exact hypergeometric P(flush)/P(straight)/P(trips) as
+pre-deal signals; reuse the conditional-EV and grid harness verbatim;
+EOR-style derivation if a linear count is wanted. Prior art expects the edge
+to swing mainly on suit imbalance (flush richness). Experiments are E10+ on
+fresh seeds (6.7e9+ block), per-experiment log discipline in EXPERIMENTS.md.
 
 Known consequences, accepted in advance: pre-M8 seeds do not replay
 bit-for-bit (52-card shuffle ≠ collapsed shuffle) — the exact v1 artifact is
 preserved at git tag **`ride-free-v1`**; banked `data/*.json` remain valid as
 data. Seed hygiene: `cards.shoe_seeds()` everywhere; fresh base seeds spaced
-≥ 1e8 (next unused block: 6.4e9+).
+≥ 1e8.
 
 ## RIDE FREE QUESTION CONCLUDED (Matt, 2026-07-17)
 

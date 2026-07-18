@@ -64,6 +64,17 @@ class Rules:
     insurance_offered: bool = True
     insurance_pays: float = 2.0  # 2:1
 
+    # 21+3 side bet: staked BEFORE the deal, resolved on the 3-card poker hand
+    # of (player card 1, player card 2, dealer up). The paytable is data — a
+    # category → payout-per-unit map encoded as a tuple of pairs so tiered
+    # variants are configurations. Empty = bet not offered. The engine only
+    # asks a strategy that implements `bet_21p3(rules)`; no built-in strategy
+    # stakes it, so published-edge validation is unaffected. Categories:
+    # "straight_flush", "three_of_a_kind", "straight", "flush"
+    # (classification precedence in side_bets.py; suited trips count as
+    # three of a kind, matching Wizard of Odds' combination table).
+    side_bet_21p3: tuple[tuple[str, float], ...] = ()
+
     # Free Bet features (all empty/False = standard blackjack)
     free_double_totals: frozenset[int] = frozenset()  # two-card totals, e.g. {9, 10, 11}
     free_double_soft_allowed: bool = False  # if True, soft totals also qualify (unconfirmed at Potawatomi; standard Free Bet is hard-only)
@@ -85,6 +96,10 @@ class Rules:
         bad = {r for r in self.free_split_ranks if r not in range(1, 11)}
         if bad:
             raise ValueError(f"free_split_ranks contains invalid ranks: {sorted(bad)}")
+        valid_cats = {"straight_flush", "three_of_a_kind", "straight", "flush"}
+        bad_cats = {c for c, _ in self.side_bet_21p3 if c not in valid_cats}
+        if bad_cats:
+            raise ValueError(f"side_bet_21p3 has unknown categories: {sorted(bad_cats)}")
 
 
 # M2 validation targets: look up the exact Wizard of Odds house edge for precisely
@@ -107,6 +122,16 @@ RIDE_FREE = Rules(
     free_split_ranks=frozenset(range(1, 10)),  # all pairs except ten-value
     free_resplits=True,
     free_double_after_split=True,
+)
+
+# The original ("Version 1") 21+3 paytable: every winning category pays a flat
+# 9 to 1. Published six-deck house edge 3.2386% (Wizard of Odds, fetched
+# 2026-07-17) — the M8b validation target.
+PAYTABLE_21P3_9TO1 = (
+    ("straight_flush", 9.0),
+    ("three_of_a_kind", 9.0),
+    ("straight", 9.0),
+    ("flush", 9.0),
 )
 
 # The exact Wizard of Odds Free Bet configuration behind their published 1.04% house
