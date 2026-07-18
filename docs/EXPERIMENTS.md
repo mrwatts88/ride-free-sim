@@ -65,6 +65,22 @@ on $20k — still beats the entire 21+3 operation (E12: +$21/h, $37k, toll,
 1,200h N0) at a quarter of the exposure.** Full table (45 r/h) roughly
 halves $/h and doubles N0-hours.
 
+**E14b addendum — the playable card (2026-07-17, seeds 8600000001 broken-row
+run / 8700000001 verification, 100k rounds pen 0.966):** integer "paper"
+tags derived by rounding the exact EORs ×1000 **under a balance constraint**
+— the naive rounding summed to −4/deck, the running count drifted with
+depth, and the TC triggers never fired (17%/0% capture; the failed run is
+seed 8600000001). Lesson recorded: **any rounded tag set must keep
+Σ(count × tag) = 0 per deck**; now asserted in code and tested. Verified
+playable system: **Dragon tags A+1 / 2−1 / 3−1 / 4−3 / 5−3 / 6−3 / 7−4 /
+8+5 / 9+5 / T+1, bet at TC ≥ 10 → 89.8% capture** (vs 91.3% real-valued
+ceiling, 85.5% WoO System 2 on the same shoes); **Panda: WoO's appendix
+tags at TC ≥ 11 are already at the integer frontier** (79.1% vs our
+sharpened set's 78.4% — a tie; use the published set). Paper pair combined
+≈ 1.11u/100 ≈ 87% of ceiling ≈ **+$89/h per $100 unit at 80 r/h** — within
+$3/h of the real-valued tags; nothing meaningful is lost going to
+integers.
+
 **M9c VERDICT: the Dragon 7 + Panda 8 pair at 8-deck EZ Baccarat is the
 strongest opportunity this project has found — ~4× the 21+3 hourly at half
 the N0, toll-free, at the house's own standard penetration, with native

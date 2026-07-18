@@ -1398,18 +1398,63 @@ class BacTrackRow:
             self.running += self.tags.get(card % 10, 0.0)
 
 
+# The PLAYABLE integer tags: the exact removal effects (x1000), rounded
+# UNDER A BALANCE CONSTRAINT — an unbalanced count's running total drifts
+# with depth and wrecks the true-count conversion (verified the hard way:
+# the naive rounding summed to -4/deck and its triggers never fired). Ties
+# are broken toward balance with minimum distortion: d7 rounds the ace UP
+# (its effect is genuinely positive); p8 rounds 4 and 5 to -2. The p8 set is
+# one step from WoO's appendix tags (sharper 3 and 9). d7 is WoO System 1
+# rounded. Balance is asserted in bac_track_rows and regeneration-tested.
+PAPER_TAGS_D7 = {0: 1, 1: 1, 2: -1, 3: -1, 4: -3, 5: -3, 6: -3, 7: -4,
+                 8: 5, 9: 5}
+PAPER_TAGS_P8 = {0: 1, 1: 1, 2: 1, 3: -3, 4: -2, 5: -2, 6: -1, 7: -1,
+                 8: -2, 9: 5}
+
+
+def _assert_balanced(tags: dict) -> dict:
+    total = sum((16 if v == 0 else 4) * tags.get(v, 0) for v in range(10))
+    if total != 0:
+        raise ValueError(f"unbalanced tag set (sum {total}/deck): {tags}")
+    return tags
+
+# Per-card frequency weights for the analytic trigger of an arbitrary tag set.
+_CARD_FREQ = {v: (16.0 if v == 0 else 4.0) / 52.0 for v in range(10)}
+
+
+def analytic_trigger(tags: dict, eors: dict, ev_fresh_deficit: float) -> float:
+    """True-count trigger for integer tags, no fitting: the least-squares
+    projection of the first-order EV model onto the count. Predicted EV shift
+    per TC unit = (415/52) * cov_f(eor, tags) / var_f(tags) (frequency-
+    weighted, means are ~0 for near-balanced counts); bet when the predicted
+    shift covers the fresh-shoe deficit."""
+    num = sum(_CARD_FREQ[v] * eors[v] * tags.get(v, 0) for v in range(10))
+    den = sum(_CARD_FREQ[v] * tags.get(v, 0) ** 2 for v in range(10))
+    slope = _LINEAR_SLOPE * num / den
+    return ev_fresh_deficit / slope
+
+
 def bac_track_rows() -> list:
     """The E14 row set. Triggers: published rows use the published triggers
-    (WoO d7 TC>=4; WoO p8 appendix TC>=11); linear-EOR rows use the analytic
-    threshold from the first-order model. The shared-count row quantifies
-    what a single (d7) count loses when it must also trigger the panda."""
+    (WoO d7 TC>=4; WoO p8 appendix TC>=11); linear-EOR and paper rows use
+    analytic thresholds from the first-order model. The shared-count row
+    quantifies what a single (d7) count loses when it must also trigger the
+    panda."""
     d7_thr = 0.076113 / _LINEAR_SLOPE
     p8_thr = 0.101876 / _LINEAR_SLOPE
+    d7_paper_thr = analytic_trigger(_assert_balanced(PAPER_TAGS_D7),
+                                    BAC_EOR_D7, 0.076113)
+    p8_paper_thr = analytic_trigger(_assert_balanced(PAPER_TAGS_P8),
+                                    BAC_EOR_P8, 0.101876)
     return [
         BacTrackRow("d7 linear-EOR (analytic)", "d7", dict(BAC_EOR_D7), d7_thr),
+        BacTrackRow(f"d7 PAPER tags @ TC>={d7_paper_thr:.1f}", "d7",
+                    dict(PAPER_TAGS_D7), d7_paper_thr),
         BacTrackRow("d7 WoO count @ TC>=4", "d7",
                     {4: -1, 5: -1, 6: -1, 7: -1, 8: 2, 9: 2}, 4.0),
         BacTrackRow("p8 linear-EOR (analytic)", "p8", dict(BAC_EOR_P8), p8_thr),
+        BacTrackRow(f"p8 PAPER tags @ TC>={p8_paper_thr:.1f}", "p8",
+                    dict(PAPER_TAGS_P8), p8_paper_thr),
         BacTrackRow("p8 WoO appendix @ TC>=11", "p8",
                     {0: 1, 1: 1, 2: 1, 3: -2, 4: -2, 5: -2, 6: -1, 7: -1,
                      8: -2, 9: 4}, 11.0),
