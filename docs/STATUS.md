@@ -44,7 +44,15 @@ sensitivity **$55.60/$67.45/$92.01 at .70/.75/.80**. Runner-up: $15–$500,
 1-16 + exits, +$83.62/h on $31.4k, corr 0.81 (equal bankroll efficiency,
 more heat, rarer table). Field intel breaking the tie (Matt, ex-supervisor
 at Potawatomi): low-limit tables draw the least surveillance attention.
-Recon pending: cut depth (the dominant lever), H17/S17, heads-up dealing.
+**Recon (Matt, Saturday 2026-07-18): four $15–$1,000 blackjack tables; pen
+≈ .75 as assumed; ONE table cut only a deck (~.83 — the prize seat, and
+the condition that wakes the 21+3 overlay); other rules as assumed. No $10
+tables seen (Saturday — weekday floor unknown). Adapted card ("crouch15",
+ledger row): $15 floor, SAME $100/$150/$200 jumps, leave TC ≤ −2 →
++$63.95/h on $27.7k at pen .75; +$88.97/h on $21.8k at pen .80 (Red 7
+version ≈ ×0.935). The $1,000 max is the growth path (double the jumps at
+~$55k roll). Remaining unknown, now the model's biggest: weekday pace —
+all numbers assume ~200 r/h heads-up.**
 **Write-up: `docs/ARTICLE_BLACKJACK.md`** (a summary piece by design).
 
 **E17 DONE (same day): the no-division Red 7 card keeps 93.5%.** New
