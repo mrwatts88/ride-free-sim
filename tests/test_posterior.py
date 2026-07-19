@@ -18,6 +18,7 @@ from collections import Counter, deque
 
 from ridefree.forensics import ShelfGuesser, guessing_experiment
 from ridefree.posterior import (
+    MultiDeckShelfPosterior,
     PosteriorGuesser,
     ShelfPosterior,
     proposition_experiment,
@@ -166,3 +167,92 @@ def test_proposition_realizes_predicted_edge():
     assert result.bets > 0
     assert abs(result.z) < Z_GATE, (result.realized, result.predicted, result.z)
     assert result.realized > 0.0, result.realized  # order structure pays
+
+
+# ---------------------------------------------------------------------------
+# Multi-deck (repeated cards): the particle filter vs brute-force truth
+
+
+def brute_force_value_conditionals(values, shelves, max_outputs=30):
+    """Exact next-VALUE conditionals by full enumeration, treating equal
+    `values` as indistinguishable — the ground truth the filter approximates."""
+    n = len(values)
+    lanes = 2 * shelves
+    by_output = Counter()
+    for assignment in itertools.product(range(lanes), repeat=n):
+        positions = physical_shelf_output(list(range(n)), shelves, assignment)
+        by_output[tuple(values[p] for p in positions)] += 1
+    walks = []
+    for output in sorted(by_output)[:max_outputs]:
+        conditionals = []
+        for t in range(n):
+            prefix = output[:t]
+            nxt = Counter()
+            for out, w in by_output.items():
+                if out[:t] == prefix:
+                    nxt[out[t]] += w
+            total = sum(nxt.values())
+            conditionals.append({v: w / total for v, w in nxt.items()})
+        walks.append((output, conditionals))
+    return walks
+
+
+def test_multideck_first_step_is_exact():
+    # Before any observation all particles are identical, so the filter's
+    # first next-value law is exact regardless of particle count.
+    values = [0, 0, 1, 1, 2, 2]
+    walks = brute_force_value_conditionals(values, shelves=1)
+    exact0 = walks[0][1][0]
+    filt = MultiDeckShelfPosterior(1, values, particles=8, seed=1)
+    got = filt.next_value_probs()
+    for v in set(values):
+        assert abs(got.get(v, 0.0) - exact0.get(v, 0.0)) < 1e-12, (v, got, exact0)
+
+
+def test_multideck_matches_brute_force_within_mc():
+    # Drive the filter along real sampled outputs; its next-value law must
+    # track the exact conditional within particle-count MC error at each step.
+    for values, shelves in (([0, 0, 1, 1], 2), ([0, 0, 1, 1, 2, 2], 1)):
+        exact = dict(brute_force_value_conditionals(values, shelves))
+        model = ShelfShuffle(shelves=shelves)
+        rng = random.Random(22700000005)
+        checked = 0
+        for _ in range(12):
+            output = tuple(
+                values[p]
+                for p in model.permute(list(range(len(values))), rng)
+            )
+            if output not in exact:
+                continue
+            checked += 1
+            filt = MultiDeckShelfPosterior(
+                shelves, values, particles=4000, seed=rng.getrandbits(31)
+            )
+            for t, v in enumerate(output):
+                got = filt.next_value_probs()
+                for val in set(values):
+                    assert abs(got.get(val, 0.0) - exact[output][t].get(val, 0.0)) < 0.05, (
+                        values, shelves, output, t, val, got, exact[output][t]
+                    )
+                filt.observe(v)
+        assert checked >= 6
+
+
+def test_multideck_distinct_values_is_exact_deterministic():
+    # With all-distinct values there are no copies, so every observation pins
+    # a unique position: the filter reduces to the rung-1 exact posterior,
+    # deterministically (no sampling variance), for any particle count.
+    values = [5, 2, 9, 1, 7, 3]
+    model = ShelfShuffle(shelves=2)
+    output = [
+        values[p] for p in model.permute(list(range(len(values))), random.Random(3))
+    ]
+    filt = MultiDeckShelfPosterior(2, values, particles=3, seed=99)
+    exact = ShelfPosterior(2, values)
+    for v in output:
+        fprobs = filt.next_value_probs()
+        eprobs = exact.next_probs()  # keyed by value == position label here
+        for val in values:
+            assert abs(fprobs.get(val, 0.0) - eprobs.get(val, 0.0)) < 1e-9
+        filt.observe(v)
+        exact.observe(v)

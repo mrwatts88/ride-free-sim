@@ -1,0 +1,17 @@
+{
+ "note": "M12b rung 2 probe-scale results (PyPy 3.11). The composition-fair baccarat-value-8 proposition through the multi-deck particle-filter posterior; a perfect card counter nets exactly zero, so every realized unit is order structure surviving copy ambiguity. Small trial counts (probe scale) — the trend is the deliverable, not tight error bars. shelves=10, target_value=8, threshold=0.02.",
+ "reproduce": "env PYTHONPATH=src uv run --python pypy@3.11 --no-project python data/e28_multideck.py <particles> <scale>",
+ "particles": 60,
+ "rows": [
+  {"decks": 2, "passes": 1, "n": 104, "trials": 40, "seed": 22900000001, "ms_per_shoe": 1042, "bets_per_shoe": 25.12, "edge_per_bet": 0.8372, "units_per_shoe": 21.035, "bits_per_shoe": 18.171, "z": -0.18},
+  {"decks": 3, "passes": 1, "n": 156, "trials": 20, "seed": 22900000001, "ms_per_shoe": 2291, "bets_per_shoe": 35.70, "edge_per_bet": 0.4929, "units_per_shoe": 17.595, "bits_per_shoe": 9.256, "z": -3.07},
+  {"decks": 2, "passes": 2, "n": 104, "trials": 6, "seed": 22900000050, "particles": 40, "ms_per_shoe": 16058, "bets_per_shoe": 0.0, "edge_per_bet": 0.0, "units_per_shoe": 0.0, "bits_per_shoe": 0.035, "comment": "the fix: two passes == 200-shelf equiv; channel collapses"}
+ ],
+ "findings": [
+  "Copy ambiguity does NOT obliterate the order channel: 2- and 3-deck shoes through one 10-shelf pass leak a large, gate-clean edge (decks=2: +21 u/shoe, 18.2 bits, z -0.18).",
+  "The copy penalty is real and measured: bits/shoe fell 18.2 -> 9.3 from 2 to 3 decks DESPITE the larger stack (more cards alone would raise bits), and predicted-vs-realized z slid to -3.07 at 3 decks -- the 60-particle filter loses fidelity (particle impoverishment) as copy ambiguity grows.",
+  "The two-pass fix collapses the channel at multi-deck too (0 bets, 0.035 bits) -- consistent with E26/E27's single-deck result.",
+  "CONFOUND (flagged): a fixed 10-shelf machine mixes a bigger stack worse (Diaconis: adequate mixing ~ n^1.5 shelves), so absolute edge conflates the copy penalty with mixing adequacy. The clean isolation is a same-n distinct-vs-duplicated comparison (queued, next chunk).",
+  "THROUGHPUT WALL: the PF is O(particles x slots x cards)/shoe; 2-pass is +20x (200-shelf slot axis). PyPy (4.3x, bit-identical, suite green) makes probe scale feasible but an 8-deck production run needs the O(slots) assumed-density filter or many more particles -- next rung."
+ ]
+}

@@ -106,6 +106,19 @@ more-known input yields more edge at the same machine quality.
   pattern) realizes the predicted edge within CI; poker-room legality gets
   its own pass before any play framing (does NOT inherit the blackjack answer).
 
+**RUNG 2 ✅ (E28, 2026-07-19): multi-deck copy ambiguity + the PyPy
+decision.** `MultiDeckShelfPosterior` — a particle filter over the latent
+copy-history (exact multi-deck filtering is permanent-hard), gated against
+brute force (matches within MC error; first step exact; distinct-values
+reduces to rung-1 exact). Finding: **copy ambiguity does not kill the order
+channel** (2 decks +21 u/shoe, 18.2 bits, gate-clean) but **taxes it
+measurably** (bits 18.2→9.3 at 2→3 decks) and **strains the PF** (z −3.07 at
+3 decks/60 particles). Two-pass fix collapses it at multi-deck too. The
+parked PyPy experiment was run (M7): bit-identical, 4.3× posterior / 2.7×
+engine, suite green → PyPy sanctioned for heavy runs. Next: (1) the O(slots)
+assumed-density posterior (the PF throughput wall), (2) the same-n
+distinct-vs-duplicated copy-isolation study, (3) the baccarat coup adapter.
+
 **RUNG 1 ✅ (E27, 2026-07-19): the game-free posterior core.**
 `posterior.py`: exact sequential next-card posterior for the shelf machine
 (label-sort filtering; brute-force-enumeration gated; multi-pass via Cor

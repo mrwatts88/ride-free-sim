@@ -418,3 +418,53 @@ paired on identical decks (it ties: the 2013 conjecture is verified);
 self-calibration (claimed hit probability vs realized); adapter #1's
 realized profit equals its posterior-predicted edge within CI (the E17
 pattern). tests/test_posterior.py; battery `data/e27_posterior_gate.py`.
+
+## Decision record: multi-deck copy ambiguity is a particle filter (M12b rung 2, 2026-07-19)
+
+**What:** `posterior.MultiDeckShelfPosterior` — the next-VALUE posterior when
+the observer knows the pre-shuffle order but cannot distinguish the copies of
+a repeated card (an 8-deck baccarat shoe hides each rank+suit behind 8 equal
+copies). This is the honest observation model; using rung 1's distinct-card
+posterior on a multi-deck shoe would hand the sim information a live player
+can't have (a paradigm-2 rule).
+
+**Why a particle filter, not exact filtering:** rung 1 is exact because a
+dealt distinct card pins one input position; with copies the exact next-value
+law sums over all copy-assignments consistent with the observed value-prefix
+— a permanent-like object, #P-hard at shoe scale (verified no factorization:
+the label-sort slot sweep needs a specific owner per slot, which copies
+destroy). So it's sequential importance resampling over the latent
+copy-history: **each particle IS a rung-1 `ShelfPosterior` over the distinct
+input positions**, carrying one hypothesis of which copy produced each
+observed value. The proposal is locally optimal — on observing value v a
+particle samples the next position from its own EXACT conditional restricted
+to value-v positions, and the incremental weight is exactly that value's
+marginal probability — so the estimator is unbiased and converges to the
+exact law as particles→∞. Systematic resampling at ESS < N/2; `ShelfPosterior.
+copy()` shares the immutable precompute and clones only the conditioning
+state. Two consequences that make it trustworthy: with all-distinct values it
+degenerates to the exact rung-1 posterior deterministically (no variance —
+the single candidate has weight 1), and its first step (before any observe)
+is exact regardless of particle count. Both are gates.
+
+**Cost and the PyPy decision:** O(particles × slots × cards) per shoe, ~100×
+a single rung-1 walk, so shoe-scale multi-deck is the project's first genuine
+throughput wall. The parked PyPy experiment (M7 record) was run here
+(`data/bench_pypy.py`): **bit-identical results, 4.3× on the posterior walk /
+2.7× on the engine, full suite green under PyPy 3.11** — so PyPy is the
+sanctioned accelerator for the heavy multi-deck/baccarat runs (the only
+friction: `requires-python >=3.12` vs PyPy's 3.11 ceiling — run via
+`PYTHONPATH=src uv run --python pypy@3.11 --no-project`, or relax the pin;
+Matt's call). Rust stays unneeded (M7 governs).
+
+**The adapter (E28):** `multideck_proposition_experiment` runs adapter #1 (the
+composition-fair value bet, perfect counter = 0) through the filter across
+deck counts and shuffle passes, so the channel's decay with copies (decks)
+and mixing (passes) is measured. The full P/B/Dragon7/Panda8 coup-EV adapter
+over the M9 baccarat engine is the next rung — it needs coup-outcome-under-
+ordered-posterior machinery of its own and is scoped separately.
+
+**Gates:** brute-force value-conditionals on tiny duplicated decks (filter
+tracks exact within MC error at every step; first step exact; distinct-values
+reduces to rung-1 exact); E17 predicted-vs-realized on the adapter (`z`).
+tests/test_posterior.py; measurement `data/e28_multideck.py`.

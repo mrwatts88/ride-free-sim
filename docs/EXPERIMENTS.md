@@ -2,6 +2,78 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E28 — M12b rung 2: the order channel under copy ambiguity (multi-deck) — it survives, but the copy tax and a throughput wall are real
+
+**Date:** 2026-07-19 · **Question:** rung 1 found a huge order channel on a
+single distinct-card deck, but a multi-deck shoe hides each rank+suit behind
+`decks` indistinguishable copies. Does that copy ambiguity destroy the edge,
+and can the posterior even be computed honestly at multi-deck scale?
+
+**Machinery (new; `posterior.MultiDeckShelfPosterior`, decision record in
+DESIGN.md):** exact multi-deck filtering is permanent-hard (copies break the
+label-sort's per-slot owner), so this is a sequential-importance particle
+filter — each particle is a rung-1 `ShelfPosterior` over the distinct input
+positions carrying one hypothesis of which copy produced each observed value;
+locally-optimal proposal (sample the next position from the exact conditional
+restricted to the observed value, weight by that value's marginal), systematic
+resampling at ESS < N/2, `ShelfPosterior.copy()` for cloning. Adapter:
+`multideck_proposition_experiment` (the composition-fair value bet — perfect
+counter = 0 — through the filter). 335 tests green (3 new multi-deck gates).
+
+**Gates (tests/test_posterior.py):** brute force — the filter's next-value law
+equals full lane-assignment enumeration through the independent physical pile
+sim, within particle MC error, at every step (tol 0.05 at 4000 particles);
+first step exact regardless of particle count; **all-distinct values reduce to
+the rung-1 exact posterior deterministically** (no variance). All pass.
+
+**The PyPy decision (the parked M7 experiment, run here):**
+`data/bench_pypy.py` under PyPy 3.11 vs CPython 3.14 — **bit-identical
+checksums, 4.3× on the posterior walk (the M12 hot path), 2.7× on the engine,
+full 335-test suite green** (and 2.3× faster). PyPy is the sanctioned
+accelerator for the heavy multi-deck/baccarat runs; only friction is
+`requires-python >=3.12` vs PyPy's 3.11 ceiling (run via `PYTHONPATH=src uv
+run --python pypy@3.11 --no-project`, or relax the pin — Matt's call). Rust
+stays unneeded.
+
+**Findings (probe scale under PyPy, 10-shelf machine, composition-fair
+baccarat-value-8 proposition; `data/e28_multideck.json`):**
+
+| decks | passes | n | bets/shoe | edge/bet | u/shoe | bits/shoe | z |
+|---|---|---|---|---|---|---|---|
+| 2 | 1 | 104 | 25.1 | +83.7% | +21.0 | 18.2 | −0.18 |
+| 3 | 1 | 156 | 35.7 | +49.3% | +17.6 | 9.3 | −3.07 |
+| 2 | 2 | 104 | 0.0 | — | 0.0 | 0.035 | — |
+
+1. **Copy ambiguity does NOT obliterate the channel.** A 2-deck shoe through
+   one 10-shelf pass leaks +21 u/shoe (18.2 bits), gate-clean (z −0.18); 3
+   decks still +17.6 u/shoe. The observer inverts the shuffle through the
+   copy fog.
+2. **But the copy tax is real and measured.** bits/shoe fell **18.2 → 9.3**
+   from 2 to 3 decks *despite* the larger stack (more cards alone would raise
+   bits) — more copies per card is genuinely harder to invert.
+3. **The PF loses fidelity as copies grow.** z slid to −3.07 at 3 decks /
+   60 particles (realized below predicted — particle impoverishment at higher
+   latent dimension). Inside the 4.5 gate but a clear signal that particle
+   count must scale with decks.
+4. **The two-pass fix collapses the channel at multi-deck too** (0 bets,
+   0.035 bits) — the E26/E27 single-deck result holds up the ladder.
+
+**Two honesty flags carried forward:**
+- **Confound:** a fixed 10-shelf machine mixes a bigger stack *worse*
+  (Diaconis: adequate mixing needs ~n^1.5 shelves), so absolute edge conflates
+  the copy penalty with mixing adequacy. The clean isolation is a **same-n
+  distinct-vs-duplicated** comparison — queued.
+- **Throughput wall:** the PF is O(particles × slots × cards)/shoe and the
+  2-pass posterior is +20× (200-shelf slot axis, 16 s/shoe). PyPy makes probe
+  scale feasible but an **8-deck production run needs the O(slots)
+  assumed-density filter** (posterior cost independent of particle count) or
+  far more particles — the immediate next build.
+
+**Scope:** full P/B/Dragon7/Panda8 coup-EV pricing over the M9 engine is the
+next rung (needs coup-outcome-under-ordered-posterior machinery). Seeds:
+22.9e9 block (probes 22900000001, 22900000050). Artifacts:
+`data/e28_multideck.py`, `data/e28_multideck.json`, `data/bench_pypy.py`.
+
 ## E27 — M12b rung 1: the exact shelf posterior — DFH's conjecture VERIFIED, the order-only value channel priced
 
 **Date:** 2026-07-19 · **Question:** convert M12a's guessing advantage into

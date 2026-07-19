@@ -175,6 +175,151 @@ class ShelfPosterior:
         self._remaining[i] = False
         self._n_remaining -= 1
 
+    def copy(self) -> "ShelfPosterior":
+        """A clone sharing immutable precompute, with independent conditioning
+        state (for particle-filter resampling)."""
+        twin = object.__new__(ShelfPosterior)
+        twin.stack = self.stack
+        twin.shelves = self.shelves
+        twin.n = self.n
+        twin.lanes = self.lanes
+        twin.nslots = self.nslots
+        twin._index = self._index
+        twin._slots = self._slots
+        twin._owner = self._owner
+        twin._logk = self._logk
+        twin._remaining = list(self._remaining)
+        twin._n_remaining = self._n_remaining
+        twin._h_slots = self._h_slots  # replaced wholesale on observe; safe to share
+        twin._h_cum = self._h_cum
+        return twin
+
+
+class MultiDeckShelfPosterior:
+    """Next-VALUE posterior for a shelf pass of a multi-deck shoe, where the
+    observer knows the pre-shuffle order but CANNOT distinguish copies of the
+    same physical card (M12b rung 2).
+
+    Rung 1's `ShelfPosterior` is exact because each distinct card, once dealt,
+    pins one input position. With repeated cards the observer sees only the
+    value; the copy that produced it is latent, and the exact next-value law
+    is a permanent-like sum over copy assignments (intractable at shoe scale).
+    This is a sequential-importance particle filter over that latent history:
+    each particle is a `ShelfPosterior` over the DISTINCT input positions
+    carrying one hypothesis of which copy produced each observed value. The
+    proposal is locally optimal — on observing value v, a particle samples the
+    next position from its own exact conditional restricted to positions of
+    value v, and its incremental weight is exactly that value's marginal
+    probability — so the filter is unbiased and converges to the exact law as
+    particles -> infinity (gated against brute force in tests). `values` maps
+    each input position (top of deck first) to its observed value (rank+suit,
+    or blackjack value, or baccarat value — the caller's equivalence class;
+    copies = equal values).
+    """
+
+    def __init__(self, shelves: int, values, particles: int = 200, seed: int = 0):
+        import random
+
+        self.values = list(values)
+        self.n = len(self.values)
+        self.particles = particles
+        self._rng = random.Random(seed)
+        positions = list(range(self.n))
+        base = ShelfPosterior(shelves, positions)
+        self._value_of = {i: self.values[i] for i in positions}
+        # particle = [posterior, log_weight]; all start identical.
+        self._parts = [[base if k == 0 else base.copy(), 0.0] for k in range(particles)]
+        self._cache = None  # per-particle (val_probs, pos_probs), shared by
+        #                     next_value_probs and the immediately following observe
+
+    def _particle_cache(self):
+        if self._cache is None:
+            cache = []
+            for post, _ in self._parts:
+                pos_probs = post.next_probs()
+                val_probs: dict = {}
+                for i, p in pos_probs.items():
+                    v = self._value_of[i]
+                    val_probs[v] = val_probs.get(v, 0.0) + p
+                cache.append((val_probs, pos_probs))
+            self._cache = cache
+        return self._cache
+
+    def _weights(self):
+        m = max(lw for _, lw in self._parts)
+        ws = [math.exp(lw - m) for _, lw in self._parts]
+        total = math.fsum(ws)
+        return [w / total for w in ws], m
+
+    def next_value_probs(self) -> dict:
+        """Filter estimate of P(next dealt value = v | everything observed)."""
+        ws, _ = self._weights()
+        cache = self._particle_cache()
+        out: dict = {}
+        for (vp, _), w in zip(cache, ws):
+            if w == 0.0:
+                continue
+            for v, p in vp.items():
+                out[v] = out.get(v, 0.0) + w * p
+        s = math.fsum(out.values())
+        return {v: p / s for v, p in out.items()} if s > 0 else out
+
+    def prob_value(self, value) -> float:
+        return self.next_value_probs().get(value, 0.0)
+
+    def observe(self, value) -> None:
+        """Condition on `value` having been dealt next; advance every particle
+        by sampling which same-value copy it was, and resample if degenerate."""
+        cache = self._particle_cache()
+        for part, (vp, pos_probs) in zip(self._parts, cache):
+            post = part[0]
+            q = vp.get(value, 0.0)
+            if q <= 0.0:
+                part[1] = -math.inf  # this history can't produce the value
+                continue
+            candidates = [(i, p) for i, p in pos_probs.items()
+                          if self._value_of[i] == value]
+            r = self._rng.random() * q
+            chosen = candidates[-1][0]
+            acc = 0.0
+            for i, p in candidates:
+                acc += p
+                if r <= acc:
+                    chosen = i
+                    break
+            post.observe(chosen)
+            part[1] += math.log(q)
+        self._cache = None
+        self._maybe_resample()
+
+    def _maybe_resample(self) -> None:
+        ws, _ = self._weights()
+        ess = 1.0 / math.fsum(w * w for w in ws)
+        if not math.isfinite(ess) or ess >= self.particles / 2:
+            return
+        # systematic resampling
+        n = self.particles
+        step = 1.0 / n
+        u = self._rng.random() * step
+        cum = 0.0
+        j = 0
+        picked = []
+        for k, w in enumerate(ws):
+            cum += w
+            while u <= cum and len(picked) < n:
+                picked.append(k)
+                u += step
+        seen: set = set()
+        new_parts = []
+        for k in picked:
+            post = self._parts[k][0]
+            if k in seen:
+                post = post.copy()
+            else:
+                seen.add(k)
+            new_parts.append([post, 0.0])
+        self._parts = new_parts
+
 
 class PropositionResult:
     """Per-deck ledger of the composition-fair value proposition."""
@@ -272,6 +417,105 @@ def proposition_experiment(
         realized += deck_real
         deck_deltas.append(deck_real - deck_pred)
     return PropositionResult(trials, bets, predicted, realized, deck_deltas)
+
+
+def multideck_proposition_experiment(
+    decks: int,
+    shelves: int,
+    trials: int,
+    seed: int,
+    *,
+    passes: int = 1,
+    particles: int = 200,
+    target_value: int = 8,
+    threshold: float = 0.02,
+):
+    """The composition-fair value proposition at multi-deck scale (M12b rung 2).
+
+    Honest observation model: the observer knows shoe k's order at rank+suit
+    resolution but cannot tell the `decks` copies of a rank+suit apart. Each
+    step the house offers a bet on "next card's BACCARAT value == target_value"
+    at odds fair against the remaining composition (a perfect counter's edge is
+    exactly zero), and the observer stakes 1 unit when the filter's value
+    probability minus the composition clears `threshold`. Realized profit is
+    pure order structure surviving copy ambiguity — the quantity that decides
+    whether hand-shuffled multi-deck baccarat is attackable. `passes` folds in
+    via DFH Cor 4.2 (the equivalent single-pass shelf count). Returns a
+    `PropositionResult` plus `.bits_per_shoe` (log-loss vs the perfect counter)
+    and `.info`."""
+    import random
+
+    from ridefree.baccarat import baccarat_value
+    from ridefree.cards import RAW_RANKS, SUITS
+    from ridefree.cards import value as bj_value
+    from ridefree.shuffle import ShelfShuffle
+
+    eq_shelves = shelves
+    for _ in range(passes - 1):
+        eq_shelves = 2 * eq_shelves * shelves
+    classes = [(rank, suit) for suit in SUITS for rank in RAW_RANKS]
+    bacc = {c: baccarat_value(bj_value(c)) for c in classes}
+    model = ShelfShuffle(shelves=shelves, passes=passes)
+    rng = random.Random(seed)
+    deck = [c for _ in range(decks) for c in classes]
+    n = len(deck)
+    # One deck = 52 distinct rank+suit classes, no copies, so the filter is
+    # exact-deterministic and a single particle suffices (no wasted work).
+    if decks == 1:
+        particles = 1
+    bets = 0
+    predicted = 0.0
+    realized = 0.0
+    deck_deltas = []
+    bits = 0.0
+    steps = 0
+    for _ in range(trials):
+        stack = list(deck)
+        rng.shuffle(stack)  # shoe k, known to the observer at rank+suit level
+        dealt = [stack[p] for p in model.permute(list(range(n)), rng)]
+        # The filter's equivalence classes ARE the rank+suit identities, so
+        # copies of a rank+suit are indistinct — the honest observation model.
+        filt = MultiDeckShelfPosterior(
+            eq_shelves, stack, particles=particles, seed=rng.getrandbits(31)
+        )
+        vcount: dict = {}  # baccarat value -> remaining count (perfect counter)
+        for c in stack:
+            v = bacc[c]
+            vcount[v] = vcount.get(v, 0) + 1
+        remaining = n
+        deck_pred = 0.0
+        deck_real = 0.0
+        for card in dealt:
+            probs = filt.next_value_probs()  # over rank+suit classes
+            pval: dict = {}
+            for c, pr in probs.items():
+                v = bacc[c]
+                pval[v] = pval.get(v, 0.0) + pr
+            actual = bacc[card]
+            target_left = vcount.get(target_value, 0)
+            if 0 < target_left < remaining:
+                q = target_left / remaining
+                p = pval.get(target_value, 0.0)
+                if p - q > threshold:
+                    bets += 1
+                    deck_pred += (p - q) / q
+                    deck_real += (1 - q) / q if actual == target_value else -1.0
+            q_v = vcount[actual] / remaining
+            p_v = pval.get(actual, 0.0)
+            if p_v > 0 and q_v > 0:
+                bits += math.log(p_v) - math.log(q_v)
+                steps += 1
+            filt.observe(card)
+            remaining -= 1
+            vcount[actual] -= 1
+        predicted += deck_pred
+        realized += deck_real
+        deck_deltas.append(deck_real - deck_pred)
+    result = PropositionResult(trials, bets, predicted, realized, deck_deltas)
+    result.bits_per_shoe = bits / trials / math.log(2)
+    result.info = {"decks": decks, "shelves": shelves, "passes": passes,
+                   "particles": particles, "n": n, "steps": steps}
+    return result
 
 
 class PosteriorGuesser:

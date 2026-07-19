@@ -94,24 +94,45 @@ deck) — multi-deck shoes repeat cards and need copy-marginalization in
 the observation model. 332 tests green (6 new). Seeds: 22.7e9 test pins,
 22.8e9 E27 battery; **next unused block 22.9e9+**.
 
-**THE PRECISELY-SPECIFIED NEXT STEP: M12b rung 2 — the shoe-scale
-observation model + the first REAL-game adapter.** Two pieces, in order:
-(1) extend `ShelfPosterior` to shoes with repeated physical cards
-(multi-deck): the observer sees rank+suit but not which copy, so
-conditioning must marginalize over copy assignments — design the exact
-(or gated-approximate) treatment, brute-force-gate it on a tiny
-duplicated deck exactly like rung 1; (2) the baccarat coup adapter over
-the validated M9 engine: joint posterior over the next 4–6 cards (chain
-the sequential conditionals), price Player/Banker/Dragon/Panda bets from
-a known 8-deck stack through a weak shuffle, gate E17-style
-(predicted-vs-realized within CI). Throughput note: n=416 at m=10 is
-~8.3k slots/sweep (~seconds/shoe pure Python) — if rung 2 drags, the
-parked PyPy experiment (M7 record) becomes relevant before any Rust
-talk. Observation-degradation curves (partial view of shoe k) ride
-along as a knob, not a new rung. The single-deck machinery as built is
-already sufficient for the POKER arm's deck scale — that arm still waits
-on its fold/gather models and its own legality pass (ROADMAP M12b);
-M13 stays parked behind M12b. **The two-layer rule
+**M12b RUNG 2 DONE (same day — E28): the multi-deck copy-ambiguity
+posterior is built, gated, and the channel is shown to survive copies —
+with two honest flags.** `MultiDeckShelfPosterior` (decision record in
+DESIGN.md): exact multi-deck filtering is permanent-hard (copies break
+the label-sort), so it's a sequential-importance particle filter — each
+particle a rung-1 posterior carrying one hypothesis of which copy was
+dealt; gated against brute force (matches within MC error, first step
+exact, distinct-values reduces to rung-1 exact deterministically). **The
+parked PyPy experiment was run (M7): bit-identical, 4.3× on the posterior
+walk / 2.7× engine, suite green — PyPy is the sanctioned accelerator; Rust
+stays unneeded.** Trend (probe scale, 10-shelf, composition-fair value-8
+prop): **copy ambiguity does NOT kill the channel** (2 decks +21 u/shoe,
+18.2 bits, z −0.18; 3 decks +17.6 u/shoe) — but **the copy tax is real**
+(bits 18.2 → 9.3 from 2→3 decks despite the bigger stack) and **the PF
+loses fidelity as copies grow** (z −3.07 at 3 decks/60 particles —
+impoverishment). Two-pass fix collapses the channel at multi-deck too
+(0 bets). 335 tests green. Seeds 22.9e9. Artifacts: `data/e28_multideck.*`,
+`data/bench_pypy.py`.
+
+**THE PRECISELY-SPECIFIED NEXT STEP: two immediate builds, then the real
+baccarat adapter.** (1) **The O(slots) assumed-density (soft-assignment)
+posterior** — the PF's O(particles × slots × cards) cost is the project's
+first throughput wall (8-deck 2-pass ≈ 16 s/shoe even under PyPy), and an
+8-deck production number needs a posterior whose cost is independent of
+particle count; build it as a mean-field filter (fractional occupancy +
+truncated slot laws), gate its BIAS against the PF/brute-force (it may not
+be exact — the gate measures the gap, and the E17 predicted-vs-realized
+catches an over-optimistic approximation). (2) **The clean copy-isolation
+study** — same-n distinct-vs-duplicated stacks through the same shuffle, to
+separate the copy penalty from the mixing-adequacy confound (a fixed
+10-shelf mixes a bigger stack worse, ~n^1.5). THEN (3) the **baccarat coup
+adapter** over the validated M9 engine: joint posterior over the next 4–6
+cards, price Player/Banker/Dragon/Panda from a known 8-deck stack, E17 gate
+— needs coup-outcome-under-ordered-posterior machinery, and the fast
+posterior from (1). Observation-degradation curves (partial view of shoe k)
+ride along as a knob. The single-deck machinery already suffices for the
+POKER arm's deck scale — that arm still waits on its fold/gather models and
+its own legality pass (ROADMAP M12b); M13 stays parked behind M12b. **The
+two-layer rule
 (Matt, 2026-07-19): the posterior core NEVER imports a game** — it lives
 at (known stack, shuffle model, observed prefix) → posterior over the
 remaining order, and its deliverable is the information curve, a property
@@ -517,9 +538,10 @@ was already stale when written); E26/M12a test pins share the 22.4e9 block
 `shoe_seeds()` derivation while the M12a pins are forensics rng streams and
 direct shoe seeds, so no shoe sequence repeats — and the E26 battery
 consumed 22.5–22.6e9; E27/M12b-rung-1 consumed 22.7e9 (test pins
-22700000001–04) and 22.8e9 (battery 22800000001–04). **Next unused seed
-block: 22.9e9+** (the M11 OOS certification, if it ever runs, takes its
-fresh block from here).
+22700000001–04) and 22.8e9 (battery 22800000001–04); E28/M12b-rung-2
+consumed 22.9e9 (test pins 22700000005 shared the earlier block; probes
+22900000001, 22900000050). **Next unused seed block: 23.0e9+** (the M11
+OOS certification, if it ever runs, takes its fresh block from here).
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 
