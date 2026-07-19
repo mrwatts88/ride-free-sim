@@ -519,6 +519,29 @@ def test_pog_count_curves_identity_json_and_merge(tmp_path):
         merge_pog_count_curves([cc, other])
 
 
+def test_pog_count_curves_no_bump_custom():
+    """sign=0 customs (whole-tag counts, no red-suit device) must work: the
+    E22b KO/simple variants. Balanced count -> IRC 0, so early-shoe RC stays
+    near 0; bins partition the rounds; determinism holds."""
+    from ridefree.experiments import run_pog_count_curves
+
+    rules = dataclasses.replace(RIDE_FREE, side_bet_pot_of_gold=PAYTABLE_POG_1)
+    simple = ({1: -1, 2: 1, 3: 1, 4: 1, 5: 0, 6: 1, 7: 1, 8: 0, 9: 0,
+               10: -1}, 1, 0)
+    a = run_pog_count_curves(rules, seed=16_800_000_009, rounds=3_000,
+                             rules_name="rf", customs={"simple_rc": simple})
+    b = run_pog_count_curves(rules, seed=16_800_000_009, rounds=3_000,
+                             rules_name="rf", customs={"simple_rc": simple})
+    bins = a.by_signal["simple_rc"]
+    assert sum(x.rounds for x in bins.values()) == 3_000
+    assert {k: v.pog_profit for k, v in bins.items()} == {
+        k: v.pog_profit for k, v in b.by_signal["simple_rc"].items()
+    }
+    # Balanced, IRC 0: RC mass concentrated near zero (fresh shoes start 0).
+    near = sum(x.rounds for k, x in bins.items() if abs(k) <= 5)
+    assert near > 1_500
+
+
 def test_search_unbalanced_pivot_generalizes_e17():
     """imbalance=2 with positive bumps must reproduce the E17 search exactly;
     imbalance=-2 must return counts whose full-shoe sum is -2 per deck."""

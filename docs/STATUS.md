@@ -20,9 +20,12 @@ t\* to −2; E21b priced the side≤main scenarios (raise-on-trigger keeps
 that BEATS hi-lo-with-division (106.6% capture, OOS'd): untied $25/$50/
 $100 → +$49/+$133/+$300/h on $17k/$24k/$41k; matched 1:1 → +$42/+$108/
 +$240/h. Matt's "ultimate card" hypothesis answered by measurement:
-fusion, dual-trigger, and Red-7-reuse ALL lose to the specialist. The
-felt read (side max, tie rule, pen, entry) sets the tier. Next: live
-verification of the literal card, pen-at-true-pen after recon.**
+fusion, dual-trigger, and Red-7-reuse ALL lose to the specialist. E22b
+then certified Matt's simplification **"hi-lo-57"** (hi-lo with the 5
+and 7 swapped; start 10, stake ≤ 5) as a statistical TIE with pog2 —
+the practicality pick — while his KO variant died (35%). The felt read
+(side max, tie rule, pen, entry) sets the tier. Next: live verification
+of the literal card, pen-at-true-pen after recon.**
 
 ## M10a DONE (2026-07-18, third session): Silver Stack = Pot of Gold, gated; WoO's table refuted on P(0)
 
@@ -121,9 +124,27 @@ wrapper untouched), `run_pog_count_curves` (hilo bins == run_pog_curve,
 in-test); 299 tests green. Artifacts: `data/e22_card.py` (stage 1),
 `e22_run.py`/`e22_verdict.py` + `e22_eor_p75_s*.json`/`e22_cc_p75_s*.json`.
 
+**E22b (Matt's simplicity question, same session): "hi-lo-57" TIES pog2;
+KO is dead.** Matt proposed two simpler counts; measured on 10 × 2M fresh
+rounds (19.4–20.3e9), four signals one stream (`data/e22b_run.py` /
+`e22b_verdict.py`): his variant A IS the published KO count — pivot +4,
+six points off-trigger, **35% capture, $25 stake negative — refuted**
+(pivot-offset dose-response now measured: 0/2/4/6 points ≈
+100/~100/70/35% capture). His variant B IS pog2 minus the red-2 gadget =
+**"hi-lo-57"** (hi-lo with the 5 and 7 swapping tags; balanced): fixed
+RC ≤ −5 captures **105% of divided hi-lo / 102% of pog2 — a statistical
+tie** → untied +$49/+$134/+$305/h at $25/$50/$100, same as pog2. **The
+practicality pick: hi-lo-57, start 10, stake at ≤ 5.** Caveat: its fixed
+rung is tuned at pen .75 (pog2's pivot is pen-robust by construction) —
+re-price the rung at the true pen after recon. Tag quality is equal
+across all three (BC −0.973-ish); the whole game is the pivot.
+
 **THE OPERATING DOCTRINE (confirmed with Matt, 2026-07-18 late session —
 the complete play in one paragraph):** count pog2 (A/T −1; 3/4/6/7 +1;
-RED 2s +1, black 2s nothing; 5/8/9 nothing; start each shoe at 24). Main
+RED 2s +1, black 2s nothing; 5/8/9 nothing; start each shoe at 24) — or
+its E22b-certified equal, **hi-lo-57** (hi-lo but the 5 counts nothing
+and the 7 counts +1; start 10, stake ≤ 5; rung re-check at true pen
+queued). Main
 bet: **table minimum every round** — the main is rent, never a bet; the
 RF positive end is dead (E22 step 0), so no count ever justifies raising
 it. Play the **Ride Free basic chart** (always take free doubles/splits;
@@ -205,7 +226,8 @@ session variance; M10a consumed 15.7–16.6e9 (gate shards) and 16.7/16.8e9
 (test pins); M10b consumed 16.9–17.8e9 (E20 curve shards; E21 farm arm
 REUSED the same block deliberately — paired CRN arms, not a replication);
 E22 consumed 17.9–18.3e9 (EOR shards) and 18.4–19.3e9 (count-curve
-shards). **Next unused seed block: 19.4e9+.**
+shards); E22b consumed 19.4–20.3e9 (simple-count head-to-head). **Next
+unused seed block: 20.4e9+.**
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 
@@ -786,6 +808,8 @@ uv run python data/e22_card.py                # E22 stage 1: EORs, gate, search
 uv run python -u data/e22_run.py SEED 2000000 out.json  # E22 stage 2 shard
 uv run python data/e22_verdict.py             # E22: head-to-head, THE CARD
 uv run python data/e22_positive_end.py        # E22 step 0: RF positive end dead
+uv run python -u data/e22b_run.py SEED 2000000 out.json  # E22b shard
+uv run python data/e22b_verdict.py            # E22b: hi-lo-57 vs pog2 vs KO
 ```
 
 ## Open items

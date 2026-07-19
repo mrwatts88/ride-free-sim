@@ -2,6 +2,55 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E22b — Matt's simple variants: "hi-lo-57" TIES the pog2 card (whole tags, no gadget); KO is dead (35%)
+
+**Date:** 2026-07-18 · **Question (Matt):** can a simpler, more transferable
+count hold the EV? Variant A = A/T −1, 2–7 +1, 8/9 0 — **which is exactly
+the published KO count** (pivot +4). Variant B = same but 5 stays 0 —
+**which is exactly pog2 minus the red-2 gadget** (the gadget's only job is
+pinning the pivot at −2; without it the count is BALANCED, pivot 0). Framed
+against hi-lo, variant B is one swap: **the 5 and the 7 trade tags** —
+"hi-lo-57".
+
+**Method:** `data/e22b_run.py` — 10 × 2M farm-arm rounds, fresh seeds
+19.4–20.3e9, FOUR signals on one card stream (hilo_tc / pog2_rc / ko_rc /
+simple_rc; whole-tag customs via the sign=0 no-bump path, in-test);
+`data/e22b_verdict.py` (A = s01–05 chooses each rung by untied capture,
+B = s06–10 scores blind; ledger conventions as E22).
+
+**Findings:**
+- **Tag quality (BC vs side EORs): hi-lo-57 −0.9734, KO −0.9774, pog2
+  −0.9726** — all three tag sets are essentially equal. The entire game is
+  the PIVOT.
+- **KO is refuted as a no-division card: 35% capture** (fixed RC ≤ −25,
+  4.25%/unit — the 6-point pivot mismatch makes the fixed threshold swing
+  from TC −1 early to TC −21 late). $25 stake goes NEGATIVE (−$3/h). The
+  dose-response is now measured: pivot offset 0 (pog2) ≈ full capture,
+  2 (hi-lo-57) ≈ −0–4%, 4 (Red 7, E22) ≈ −30%, 6 (KO) ≈ −65%.
+- **hi-lo-57 at fixed RC ≤ −5: 105.1% of divided hi-lo, 101.9% of pog2
+  pooled — a statistical TIE with the certified card** (B-half blind:
+  +6.71%/unit at 24.0% of rounds → 1.613/100 vs pog2's 1.554; differences
+  ≲1σ on the same stream). Untied nets $25/$50/$100: **+$49/+$134/+$305/h**
+  — indistinguishable from pog2's +$48/+$132/+$300.
+- **The robustness asymmetry (why pog2 stays the reference):** pog2's
+  trigger is the pivot — depth-exact and therefore PEN-ROBUST by
+  construction. hi-lo-57's fixed RC ≤ −5 is a depth compromise TUNED AT
+  pen .75; a different real pen shifts its optimal rung (re-price at the
+  true pen after recon — already queued). Cross-block note: the hilo −2
+  window ran +7.26/+7.52/+7.81% across E21/E22/E22b's independent 20M
+  blocks (~1.5σ steps — noise, logged).
+
+**Verdict: drill either card; hi-lo-57 is the practicality pick.**
+
+> **hi-lo-57: count exactly like hi-lo but the 5 counts NOTHING and the 7
+> counts +1** (A/T −1; 2/3/4/6/7 +1; 5/8/9 nothing). Balanced. **Start
+> each shoe at 10; stake the side (and split 5s) at 5 or below** (slide
+> +10 of the certified RC ≤ −5). Everything else per the operating
+> doctrine.
+
+KO's transferability is real but it cannot run this trigger without
+division. Seeds consumed: 19.4–20.3e9. **Next unused block: 20.4e9+.**
+
 ## E22 — THE POG2 CARD: a no-division count that BEATS hi-lo-with-division (106.6% capture); Matt's "ultimate card" answered three ways
 
 **Date:** 2026-07-18 · **Questions:** the no-division human card for the

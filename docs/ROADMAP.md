@@ -203,6 +203,11 @@ mid-shoe entry policy. Verdict `data/m10b_verdict.py`; E20 in EXPERIMENTS.
   (fusion / dual-trigger / Red-7 reuse — the RF positive end is dead and
   the pivot mismatch costs 30–38%). **THE CARD: start 24, stake ≤ 12.**
   Untied $25/$50/$100 → +$49/+$133/+$300/h on $17k/$24k/$41k.
+- **E22b — Matt's simple variants ✅**: "hi-lo-57" (hi-lo with the 5 and 7
+  swapped; balanced, fixed RC ≤ −5 → start 10, stake ≤ 5) statistically
+  TIES pog2 (102%) — the practicality pick, rung re-check at true pen
+  queued; the KO variant (pivot +4, six off-trigger) is dead at 35%.
+  Pivot-offset dose-response measured: 0/2/4/6 → 100/~100/70/35%.
 
 **Conditions: side max + side-tied-to-main (the two placard questions),
 pen ≥ ~.75 on the Ride Free tables (unmeasured), 4-hand resplit assumed.**
