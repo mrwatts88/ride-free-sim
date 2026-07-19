@@ -2311,3 +2311,206 @@ def format_ramp(res: RampResult) -> str:
     if res.ins_profit:
         lines.append(f"insurance contribution: {100 * res.ins_profit / n:+.4f}u/100")
     return "\n".join(lines)
+
+
+# --- M10b: Pot of Gold per-TC curve (side and main profit binned separately) --
+#
+# The E16 pattern applied to the Silver Stack attack: one flat-bet pass banks
+# per-hi-lo-TC bins carrying the SIDE bet's profit moments and the MAIN game's
+# profit moments separately, so any threshold/ramp card prices as arithmetic
+# over the bins WITH the Ride Free toll charged at the counts where the side
+# bet actually fires (the toll worsens exactly where the signal lives — a flat
+# toll would flatter the verdict). Tracker convention matches run_tc_curve:
+# the CompositionTracker sees every card in a settled RoundResult including
+# the hole card — the perfect-information curve convention E16/E17 used; a
+# live-visibility distillation is a later, separate measurement (E18 pattern).
+
+
+def _bin_tc12(value: float) -> int:
+    """Integer TC bins clamped to ±12 — wider than the E16 ±8 clamp because
+    the Pot of Gold signal's money lives in the deep-negative tail."""
+    return max(-12, min(12, int(round(value))))
+
+
+@dataclass
+class PogBin:
+    rounds: int = 0
+    pog_profit: float = 0.0
+    pog_sq: float = 0.0
+    main_profit: float = 0.0
+    main_sq: float = 0.0
+    tc_sum: float = 0.0
+    tokens: int = 0  # lammer count, for the rate-vs-TC picture
+
+    def add(self, pog: float, main: float, tc: float, tokens: int) -> None:
+        self.rounds += 1
+        self.pog_profit += pog
+        self.pog_sq += pog * pog
+        self.main_profit += main
+        self.main_sq += main * main
+        self.tc_sum += tc
+        self.tokens += tokens
+
+    @property
+    def pog_ev(self) -> float:
+        return self.pog_profit / self.rounds if self.rounds else 0.0
+
+    @property
+    def pog_stderr(self) -> float:
+        if self.rounds < 2:
+            return 0.0
+        m = self.pog_ev
+        var = max(self.pog_sq / self.rounds - m * m, 0.0)
+        return math.sqrt(var / self.rounds)
+
+    @property
+    def main_ev(self) -> float:
+        return self.main_profit / self.rounds if self.rounds else 0.0
+
+    @property
+    def main_stderr(self) -> float:
+        if self.rounds < 2:
+            return 0.0
+        m = self.main_ev
+        var = max(self.main_sq / self.rounds - m * m, 0.0)
+        return math.sqrt(var / self.rounds)
+
+
+@dataclass
+class PogCurveResult:
+    rules_name: str
+    penetration: float
+    paytable: tuple[float, ...] = ()
+    rounds: int = 0
+    pog_total: float = 0.0
+    main_total: float = 0.0
+    bins: dict[int, PogBin] = field(default_factory=dict)
+
+
+def run_pog_curve(
+    rules: Rules, *, seed: int, rounds: int, rules_name: str = ""
+) -> PogCurveResult:
+    """Flat-bet pass: main 1 unit + Pot of Gold 1 unit every round, binned by
+    pre-deal hi-lo true count. `rules` must carry side_bet_pot_of_gold."""
+    from ridefree.player_ev import OptimalStrategy
+    from ridefree.strategy import AlwaysPotOfGold
+
+    assert rules.side_bet_pot_of_gold, "rules must offer the Pot of Gold bet"
+    strategy = AlwaysPotOfGold(OptimalStrategy())
+    res = PogCurveResult(
+        rules_name=rules_name, penetration=rules.penetration,
+        paytable=rules.side_bet_pot_of_gold,
+    )
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    tracker = CompositionTracker(rules.decks)
+    rounds_since = 0
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            tracker.new_shoe()
+            rounds_since = 0
+        tc = tracker.hilo_true()
+        result = play_round(rules, shoe, strategy, bet=1.0)
+        rounds_since += 1
+        tracker.observe_round(result)
+        main = result.profit - result.pog_profit
+        res.rounds += 1
+        res.pog_total += result.pog_profit
+        res.main_total += main
+        res.bins.setdefault(_bin_tc12(tc), PogBin()).add(
+            result.pog_profit, main, tc, result.pog_tokens
+        )
+    return res
+
+
+def pog_curve_to_json(res: PogCurveResult, seed: int) -> dict:
+    return {
+        "kind": "pog_curve",
+        "rules": res.rules_name,
+        "penetration": res.penetration,
+        "paytable": list(res.paytable),
+        "seed": seed,
+        "rounds": res.rounds,
+        "pog_total": res.pog_total,
+        "main_total": res.main_total,
+        "bins": {
+            str(k): [b.rounds, b.pog_profit, b.pog_sq, b.main_profit,
+                     b.main_sq, b.tc_sum, b.tokens]
+            for k, b in res.bins.items()
+        },
+    }
+
+
+def load_pog_curve_json(path: str) -> PogCurveResult:
+    import json
+
+    with open(path) as f:
+        payload = json.load(f)
+    if payload.get("kind") != "pog_curve":
+        raise ValueError(f"{path} is not a pog_curve dump")
+    res = PogCurveResult(
+        rules_name=payload["rules"],
+        penetration=payload["penetration"],
+        paytable=tuple(payload["paytable"]),
+        rounds=payload["rounds"],
+        pog_total=payload["pog_total"],
+        main_total=payload["main_total"],
+    )
+    for key, (n, pp, p2, mp, m2, tcs, tok) in payload["bins"].items():
+        res.bins[int(key)] = PogBin(
+            rounds=n, pog_profit=pp, pog_sq=p2, main_profit=mp, main_sq=m2,
+            tc_sum=tcs, tokens=tok,
+        )
+    return res
+
+
+def merge_pog_curves(results: list[PogCurveResult]) -> PogCurveResult:
+    """Pool independently-seeded pog-curve runs (bin stats are additive)."""
+    assert results
+    first = results[0]
+    merged = PogCurveResult(
+        rules_name=first.rules_name, penetration=first.penetration,
+        paytable=first.paytable,
+    )
+    for r in results:
+        assert (r.rules_name, r.penetration, r.paytable) == (
+            first.rules_name, first.penetration, first.paytable
+        ), "cannot pool pog curves from different games/paytables"
+        merged.rounds += r.rounds
+        merged.pog_total += r.pog_total
+        merged.main_total += r.main_total
+        for k, b in r.bins.items():
+            t = merged.bins.setdefault(k, PogBin())
+            t.rounds += b.rounds
+            t.pog_profit += b.pog_profit
+            t.pog_sq += b.pog_sq
+            t.main_profit += b.main_profit
+            t.main_sq += b.main_sq
+            t.tc_sum += b.tc_sum
+            t.tokens += b.tokens
+    return merged
+
+
+def format_pog_curve(res: PogCurveResult, min_rounds: int = 1000) -> str:
+    n = res.rounds
+    lines = [
+        f"rules: {res.rules_name}   penetration: {res.penetration:.2f}   "
+        f"paytable: {'/'.join(f'{p:g}' for p in res.paytable)}",
+        f"rounds: {n:,}   pog EV: {100 * res.pog_total / n:+.4f}%   "
+        f"main EV: {100 * res.main_total / n:+.4f}%",
+        "",
+        f"  {'tc':>4s} {'rounds':>11s} {'freq':>8s} {'pog EV':>9s} {'±1se':>8s} "
+        f"{'main EV':>9s} {'±1se':>8s} {'lam/round':>10s} {'mean tc':>8s}",
+    ]
+    for k in sorted(res.bins):
+        b = res.bins[k]
+        if b.rounds < min_rounds:
+            continue
+        lines.append(
+            f"  {k:+4d} {b.rounds:>11,d} {100 * b.rounds / n:7.3f}% "
+            f"{100 * b.pog_ev:+8.3f}% {100 * b.pog_stderr:7.3f}% "
+            f"{100 * b.main_ev:+8.3f}% {100 * b.main_stderr:7.3f}% "
+            f"{b.tokens / b.rounds:10.4f} {b.tc_sum / b.rounds:+8.2f}"
+        )
+    return "\n".join(lines)

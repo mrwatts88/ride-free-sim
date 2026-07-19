@@ -156,3 +156,42 @@ class AlwaysSideBet:
 
     def __getattr__(self, name):
         return getattr(self._inner, name)
+
+
+class AlwaysPotOfGold:
+    """Wraps any strategy and stakes the Pot of Gold side bet every round —
+    the always-bet comparator for the M10a validation gate. Everything except
+    `bet_pot_of_gold` delegates to the wrapped strategy, so it composes with
+    AlwaysSideBet in either order."""
+
+    def __init__(self, inner, stake: float = 1.0) -> None:
+        self._inner = inner
+        self._stake = stake
+
+    def bet_pot_of_gold(self, rules: Rules) -> float:
+        return self._stake
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class SplitFives:
+    """Wraps any strategy but free-splits 5s whenever the rules fund it
+    (instead of the main-EV play, the free double on hard 10).
+
+    The Pot of Gold farming line Wizard of Odds prices: under Pay Table 1 it
+    cuts the side bet's edge 5.77% -> 2.75% while costing the main bet 0.15%.
+    Split hands re-pair 5s too, so the wrapper also takes free RE-splits of 5s.
+    Every other decision — and every optional hook — delegates to the inner
+    strategy."""
+
+    def __init__(self, inner) -> None:
+        self._inner = inner
+
+    def choose(self, view: HandView, rules: Rules) -> Action:
+        if view.pair_rank == 5 and view.free_split_available:
+            return Action.SPLIT
+        return self._inner.choose(view, rules)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)

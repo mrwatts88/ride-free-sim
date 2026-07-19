@@ -13,7 +13,7 @@ from enum import Enum
 from ridefree.cards import ACE, TEN
 from ridefree.hand import hand_total, is_blackjack, is_soft
 from ridefree.rules import Rules
-from ridefree.side_bets import settle_21p3
+from ridefree.side_bets import settle_21p3, settle_pot_of_gold
 
 
 class Action(Enum):
@@ -94,6 +94,13 @@ class RoundResult:
     sb21p3_stake: float = 0.0
     sb21p3_profit: float = 0.0
     sb21p3_category: str | None = None  # winning/losing class, None = no bet or no class
+    # Pot of Gold side bet (0 unless the strategy staked it pre-deal): resolved
+    # at round end on the free-bet lammers received (free_splits + free_doubles),
+    # kept win-lose-or-push per hand. pog_tokens records the settled count only
+    # when a stake was up. Round `profit` includes pog_profit; HandResults never do.
+    pog_stake: float = 0.0
+    pog_profit: float = 0.0
+    pog_tokens: int = 0
 
 
 def _name(card: int) -> str:
@@ -210,6 +217,15 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
             if sb_stake > 0:
                 deal_pos = shoe.snapshot()
 
+    # Pot of Gold: staked strictly BEFORE the deal; resolved at round end on the
+    # count of free bets granted (no cards of its own, so it never touches the
+    # deal sequence).
+    pog_stake = 0.0
+    if rules.side_bet_pot_of_gold:
+        pog_hook = getattr(strategy, "bet_pot_of_gold", None)
+        if pog_hook is not None:
+            pog_stake = pog_hook(rules)
+
     # Deal order is fixed for replay determinism: player, dealer up, player, hole.
     first = shoe.deal()
     up = shoe.deal()
@@ -251,29 +267,40 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
         and is_blackjack(dealer_cards)
     ):
         note("dealer has blackjack")
+        pog_profit = 0.0
+        if pog_stake > 0:
+            # No free bet can exist once the peek ends the round: 0 lammers.
+            pog_profit = settle_pot_of_gold(rules.side_bet_pot_of_gold, 0, pog_stake)
+            note(f"pot of gold stake {pog_stake:g} — 0 lammers, {pog_profit:+g}")
         outcome = "push" if player_bj else "lose"
         hand_profit = 0.0 if player_bj else -bet
         note(f"hand 1: {outcome} {hand_profit:+g}")
         hand_result = HandResult(tuple(player.cards), bet, 0.0, outcome, hand_profit)
         return RoundResult(
-            hand_profit + insurance_profit + sb_profit, (hand_result,),
+            hand_profit + insurance_profit + sb_profit + pog_profit, (hand_result,),
             tuple(dealer_cards), tuple(events), dealer_played_out=False,
             player_natural=player_bj, was_pair=was_pair,
             insurance_stake=insurance_stake, insurance_profit=insurance_profit,
             sb21p3_stake=sb_stake, sb21p3_profit=sb_profit,
             sb21p3_category=sb_category,
+            pog_stake=pog_stake, pog_profit=pog_profit,
         )
     if player_bj:
+        pog_profit = 0.0
+        if pog_stake > 0:
+            pog_profit = settle_pot_of_gold(rules.side_bet_pot_of_gold, 0, pog_stake)
+            note(f"pot of gold stake {pog_stake:g} — 0 lammers, {pog_profit:+g}")
         hand_profit = bet * rules.blackjack_payout
         note(f"player blackjack {hand_profit:+g}")
         hand_result = HandResult(tuple(player.cards), bet, 0.0, "blackjack", hand_profit)
         return RoundResult(
-            hand_profit + insurance_profit + sb_profit, (hand_result,),
+            hand_profit + insurance_profit + sb_profit + pog_profit, (hand_result,),
             tuple(dealer_cards), tuple(events), dealer_played_out=False,
             player_natural=True, was_pair=was_pair,
             insurance_stake=insurance_stake, insurance_profit=insurance_profit,
             sb21p3_stake=sb_stake, sb21p3_profit=sb_profit,
             sb21p3_category=sb_category,
+            pog_stake=pog_stake, pog_profit=pog_profit,
         )
 
     hands = [player]
@@ -430,7 +457,18 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
             HandResult(tuple(hand.cards), hand.wager, hand.free_wager, outcome, delta)
         )
         profit += delta
-    profit += insurance_profit + sb_profit
+    pog_profit = 0.0
+    pog_tokens = 0
+    if pog_stake > 0:
+        # Lammers stay collected however each hand settled (win/lose/push all
+        # move the lammer to the Pot of Gold spot — NV rules of play).
+        pog_tokens = free_splits + free_doubles
+        pog_profit = settle_pot_of_gold(
+            rules.side_bet_pot_of_gold, pog_tokens, pog_stake
+        )
+        note(f"pot of gold stake {pog_stake:g} — {pog_tokens} lammer(s), "
+             f"{pog_profit:+g}")
+    profit += insurance_profit + sb_profit + pog_profit
     note(f"round profit {profit:+g}")
     return RoundResult(
         profit, tuple(results), tuple(dealer_cards), tuple(events),
@@ -439,4 +477,5 @@ def play_round(rules: Rules, shoe, strategy, bet: float = 1.0, log: bool = False
         free_splits=free_splits, free_doubles=free_doubles, dealer_22_push=dealer_22,
         insurance_stake=insurance_stake, insurance_profit=insurance_profit,
         sb21p3_stake=sb_stake, sb21p3_profit=sb_profit, sb21p3_category=sb_category,
+        pog_stake=pog_stake, pog_profit=pog_profit, pog_tokens=pog_tokens,
     )

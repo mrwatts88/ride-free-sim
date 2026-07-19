@@ -13,6 +13,7 @@ from ridefree.cards import Shoe, shoe_seeds
 from ridefree.engine import play_round
 from ridefree.rules import (
     PAYTABLE_21P3_9TO1,
+    PAYTABLE_POG_1,
     RIDE_FREE,
     RIDE_FREE_WOO,
     SHOE_END_MODES,
@@ -93,6 +94,17 @@ def _sim(args: argparse.Namespace) -> None:
         rules = dataclasses.replace(rules, side_bet_21p3=PAYTABLE_21P3_9TO1)
         strategy = AlwaysSideBet(strategy)
         print("21+3: always-bet 1 unit, flat 9-to-1 paytable")
+    if args.split_fives:
+        from ridefree.strategy import SplitFives
+
+        strategy = SplitFives(strategy)
+        print("split fives: free-splitting 5s whenever funded (Pot of Gold farm)")
+    if args.pog:
+        from ridefree.strategy import AlwaysPotOfGold
+
+        rules = dataclasses.replace(rules, side_bet_pot_of_gold=PAYTABLE_POG_1)
+        strategy = AlwaysPotOfGold(strategy)
+        print("pot of gold: always-bet 1 unit, pay table 1 (3/10/30/60/100/300/1000)")
     m = simulate(rules, strategy, seed=args.seed, rounds=args.rounds, bet=1.0)
     edge_pct = m.edge * 100
     err_pct = m.edge_stderr * 100
@@ -120,6 +132,17 @@ def _sim(args: argparse.Namespace) -> None:
             if cat in m.sb21p3_categories:
                 v = m.sb21p3_categories[cat]
                 print(f"  {cat:16s} {v:9,} ({100 * v / n:7.4f}%)")
+    if m.pog_rounds:
+        pog_edge = m.pog_profit_total / m.pog_stake_total
+        n = m.pog_rounds
+        print(f"pot of gold:       {n:,} rounds staked, "
+              f"total {m.pog_stake_total:g}, profit {m.pog_profit_total:+.1f}")
+        print(f"pot of gold edge:  {100 * pog_edge:+.4f}% per unit staked "
+              f"(WoO sim convention -5.7687%; NV-rules arithmetic ~-7.7%, "
+              f"see E19)")
+        for k in sorted(m.pog_tokens):
+            v = m.pog_tokens[k]
+            print(f"  {k} lammer(s)     {v:9,} ({100 * v / n:8.4f}%)")
     if m.free_splits or m.free_doubles or m.dealer_22_pushes:
         print(f"free splits:       {m.free_splits:,} "
               f"({100 * m.free_splits / m.rounds:.2f}% of rounds)")
@@ -421,6 +444,41 @@ def _ramp(args: argparse.Namespace) -> None:
     print(format_ramp(res))
 
 
+def _pogcurve(args: argparse.Namespace) -> None:
+    import json
+
+    from ridefree.experiments import format_pog_curve, pog_curve_to_json, run_pog_curve
+    from ridefree.rules import PAYTABLE_POG_04, PAYTABLE_POG_2
+
+    paytables = {"1": PAYTABLE_POG_1, "2": PAYTABLE_POG_2, "04": PAYTABLE_POG_04}
+    name, rules, _, _ = VARIANTS[args.rules]
+    changes = {"side_bet_pot_of_gold": paytables[args.paytable]}
+    if args.penetration is not None:
+        changes["penetration"] = args.penetration
+    rules = dataclasses.replace(rules, **changes)
+    print(f"ruleset: {name}   pen: {rules.penetration:.2f}   "
+          f"pot of gold pay table {args.paytable}, always-bet 1 unit")
+    res = run_pog_curve(rules, seed=args.seed, rounds=args.rounds, rules_name=name)
+    print(format_pog_curve(res, min_rounds=args.min_rounds))
+    if args.json:
+        with open(args.json, "w") as f:
+            json.dump(pog_curve_to_json(res, args.seed), f)
+        print(f"\npog-curve JSON written to {args.json}")
+
+
+def _pogcombine(args: argparse.Namespace) -> None:
+    from ridefree.experiments import (
+        format_pog_curve,
+        load_pog_curve_json,
+        merge_pog_curves,
+    )
+
+    curves = [load_pog_curve_json(p) for p in args.paths]
+    merged = merge_pog_curves(curves)
+    print(f"merged {len(curves)} pog curve(s)")
+    print(format_pog_curve(merged, min_rounds=args.min_rounds))
+
+
 def _bac_rules(args: argparse.Namespace):
     import dataclasses as _dc
 
@@ -592,6 +650,11 @@ def main() -> None:
                         "(default on; --no-insurance for the published-edge comparator)")
     s.add_argument("--21p3", dest="sb_21p3", action="store_true",
                    help="stake the 21+3 side bet (flat 9-to-1 paytable) every round")
+    s.add_argument("--pog", action="store_true",
+                   help="stake the Pot of Gold side bet (pay table 1) every round")
+    s.add_argument("--split-fives", dest="split_fives", action="store_true",
+                   help="free-split 5s instead of doubling (the Pot of Gold farm "
+                        "line; costs the main bet ~0.15%%)")
     s.add_argument("--deviations", action=argparse.BooleanOptionalAction, default=True,
                    help="composition-based playing deviations (default on; slower "
                         "~0.5k rounds/s; --no-deviations for fixed chart play)")
@@ -755,6 +818,26 @@ def main() -> None:
     rp.add_argument("--seed", type=int, default=1)
     rp.add_argument("--rounds", type=int, default=1_000_000)
     rp.set_defaults(func=_ramp)
+
+    pg = sub.add_parser(
+        "pogcurve", help="Pot of Gold EV by hi-lo TC, side and main binned "
+                         "separately (M10b: the Silver Stack attack input)"
+    )
+    pg.add_argument("--rules", choices=VARIANTS, default="ridefree",
+                    help="base game (default: the Potawatomi RIDE_FREE config)")
+    pg.add_argument("--paytable", choices=("1", "2", "04"), default="1",
+                    help="Pot of Gold paytable (Potawatomi felt-confirmed: 1)")
+    pg.add_argument("--penetration", type=float, default=None)
+    pg.add_argument("--seed", type=int, default=1)
+    pg.add_argument("--rounds", type=int, default=1_000_000)
+    pg.add_argument("--min-rounds", type=int, default=1_000)
+    pg.add_argument("--json", default=None, help="dump curve bins to this path")
+    pg.set_defaults(func=_pogcurve)
+
+    pgc = sub.add_parser("pogcombine", help="pool pog-curve JSON dumps")
+    pgc.add_argument("paths", nargs="+")
+    pgc.add_argument("--min-rounds", type=int, default=1_000)
+    pgc.set_defaults(func=_pogcombine)
 
     bx = sub.add_parser("bacexact", help="exact baccarat outcome table (enumeration)")
     bx.add_argument("--rules", choices=("ez", "classic"), default="ez")

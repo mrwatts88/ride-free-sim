@@ -2,6 +2,144 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E20 — Silver Stack IS BEATABLE: hi-lo TC ≤ −3 makes the side bet +7.4%/unit on 11.7% of rounds (OOS-replicated)
+
+**Date:** 2026-07-18 · **Question:** M10b — does shoe composition swing Pot
+of Gold PT1 past its 8.25–9.0% base edge, and does anything survive the Ride
+Free main-bet toll?
+
+**Method:** new `cli pogcurve` / `pogcombine` (experiments.py: per-hi-lo-TC
+bins carrying SIDE profit moments and MAIN profit moments separately, ±12
+clamp — the E16 curve pattern; tracker convention as E16/E17: full
+RoundResult visible at settlement, i.e. normal live counting). 10 × 2M
+cut_card rounds, Potawatomi `RIDE_FREE` + PT1, pen 0.75 (assumed — field
+unknown), `AlwaysPotOfGold(OptimalStrategy)`, seeds 16.9e9–17.8e9 step 1e8;
+shards s01–05 = in-sample threshold search, s06–10 = untouched
+out-of-sample. Verdict arithmetic: `data/m10b_verdict.py` over
+`data/m10b_rf_p75_s*.json`.
+
+**Findings (pooled 20M rounds):**
+- **The curve is enormous and monotone**: side EV per unit staked runs from
+  ≈ −4.4% at TC 0 through **+3.2% at −2, +7.1% at −3, +11.5% at −4,
+  +19.5% at −6, +29% at −8, +45% at −12** (per-bin z up to +20). The lammer
+  rate roughly doubles (0.10 → 0.32/round) as TC falls, and the paytable's
+  convexity (multi-lammer chains need the small-card clusters negative
+  shoes are made of) multiplies it. Zero crossing between TC −1 and −2.
+- **Out-of-sample replication at t\* = −3 (chosen in-sample): PASS** — A
+  +7.10% ± 0.42 vs B +7.64% ± 0.45 (A−B z = −0.88); pooled window: trigger
+  **11.65% of rounds, side EV +7.37% ± 0.31**. Main EV inside the window is
+  −2.53% (vs −1.13% seated overall) — the toll grows exactly where the
+  signal fires and IS charged in every number below.
+- **Always-on baselines** (RIDE_FREE cut_card .75): pog −8.99%/unit, main
+  −1.15% — the cut-card/no-ace-resplit analogue of E19's csm −8.25%.
+- **Ledger (seated: $15 main every round, side staked at TC ≤ −3):**
+  side $25 → **+$9/h** on $61k (dead: toll eats it); side $50 → **+$52/h,
+  N0 487h, ~$38k** at 200 r/h heads-up; side $100 → **+$138/h, N0 270h,
+  ~$56k**. Wong-in (enter only at TC ≤ −3, needs mid-shoe entry):
+  +$34/$77/$163 per hour at 200 observed rounds/h for $25/$50/$100 side.
+  For scale: crouch15-2r ≈ +$40/h on ~$36–40k; EZ bac ≈ +$92/h on $81k.
+  **Per dollar of bankroll this is the project's strongest verdict** — IF
+  the side max cooperates.
+- Variance caveat: seated sd/bankroll set cov(main, side) = 0 (bins don't
+  carry the cross moment); the live verification run measures realized
+  combined variance.
+
+**Verdict conditions (order of sensitivity):** (1) **side max** — the whole
+result scales with it; $25 max kills it, $50+ beats every blackjack line we
+own (READ THE FELT); (2) **penetration** — .75 assumed, unmeasured on the
+Ride Free tables; the deep-negative tail is depth-fed (pen sensitivity run
+= next arm); (3) mid-shoe side staking freedom (staking the side bet in
+round N of a shoe you've sat through is surely fine; wong-IN mid-shoe needs
+the entry policy checked); (4) 4-hand resplit cap assumed.
+
+**Not done yet (next chunks):** the no-division human card (RC form of
+"TC ≤ −3" — E17's unbalanced-count search machinery points at a pivot-at-−3
+count; note hi-lo itself is NOT the optimal lammer count, corr −0.937
+leaves ~capture headroom for a POG-specific EOR derivation); pen .70/.80
+sensitivity shards; live verification of the literal card (E18 pattern);
+optics note (side-jamming at trash counts is novel, unmodeled behavior —
+nobody has published this attack).
+
+Seeds consumed: 16.9e9–17.8e9 (+ 16.8e9-block test pins added earlier).
+**Next unused block: 17.9e9+.**
+
+## E19 — Silver Stack IS Pot of Gold; the published table is refuted on P(0); the real PT1 edge is 8.25%
+
+**Date:** 2026-07-18 · **Question (Matt, casino recon):** Potawatomi's Ride
+Free tables carry a "Silver Stack" side bet — lammers per free bet,
+3/10/30/60/100/300/1000 for 1–7. Worth attacking?
+
+**Identification:** the paytable is Galaxy Gaming's Pot of Gold **Pay Table 1
+verbatim** (WoO Free Bet page; NV rules-of-play filing "POG 04" differs only
+in 6 → 299:1). Published: 5.77% house edge normal / 2.75% splitting 5s
+(+0.15% main cost); PT2 4.64%. Nobody has published a composition analysis —
+and the WoV thread asking ends in "needs a simulation." Settlement semantics
+(NV filing, scanned pages read directly): the lammer is awarded when the
+free bet is granted and KEPT win, lose, or push; all PoG wagers lose to a
+dealer blackjack.
+
+**Build (M10a, one session):** `Rules.side_bet_pot_of_gold` payout tuple
+(PT1/PT2/POG-04 presets), pre-deal `bet_pot_of_gold` hook, settlement =
+`settle_pot_of_gold(paytable, free_splits + free_doubles, stake)` — the
+engine's existing ledger counters ARE the lammer count; no cards, no RNG, no
+new play paths (deal-sequence brace test). `AlwaysPotOfGold` + `SplitFives`
+wrappers; token histogram in Metrics; `cli sim --pog / --split-fives`;
+21 new tests incl. a scripted 7-lammer resplit chain (292 green).
+
+**Finding 1 — the published table is arithmetically impossible.** P(0
+lammers) is strategy-free dealing arithmetic: ≥1 lammer iff the initial two
+cards are free-bet eligible (pair A–9, or non-pair hard 9/10/11) and the
+dealer has no natural — and enumeration proves every repo strategy takes
+every offered free bet (the one divergence family, 5,5 free-double vs
+free-split, pays one lammer either way; even the A,A re-pair after splitting
+aces is taken). Under the lose-to-dealer-BJ rule P(lose) is peek/no-peek
+invariant: **exact 6-deck P(0) = 0.838228071**
+(`side_bets.exact_p0_pot_of_gold`, exact fractions, rules-driven). WoO
+publishes **0.833420** — a "random simulation" with no stated methodology —
+irreconcilable at any deck count. Closest reconstruction: their sim let
+lammers survive ten-up dealer naturals (ace-peek only). Their k≥2 rungs are
+convention-robust; their P(0)/P(1) are not.
+
+**Finding 2 — gate battery (10 × 2M csm rounds, RIDE_FREE_WOO + PT1,
+OptimalStrategy; seeds 15.7e9–16.6e9 step 1e8; `data/m10a_gate.py` /
+`m10a_verdict.py`):**
+- **G1 exact:** P(0) observed 0.838181 vs 0.838228071 → **z = −0.41 ✅** (the
+  tier-1 gate: sim == first-principles arithmetic).
+- **G3 convention-free published delta:** split-fives PT1 improvement
+  **+3.080% ± 0.185 vs WoO +3.019% → z = +0.33 ✅** — this one exercises the
+  entire 5,5 resplit/free-double tree, so the multi-token machinery is
+  validated against a published number despite Finding 1.
+- **G4:** farm's main-game cost −0.173% ± 0.048 vs WoO −0.15% → z −0.48 ✅
+  (and the normal arm's main edge −1.027% ± 0.034 re-confirms the M4
+  baseline on fresh seeds).
+- **G2 shape vs their table:** k=6 −0.9σ, k=7 +0.6σ (23 jackpots in 10M) ✅;
+  k=2 +2.8σ, k=3 **−7.8σ** (0.3713% vs 0.3866%, −4% relative), k=4 −2.4σ,
+  k=5 −2.0σ — a real shape disagreement beyond the BJ convention.
+- **G5 bridge:** measured −8.246% + 4·ΔP0 (+1.923%) = −6.323% vs their
+  −5.769%: closes 78%; the −0.55pp residual is exactly the k≥3 shape gap.
+  Their absolute table cannot be fully reconstructed under the stated rules;
+  our table is pinned by G1 + hand-level chain tests + G3.
+
+**The operative numbers (NV rules, six decks, csm comparator):**
+**PT1 −8.246% ± 0.128%** (what Silver Stack actually charges; the advertised
+5.77% is an artifact of their convention), POG-04 −8.249%, PT2 −7.071%,
+split-fives farm −5.166% ± 0.134%. Per-round sd ≈ 4.1 units. Every paytable
+variant prices by arithmetic on the banked token histogram (shards in
+`data/m10a_*.json`).
+
+**Consequences for M10b (the attack):** the composition signal must clear
+8.25%, not 5.77% — a materially higher bar (quad-Q cleared 3.24% only at
+deep pen; but the lammer signal is far stronger: corr(p_free_double,
+hilo_tc) = −0.937 with the payoff convex in exactly the events that
+negative-count shoes breed). The attack runs on the Potawatomi `RIDE_FREE`
+config at real pen with the Ride Free main toll charged at the negative
+counts where the side bet fires. Field status: the 6-lammer rung is
+felt-confirmed 300:1 (Matt, same day) → Potawatomi's paytable is PT1
+exactly; still unknown: side-bet max, resplit cap (assumed 4 hands).
+
+Seeds consumed: 15.7e9–16.6e9 (gate shards), 16.7e9/16.8e9 (test pins).
+**Next unused block: 16.9e9+.**
+
 ## E18 — Collapsing the card: the locked crouch15-2r (2 rungs, insure at max bet, walk line at zero)
 
 **Date:** 2026-07-18 · **Question (Matt, after drilling the E17 card):** the

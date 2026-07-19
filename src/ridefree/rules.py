@@ -75,6 +75,21 @@ class Rules:
     # three of a kind, matching Wizard of Odds' combination table).
     side_bet_21p3: tuple[tuple[str, float], ...] = ()
 
+    # Pot of Gold side bet (Galaxy Gaming; "Silver Stack" on Potawatomi's floor):
+    # staked BEFORE the deal, resolved at round end on the total number of free
+    # bets ("lammers") the player received this round — free splits plus free
+    # doubles, kept regardless of how each hand settles (NV rules of play,
+    # fetched 2026-07-18: win/lose/push all move the lammer to the Pot of Gold
+    # spot). Zero lammers loses the stake; a dealer blackjack therefore loses it
+    # automatically (peek ends the round before any free bet can exist), and so
+    # does a player natural. The paytable is data: entry [k-1] is the payout per
+    # unit for exactly k lammers; more lammers than rungs pays the top rung
+    # (unreachable at max_hands=4, where the maximum is 3 free splits + 4 free
+    # doubles = 7). Empty = bet not offered. The engine only asks a strategy
+    # that implements `bet_pot_of_gold(rules)`; no built-in strategy stakes it,
+    # so published-edge validation is unaffected.
+    side_bet_pot_of_gold: tuple[float, ...] = ()
+
     # Free Bet features (all empty/False = standard blackjack)
     free_double_totals: frozenset[int] = frozenset()  # two-card totals, e.g. {9, 10, 11}
     free_double_soft_allowed: bool = False  # if True, soft totals also qualify (unconfirmed at Potawatomi; standard Free Bet is hard-only)
@@ -100,6 +115,8 @@ class Rules:
         bad_cats = {c for c, _ in self.side_bet_21p3 if c not in valid_cats}
         if bad_cats:
             raise ValueError(f"side_bet_21p3 has unknown categories: {sorted(bad_cats)}")
+        if any(p < 0 for p in self.side_bet_pot_of_gold):
+            raise ValueError("side_bet_pot_of_gold payouts must be >= 0")
 
 
 # M2 validation targets: look up the exact Wizard of Odds house edge for precisely
@@ -139,3 +156,14 @@ PAYTABLE_21P3_9TO1 = (
 # 4 hands). Per WoO's rule-variation table, no-resplit-aces costs the player 0.08%,
 # so the Potawatomi RIDE_FREE preset's derived target is ~1.12%.
 RIDE_FREE_WOO = dataclasses.replace(RIDE_FREE, resplit_aces=True)
+
+# Pot of Gold paytables (payout per unit for 1, 2, ... 7 lammers). Published
+# six-deck house edges (Wizard of Odds Free Bet page, fetched 2026-07-18, on the
+# RIDE_FREE_WOO ruleset): Pay Table 1 = 5.77% under normal play, 2.75% when the
+# player free-splits 5s instead of doubling (which costs the main bet 0.15%);
+# Pay Table 2 = 4.64% / 1.48%. POG-04 is the Nevada rules-of-play filing's
+# variant of PT1 (6 lammers pay 299 instead of 300). Matt's read of Potawatomi's
+# "Silver Stack" rack card (2026-07-18) matches Pay Table 1 exactly.
+PAYTABLE_POG_1 = (3.0, 10.0, 30.0, 60.0, 100.0, 300.0, 1000.0)
+PAYTABLE_POG_2 = (3.0, 12.0, 30.0, 50.0, 100.0, 100.0, 100.0)
+PAYTABLE_POG_04 = (3.0, 10.0, 30.0, 60.0, 100.0, 299.0, 1000.0)

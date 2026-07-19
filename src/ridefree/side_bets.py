@@ -143,6 +143,74 @@ def ev_fracs_21p3(
     return _ev_from(combos, total, paytable)
 
 
+def exact_p0_pot_of_gold(rules) -> float:
+    """Exact P(Pot of Gold loses) — the strategy-independent tier-1 reference.
+
+    A round collects >=1 lammer iff the initial two player cards are free-bet
+    eligible under `rules` (free-split pair, or free-double two-card total,
+    hard-only unless the soft flag is on) AND the dealer has no blackjack —
+    and every strategy in the repo takes every offered free bet (the 5,5
+    free-double-vs-free-split choice yields one lammer either way), so P(0)
+    is pure dealing arithmetic. Because "all Pot of Gold wagers lose to a
+    dealer blackjack" (NV rules of play), P(lose) is identical under peek and
+    no-peek conventions: 1 - P(eligible) + P(eligible AND dealer natural).
+
+    Wizard of Odds' simulated table (fetched 2026-07-18) publishes
+    P(0) = 0.833420 for six decks — irreconcilable with this arithmetic under
+    the stated rules (exact: 0.838228); see docs/EXPERIMENTS.md E19 for the
+    reconciliation hypothesis (their sim appears to let lammers survive
+    ten-up dealer blackjacks).
+    """
+    from fractions import Fraction
+
+    copies = {r: (16 if r == 10 else 4) * rules.decks for r in range(1, 11)}
+    total = 52 * rules.decks
+
+    def p_seq(cards):
+        seen: dict[int, int] = {}
+        p = Fraction(1)
+        left = total
+        for c in cards:
+            p *= Fraction(copies[c] - seen.get(c, 0), left)
+            seen[c] = seen.get(c, 0) + 1
+            left -= 1
+        return p
+
+    def eligible(c1, c2):
+        if c1 == c2 and c1 in rules.free_split_ranks:
+            return True
+        soft = c1 == 1 or c2 == 1
+        if soft and not rules.free_double_soft_allowed:
+            return False
+        return (c1 + c2) in rules.free_double_totals
+
+    p_elig = Fraction(0)
+    p_elig_bj = Fraction(0)
+    for c1 in range(1, 11):
+        for c2 in range(1, 11):
+            if not eligible(c1, c2):
+                continue
+            p_elig += p_seq([c1, c2])
+            for up, hole in ((1, 10), (10, 1)):
+                p_elig_bj += p_seq([c1, c2, up, hole])
+    return float(1 - p_elig + p_elig_bj)
+
+
+def settle_pot_of_gold(
+    paytable: tuple[float, ...], tokens: int, stake: float
+) -> float:
+    """Profit of a staked Pot of Gold bet settled on `tokens` free-bet lammers.
+
+    Paytable entry [k-1] pays exactly k lammers; a count past the top rung pays
+    the top rung (data semantics — unreachable when max_hands caps lammers at
+    the rung count); zero lammers loses the stake. Rounds the player never acts
+    in (dealer blackjack, player natural) settle here as tokens=0, matching the
+    NV rules of play ("all Pot of Gold wagers lose to a dealer blackjack")."""
+    if tokens <= 0:
+        return -stake
+    return paytable[min(tokens, len(paytable)) - 1] * stake
+
+
 def settle_21p3(
     paytable: tuple[tuple[str, float], ...],
     cards: tuple[RawCard, RawCard, RawCard],

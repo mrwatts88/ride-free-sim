@@ -6,10 +6,64 @@ and the precisely-specified next step. Doc map at the bottom.
 **Current state in one line: all three research questions are ANSWERED and
 written up (Ride Free: dominated; 21+3: beatable, grind-scale; Dragon 7 +
 Panda 8: beatable, the strongest verdict — `docs/ARTICLE_EZBAC.md`); E16
-priced classic blackjack in real dollars; and the PLAYING CARD IS NOW LOCKED
+priced classic blackjack in real dollars; the PLAYING CARD IS LOCKED
 (E18, below): crouch15-2r, certified ≈ +$44/h ± 2 on ~$36k, drilled by the
-trainer web app. Remaining items are field checks on the felt and parked
-options below.**
+trainer web app; and M10 (below) turned Matt's "Silver Stack" recon find
+into the project's best per-bankroll verdict in one day: M10a gated the Pot
+of Gold engine and refuted the published table (real PT1 edge 8.25%, not
+5.77%); M10b proved the bet BEATABLE — TC ≤ −3 → +7.4%/unit on 11.7% of
+rounds, OOS-replicated → ~+$52/h on $38k at a $50 side max ($100 → $138/h
+on $56k). Everything now hangs on one felt read: the Silver Stack table
+max. Next: pen sensitivity, the human card, live verification.**
+
+## M10a DONE (2026-07-18, third session): Silver Stack = Pot of Gold, gated; WoO's table refuted on P(0)
+
+Matt's recon find (Silver Stack on the Ride Free tables, 3/10/30/60/100/300/
+1000 for 1–7 lammers) is Galaxy Gaming's **Pot of Gold Pay Table 1 verbatim**.
+Full story in **EXPERIMENTS E19**; the short version:
+
+- **Engine:** `Rules.side_bet_pot_of_gold` (PT1/PT2/POG-04 presets as data),
+  pre-deal `bet_pot_of_gold` hook, settled from the ledger's existing
+  `free_splits + free_doubles` — no cards, no RNG, deal sequence untouched
+  (brace-tested). `AlwaysPotOfGold`/`SplitFives` wrappers, token histogram in
+  Metrics, `cli sim --pog / --split-fives`. 292 tests green (21 new, incl. a
+  scripted 7-lammer chain and an exact-P(0) pin).
+- **The published table is impossible:** P(0 lammers) is strategy-free
+  dealing arithmetic (proved: every repo strategy takes every offered free
+  bet) = **0.838228071 exact** (`side_bets.exact_p0_pot_of_gold`); WoO's
+  simulated table says 0.833420. Gate battery therefore scores exact-P(0),
+  their convention-robust k≥2 shape, and their convention-FREE deltas.
+- **Gate (10 × 2M csm rounds, RIDE_FREE_WOO + PT1, seeds 15.7–16.6e9):**
+  P(0) z −0.41 ✅; split-fives delta +3.080% vs published +3.019% (z +0.33) ✅
+  — validates the whole resplit/token tree; farm main cost −0.173% vs −0.15%
+  ✅; main edge −1.027% ± 0.034 re-confirms M4 ✅; k=6/7 rungs match (23
+  jackpots in 10M) ✅; k=3 disagrees with their sim by −4% relative (their
+  table is unreconstructible under the stated rules — logged, not chased).
+- **Operative numbers (NV rules): PT1 −8.246% ± 0.128 (Silver Stack's real
+  cost), POG-04 −8.249, PT2 −7.071, split-fives farm −5.166.** Per-round sd
+  ≈ 4.1u. Histogram shards banked (`data/m10a_*.json`, pool via
+  `data/m10a_verdict.py`) — any paytable variant prices by arithmetic.
+
+**M10b DONE (same session): SILVER STACK IS BEATABLE — the project's best
+$/bankroll verdict, conditional on the side max (E20).** 20M cut_card
+rounds (pen .75 assumed), 5 in-sample + 5 out-of-sample shards: side EV per
+unit runs −4.4% (TC 0) → +7.1% (−3) → +19.5% (−6) → +45% (−12), monotone,
+z to +20; **t\* = −3 replicates OOS (+7.10 ± 0.42 vs +7.64 ± 0.45): trigger
+11.65% of rounds at +7.37% ± 0.31/unit.** Seated ledger ($15 main every
+round — toll charged per-TC, −2.53% inside the window): side $50 →
+**+$52/h, N0 487h, ~$38k**; side $100 → **+$138/h, N0 270h, ~$56k**; $25
+max → +$9/h (dead). Wong-in stronger still (needs entry policy). New
+machinery: `cli pogcurve/pogcombine` (side+main binned separately, ±12
+clamp), verdict `data/m10b_verdict.py`, shards `data/m10b_rf_p75_s*.json`.
+**Field status: 6-lammer rung felt-confirmed 300:1 → PT1 exactly. THE ONE
+NUMBER THAT NOW RULES EVERYTHING: the Silver Stack table max** ($25 kills
+it, $50+ beats every blackjack line we own). Also unknown: Ride Free
+table pen (assumed .75; tail is depth-fed), mid-shoe entry policy (wong
+mode only), resplit cap (assumed 4). **Next chunks (in order): pen
+.70/.80 sensitivity shards; the no-division human card (pivot-at-−3
+unbalanced count via the E17 search; hi-lo is provably not the optimal
+lammer count — headroom for a POG-specific EOR derivation); live
+verification of the literal card (E18 pattern); optics/heat note.**
 
 ## E18 DONE (2026-07-18): THE LOCKED CARD — crouch15-2r, certified live
 
@@ -62,8 +116,10 @@ Session-variance percentiles measured (15.6e9, 2M rounds, never-leave card):
 −$4,480, 47.6% of sessions lose, and the MEDIAN session touches −$1,182 at
 its low point (P10 low −$3,100). Expectation-setting numbers, in
 EXPERIMENTS E18b.
-**Next unused seed block: 15.7e9+** (14.9e9 wong depth, 15.0–15.5e9 E18b,
-15.6e9 session variance).
+Seed ledger through E18b: 14.9e9 wong depth, 15.0–15.5e9 E18b, 15.6e9
+session variance; M10a consumed 15.7–16.6e9 (gate shards) and 16.7/16.8e9
+(test pins); M10b consumed 16.9–17.8e9 (E20 curve shards). **Next unused
+seed block: 17.9e9+.**
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 
@@ -468,14 +524,27 @@ buys ~4pp on d7, Panda tail high-order; the two-count card is the human
 frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
 **Next unused block: 14.2e9+.**
 
-## NEXT STEPS (M8 research complete; field + polish items remain)
+## NEXT STEPS (M10 verdict in; field items now rule everything)
 
-1. **Field checks (Matt, at the felt — no rack-card homework left):** 21+3
-   flat 9:1 CONFIRMED on the floor (2026-07-17; progressive and "Top 3" also
-   present); sit-without-betting at baccarat CONFIRMED fine (2026-07-17).
-   Remaining, readable off the felt in a minute: the EZ table's Dragon/Panda
-   paytables (40:1/25:1 assumed), side-bet maxes, cut-card depth — and, only
-   if 21+3 is ever played, its pen/CSM/entry policy and H17/S17.
+0. **THE decisive field check (Matt, tomorrow 2026-07-19): the Silver Stack
+   table max on the Ride Free tables.** $25 → dead (+$9/h); $50 → +$52/h on
+   ~$38k; $100 → +$138/h on ~$56k (E20 ledger, pen .75 assumed). While
+   standing there, also read: the Ride Free tables' cut-card depth (pen
+   assumed .75 — the signal is depth-fed), whether mid-shoe side staking /
+   entry is unrestricted (wong mode), and the resplit cap (assumed 4 hands).
+   Matt's prior: many side bets cap at $100, wouldn't be surprised by $25.
+1. **M10 simulation chunks queued behind the felt read (in order):** pen
+   .70/.80 sensitivity shards (same pogcurve harness, fresh seeds 17.9e9+);
+   the no-division human card — a pivot-at-−3 unbalanced count via the E17
+   `search_unbalanced_level1` machinery, plus a POG-specific EOR derivation
+   (hi-lo is provably not the optimal lammer count); live verification of
+   the literal card incl. realized combined variance (E18 pattern — the
+   ledger's cov(main,side)=0 approximation gets replaced by measurement);
+   optics/heat note for the article (side-jamming at trash counts).
+2. **Older field checks (still open, lower stakes now):** the EZ table's
+   Dragon/Panda paytables (40:1/25:1 assumed), side-bet maxes, cut-card
+   depth; weekday blackjack pace (all crouch15 $/h assume 200 r/h heads-up);
+   only if 21+3 is ever played, its pen/CSM/entry policy.
 2. Optional realism passes if the field checks pass: visible-cards-only
    tracker (drop hole-card assumption — expect ~nil), full-table
    cards-per-round model, tiered-paytable re-derivation (pure configuration:
@@ -591,6 +660,13 @@ uv run python -m ridefree.cli ramp --rules h17 --arm ins \
     --ramp "-0.5:1,0.5:2,1.5:4,2.5:6,3.5:8"   # live bet-ramp simulator
 uv run python data/e16_ledger.py h17 p75      # the E16 cover-vs-money menu
 uv run python -m ridefree.trainer             # the crouch15 drill room (web app)
+uv run python -m ridefree.cli sim --rules ridefree_woo --shoe-mode csm \
+    --pog [--split-fives]                     # Pot of Gold always-bet comparator
+uv run python -u data/m10a_gate.py normal 15700000001 2000000  # gate shard
+uv run python data/m10a_verdict.py            # pool shards, score the battery
+uv run python -m ridefree.cli pogcurve --rounds 2000000 --seed S --json out.json
+uv run python -m ridefree.cli pogcombine data/m10b_rf_p75_s*.json
+uv run python data/m10b_verdict.py            # E20: threshold, OOS, ledger
 ```
 
 ## Open items
@@ -623,5 +699,8 @@ uv run python -m ridefree.trainer             # the crouch15 drill room (web app
   gates in `tests/test_trainer.py` / `test_trainer_server.py`; decision
   record in DESIGN.md.
 - `docs/STATUS.md` — this file. Update it at every session checkpoint.
-- `data/` — banked grid JSONs (E2, E3 shards; additive bin stats) and
-  `e12_verdict.py` (the E12 ledger arithmetic).
+- `data/` — banked grid JSONs (E2, E3 shards; additive bin stats),
+  `e12_verdict.py` (the E12 ledger arithmetic), `m10a_gate.py` /
+  `m10a_verdict.py` + `m10a_*.json` (the M10a token-histogram gate),
+  `m10b_verdict.py` + `m10b_rf_p75_s*.json` (the E20 attack bins — any
+  threshold/ramp/side-max reprices by arithmetic over these).

@@ -34,6 +34,13 @@ class Metrics:
     sb21p3_stake_total: float = 0.0
     sb21p3_profit_total: float = 0.0
     sb21p3_categories: dict[str, int] = field(default_factory=dict)
+    # Pot of Gold side bet (nonzero only when the strategy stakes it). Same
+    # convention again; the token histogram is the M10a gate's whole statistic —
+    # every paytable variant is priced from it by arithmetic.
+    pog_rounds: int = 0
+    pog_stake_total: float = 0.0
+    pog_profit_total: float = 0.0
+    pog_tokens: dict[int, int] = field(default_factory=dict)
     pairs_dealt: int = 0
     splits: int = 0
     doubles: int = 0
@@ -63,6 +70,13 @@ class Metrics:
             self.sb21p3_profit_total += result.sb21p3_profit
             key = result.sb21p3_category or "none"
             self.sb21p3_categories[key] = self.sb21p3_categories.get(key, 0) + 1
+        if result.pog_stake:
+            self.pog_rounds += 1
+            self.pog_stake_total += result.pog_stake
+            self.pog_profit_total += result.pog_profit
+            self.pog_tokens[result.pog_tokens] = (
+                self.pog_tokens.get(result.pog_tokens, 0) + 1
+            )
         if result.was_pair:
             self.pairs_dealt += 1
         if result.did_split:

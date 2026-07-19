@@ -257,3 +257,46 @@ Fuzzed in `tests/test_trainer.py` over thousands of random-play rounds.
 hole card until settlement, then counts it — exactly what a live counter sees,
 and the convention the E16/E17 pricing assumed (hole revealed before the next
 bet decision).
+
+## Decision record: Pot of Gold settles from the ledger it already keeps (M10, 2026-07-18)
+
+**What:** `Rules.side_bet_pot_of_gold` — a payout tuple indexed by lammer
+count (entry [k-1] pays exactly k lammers; counts past the top rung pay the
+top rung; empty = not offered; `PAYTABLE_POG_1/2/POG_04` presets). Staked
+strictly pre-deal via the optional hook `bet_pot_of_gold(rules)` (insurance/
+21+3 pattern: no built-in strategy stakes it, published-edge validation
+untouched); settled in `play_round` at round end as
+`settle_pot_of_gold(paytable, free_splits + free_doubles, stake)`.
+
+**Why no new mechanics:** the engine has tracked casino-funded wagers per
+hand since M3 (working rule 4) and already counts `free_splits`/`free_doubles`
+per round — the lammer count IS that sum. The bet consumes no cards and no
+RNG, so the deal sequence and every main-game decision are bit-identical with
+and without the stake (brace test in tests/test_pog.py). Settlement semantics
+from the NV rules-of-play filing (fetched 2026-07-18): the lammer is kept
+whether that hand wins, loses, or pushes; all Pot of Gold wagers lose to a
+dealer blackjack — which the peek path realizes automatically (0 lammers can
+exist when the round ends at the peek), and the player-natural path likewise.
+
+**Strategy convention, proved not assumed:** token distribution depends only
+on free-bet take/decline choices (lammers exist only at two-card decision
+points). Enumeration over every free-bet-eligible state
+(scratchpad, 2026-07-18) shows `OptimalStrategy` declines NO free bet — the
+lone divergence family is 5,5 (and post-split 5,5), where free-DOUBLE beats
+free-split by 15–30% of a bet on main-game EV, matching WoO's "normal
+strategy doubles fives" convention and their separate split-fives variant
+(`strategy.SplitFives` wrapper reproduces it: +3.0pp on the PoG edge for
+−0.15pp of main edge).
+
+**The published-table discrepancy (E19):** P(0 lammers) is strategy-free
+dealing arithmetic — `side_bets.exact_p0_pot_of_gold` (exact fractions,
+rules-driven) gives 0.838228071 for six decks, and is peek/no-peek invariant
+BECAUSE of the lose-to-dealer-BJ rule. WoO's simulated table publishes
+0.833420, irreconcilable under the stated rules at any deck count; every
+k>=2 rung of their table matches our sims. Reconciliation hypothesis with the
+arithmetic bridge (their sim appears to let lammers survive ten-up dealer
+naturals) is recorded in EXPERIMENTS E19; the M10a gate therefore scores
+exact-P(0), the k>=2 shape, the convention-free split-fives deltas, and the
+bridge — not blind agreement with a table our own arithmetic refutes. The
+real-rules PT1 house edge is ~7.7%, not the advertised 5.77% — the M10b
+attack must clear the honest number.

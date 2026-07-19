@@ -130,6 +130,67 @@ play refuted (Panda on Dragon triggers −4.7%/bet). Ledger
 bankroll; $25-cap scenario +$23/h on $20k.** ~4× the 21+3 hourly at half
 the N0, toll-free. M9 complete — cli: bacexact / bac / bacev / bactrack.
 
+## M10a — Pot of Gold ("Silver Stack") as configuration, validated before attacked
+
+Matt's recon (2026-07-18): Potawatomi's Ride Free tables carry a "Silver
+Stack" side bet — pays on the count of free-bet lammers collected per round;
+his rack-card read (3/10/30/60/100/300/1000 for 1–7) is Galaxy Gaming's Pot
+of Gold Pay Table 1 verbatim. Prior art: WoO prices PT1 at 5.77% (2.75% under
+a split-5s farm, which costs the main bet 0.15%); nobody has published a
+composition analysis — the same gap M8/M9 closed. Structurally promising:
+lammer rate = free doubles + free splits, whose count correlations are
+ALREADY measured in this repo (corr(p_free_double, hilo_tc) = −0.937,
+corr(p_pair, hilo_tc) = −0.724) and fire at NEGATIVE counts — dead rounds in
+every system we've built, on the opposite tell from counting.
+
+`Rules.side_bet_pot_of_gold` is a payout tuple indexed by lammer count (PT1 /
+PT2 / NV POG-04 presets); staked pre-deal via `bet_pot_of_gold(rules)`;
+settled at round end from the engine's existing `free_splits + free_doubles`
+counters, kept win-lose-or-push (NV rules of play); dealer blackjack and
+player naturals lose the stake with 0 lammers. Consumes no cards and no RNG —
+the deal sequence is untouched (brace test). `AlwaysPotOfGold` + `SplitFives`
+wrappers; `cli sim --pog / --split-fives`; token histogram in Metrics.
+
+**Gate (five parts — designed around a published-table discrepancy we PROVED,
+see E19):** exact dealing arithmetic gives P(0 lammers) = 0.838228071
+(`side_bets.exact_p0_pot_of_gold`, strategy-independent: enumeration-verified
+that every repo strategy takes every offered free bet; peek/no-peek
+equivalent under the lose-to-dealer-BJ rule), while WoO's simulated table
+says 0.833420 — irreconcilable with the stated rules under any deck count;
+their k≥2 rungs and their split-fives DELTAS are convention-robust, so:
+G1 sim P(0) vs exact; G2 rungs k=2..7 vs WoO; G3 split-fives PT1 delta vs
++3.0187pp; G4 split-fives main cost vs −0.15pp; G5 the reconciliation bridge
+(our edge + 4·ΔP0 must land on WoO's −5.7687%). 10 × 2M csm rounds, seeds
+15.7e9–16.6e9; verdict `data/m10a_verdict.py`.
+
+**PASSED (2026-07-18, same session):** G1 P(0) 0.838181 vs 0.838228071
+(z −0.41) ✅; G3 delta +3.080% ± 0.185 vs +3.019 (z +0.33) ✅ — exercises the
+full resplit/token tree; G4 −0.173% ± 0.048 vs −0.15 (z −0.48) ✅; main edge
+−1.027% ± 0.034 re-confirms M4 ✅; G2 k=6 −0.9σ / k=7 +0.6σ (23 jackpots in
+10M) ✅, k=2..5 record a −4%-relative k=3 disagreement with their
+unreconstructible sim (G5 bridge closes 78%; residual = the k≥3 shape) —
+logged in E19, not chased. **Operative NV-rules table (ours): PT1 −8.246%
+± 0.128, POG-04 −8.249, PT2 −7.071, split-fives −5.166.** 292 tests at
+gate time (294 after M10b machinery).
+
+## M10b — The attack ✅ (E20, 2026-07-18): BEATABLE — the best $/bankroll verdict yet
+
+**Answered same day: yes.** `cli pogcurve/pogcombine` (per-TC bins, side and
+main moments SEPARATE, ±12 clamp) over 20M cut_card rounds (pen .75 assumed),
+5 in-sample + 5 OOS shards: the side-EV curve is monotone, −4.4% at TC 0 →
++7.1% at −3 → +19.5% at −6 → +45% at −12 (z to +20); **t\* = −3 replicated
+out-of-sample (+7.10 ± 0.42 vs +7.64 ± 0.45) → trigger 11.65% of rounds at
++7.37% ± 0.31 per unit.** Ledger with the toll charged per-TC (main −2.53%
+inside the window): seated $15 main + side at TC ≤ −3 → **$50 side: +$52/h,
+N0 487h, ~$38k; $100 side: +$138/h, N0 270h, ~$56k; $25 side: +$9/h (toll
+eats it)**. Wong-in mode roughly doubles $/observed-hour but needs the
+mid-shoe entry policy. Verdict `data/m10b_verdict.py`; E20 in EXPERIMENTS.
+**Conditions: side max (THE decider), pen ≥ ~.75 on the Ride Free tables
+(unmeasured), 4-hand resplit assumed.** Remaining rungs before the felt:
+pen sensitivity shards, the no-division pivot-at-−3 human card (E17 search
+machinery; hi-lo is not the optimal lammer count — EOR headroom), live
+verification of the literal card (E18 pattern), optics note.
+
 Each milestone has a validation gate; don't advance until it passes.
 
 ## M0 — Scaffold ✅
