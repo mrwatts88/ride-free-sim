@@ -121,6 +121,20 @@ wrapper untouched), `run_pog_count_curves` (hilo bins == run_pog_curve,
 in-test); 299 tests green. Artifacts: `data/e22_card.py` (stage 1),
 `e22_run.py`/`e22_verdict.py` + `e22_eor_p75_s*.json`/`e22_cc_p75_s*.json`.
 
+**THE OPERATING DOCTRINE (confirmed with Matt, 2026-07-18 late session —
+the complete play in one paragraph):** count pog2 (A/T −1; 3/4/6/7 +1;
+RED 2s +1, black 2s nothing; 5/8/9 nothing; start each shoe at 24). Main
+bet: **table minimum every round** — the main is rent, never a bet; the
+RF positive end is dead (E22 step 0), so no count ever justifies raising
+it. Play the **Ride Free basic chart** (always take free doubles/splits;
+NOT the classic chart), no count deviations, no insurance. **At count ≤
+12: stake the side, and while the side is out split 5,5 instead of free-
+doubling** (the farm — the one playing deviation, unconditional at any
+side stake). If the placard ties side to main, raise the main to the
+required match ON TRIGGER ROUNDS ONLY, back to minimum the moment the
+side comes down. Side down → 5,5 takes the free double again. The main
+game is the toll; the side bet is the business.
+
 **Still unknown from the felt:** the Silver Stack side max AND whether
 the side is tied to the main bet, at what ratio (E21b: 1:1 costs ~25–30%
 of the hourly, 2:1 is the damaging one) — together these set the TIER:
@@ -771,6 +785,7 @@ uv run python -m ridefree.cli pogeor --split-fives --seed S --json out.json
 uv run python data/e22_card.py                # E22 stage 1: EORs, gate, search
 uv run python -u data/e22_run.py SEED 2000000 out.json  # E22 stage 2 shard
 uv run python data/e22_verdict.py             # E22: head-to-head, THE CARD
+uv run python data/e22_positive_end.py        # E22 step 0: RF positive end dead
 ```
 
 ## Open items

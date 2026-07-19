@@ -10,7 +10,7 @@ all-in-one count (raise mains at +TC, stake the side at −TC), or does a
 side-specialist win?
 
 **Step 0 — the positive end is DEAD on the Ride Free table (banked-bin
-arithmetic, scratchpad):** RF main EV doesn't cross zero until TC +5 (the
+arithmetic, `data/e22_positive_end.py`):** RF main EV doesn't cross zero until TC +5 (the
 dealer-22 push blunts ten-rich standing); the crouch-style ramp
 ($100/$150/$200 at +2/+3/+4) is **−$0.47/h** ON this table; $200-at-+4
 top-only makes +$7/h against the side's $69–275/h. **Fusion refuted by

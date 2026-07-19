@@ -185,11 +185,29 @@ inside the window): seated $15 main + side at TC ≤ −3 → **$50 side: +$52/h
 N0 487h, ~$38k; $100 side: +$138/h, N0 270h, ~$56k; $25 side: +$9/h (toll
 eats it)**. Wong-in mode roughly doubles $/observed-hour but needs the
 mid-shoe entry policy. Verdict `data/m10b_verdict.py`; E20 in EXPERIMENTS.
-**Conditions: side max (THE decider), pen ≥ ~.75 on the Ride Free tables
-(unmeasured), 4-hand resplit assumed.** Remaining rungs before the felt:
-pen sensitivity shards, the no-division pivot-at-−3 human card (E17 search
-machinery; hi-lo is not the optimal lammer count — EOR headroom), live
-verification of the literal card (E18 pattern), optics note.
+
+**Post-verdict rungs, all ✅ the same day (2026-07-18, late sessions):**
+- **E21 — the farm arm ✅**: SplitFives while the side is out is free by
+  measurement (per-bin breakeven side stake < $1); window side EV +7.37% →
+  **+11.78%/unit**, threshold widens to −2, the $25 max un-dies. Paired-CRN
+  arms on the E20 seeds re-validated the gate AND WoO's published deltas.
+- **E21b — the side ≤ main scenarios ✅** (banked-bin arithmetic): tied 1:1
+  → raise-on-trigger keeps 70–77% of the hourly (flat-matching dominated);
+  2:1 is the damaging tie. Optics bonus: main bumps at FALLING counts.
+- **E22 — the human card ✅**: POG side-EV EORs derived by regression
+  (gate: the same regression's main EORs reproduce E4a's calculator at
+  corr +0.9956); pivot-(−2) search winner **"pog2"** (A/T −1, 3/4/6/7 +1,
+  red 2s +1, 5/8/9 nothing) certified head-to-head on one card stream:
+  **106.6% of hi-lo-with-division** at its pivot rung, both placard
+  scenarios pick the same rung. Matt's "ultimate card" refuted three ways
+  (fusion / dual-trigger / Red-7 reuse — the RF positive end is dead and
+  the pivot mismatch costs 30–38%). **THE CARD: start 24, stake ≤ 12.**
+  Untied $25/$50/$100 → +$49/+$133/+$300/h on $17k/$24k/$41k.
+
+**Conditions: side max + side-tied-to-main (the two placard questions),
+pen ≥ ~.75 on the Ride Free tables (unmeasured), 4-hand resplit assumed.**
+Remaining rungs: live verification of the literal pog2 card (E18 pattern),
+pen re-run at the TRUE pen post-recon, trainer pog2 mode, optics note.
 
 Each milestone has a validation gate; don't advance until it passes.
 
