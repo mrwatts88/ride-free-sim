@@ -392,8 +392,9 @@ lammers) is strategy-free dealing arithmetic: ≥1 lammer iff the initial two
 cards are free-bet eligible (pair A–9, or non-pair hard 9/10/11) and the
 dealer has no natural — and enumeration proves every repo strategy takes
 every offered free bet (the one divergence family, 5,5 free-double vs
-free-split, pays one lammer either way; even the A,A re-pair after splitting
-aces is taken). Under the lose-to-dealer-BJ rule P(lose) is peek/no-peek
+free-split, banks its FIRST lammer either way — the split chain can add
+more, which moves mass among k ≥ 1 but never touches P(0); even the A,A
+re-pair after splitting aces is taken). Under the lose-to-dealer-BJ rule P(lose) is peek/no-peek
 invariant: **exact 6-deck P(0) = 0.838228071**
 (`side_bets.exact_p0_pot_of_gold`, exact fractions, rules-driven). WoO
 publishes **0.833420** — a "random simulation" with no stated methodology —

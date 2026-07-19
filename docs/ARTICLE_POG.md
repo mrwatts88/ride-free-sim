@@ -100,9 +100,10 @@ strategy at all. A round earns at least one lammer if and only if the
 initial two cards are free-bet eligible — any pair ace through nine, or a
 non-pair hard 9, 10, or 11 — and the dealer does not have blackjack. Every
 sensible strategy takes every offered free bet (we proved this holds for
-every strategy in the repository by enumeration; the one genuine choice, a
-pair of 5s that may either free-double or free-split, earns exactly one
-lammer either way). P(0) is therefore pure dealing arithmetic over the
+every strategy in the repository by enumeration; the one genuine choice —
+a pair of 5s, which may either free-double or free-split — banks its
+first lammer immediately under either action, so the divergence moves
+probability among the paying rungs but never in or out of zero). P(0) is therefore pure dealing arithmetic over the
 six-deck composition, computable in exact rational fractions:
 
 > **P(0 lammers) = 0.838228071…** (exact, six decks, lose-to-dealer-
