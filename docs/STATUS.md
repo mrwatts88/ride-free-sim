@@ -102,33 +102,39 @@ only ~1–2% of bank over honest EV-max — measured, no longer a hunch.
 **E25b (same day): MATT'S HONEST SPEC — bank ≤ $5k, walk ≤ 10%,
 ≥ $10/h — is INFEASIBLE seated-and-betting (walk ≤ 6.5% costs $16.3k at
 the $15 floor / $10.9k at $10 / ≈$8k at pen .80: the −2..−1 floor toll
-is a variance floor 2–3× the budget) but the SIT-OUT card passes all
-three with margin: $3.8k at +$10.4/h ($15 floor) or $3.2k at +$10.1/h
-($10 floor), 140 r/h, zero walking, betting ~36% of rounds from a kept
-seat.** The whole hobby now hangs on one felt question.
+is a variance floor 2–3× the budget). The SIT-OUT card passed all three
+numbers on paper ($3.2–3.8k at +$10/h, zero walking) but **MATT KILLED
+IT (same day): skipping hands while seated is too faux pas for a social
+table — not playable.** E25c then measured the walk lines' EVENT rates
+(the felt-feel his "walk ≤ 10%" is really about): ≤ −1 = 12 walks/h
+(fantasy); ≤ −2 = 4.8/h, 67% of shoes; ≤ −4 — the gentlest we own —
+= 1.9/h abandoning 36% of shoes, the exact walking load E18b already
+shelved as weekday-impractical, and still $10.9k. **M11 status: the
+spec is over-determined at pen .75 — the $10 floor played 90% of rounds
+alone consumes ~80% of the σ² budget that $10/h-on-$5k allows. No card
+we own, or can own, meets all three numbers at this game as played.**
 
-**Next chunks (E25b reordered — the felt now gates everything):**
-1. **THE decisive recon (Matt, next casino visit):** may a seated
-   player sit out hands and rejoin mid-shoe (house policy + dealer
-   practice at the $15 tables)? Secondary: weekday $10 tables? weekday
-   pace? If sit-out is allowed → the spec-passing card exists; then
-   chunk 2. If hostile → the resize-on-drawdown ladder is the one
-   honest lever left for a seated card (new machinery, real RoR
-   reduction, costs hourly when down).
-2. **OOS-certify the sit-out card as the LITERAL human card** (crisp
-   TC-threshold indexes from the E25 play list, the E18/E23 pattern;
-   closes the composition-vs-crisp gap, the additivity approximation,
-   and the play-level winner's curse in one run; next unused block
-   22.4e9+).
-3. **The walk-pivot count** (only if a walk shape revives): unbalanced
-   level-1 with pivot AT the walk line (imbalance −1 → pivot TC −1 →
-   the walk depth-EXACT). One new `countcurve` signal run.
-4. **PyPy throughput experiment** (Matt's "should we port to Rust?"
-   question, 2026-07-19 answer: not yet): the engine is pure stdlib —
-   PyPy could buy 5–15× for zero code changes, possibly bit-identical
-   (MT19937-compatible random). 30-minute experiment before any Rust
-   talk; Rust only if a question demands a scale PyPy can't reach
-   (decision record M7 still governs).
+**Next chunks (M11 near a verdict; Matt chooses whether to continue):**
+1. **The resize-on-drawdown ladder — the ONE remaining honest lever:**
+   drop stakes when the bank dips (real RoR reduction, unlike
+   quit-if-down which voids the RoR). Could plausibly make a ~$9–11k
+   static card behave like ~$5–6k effective. Needs new machinery (a
+   session simulator with dynamic stakes over banked bins, or live);
+   costs hourly when down. Build ONLY if Matt wants the hobby badly
+   enough at these numbers.
+2. **Spec-relaxation menu (no new work, just Matt's call):** the three
+   numbers ARE mutually satisfiable at ~20% RoR on $5k, or ~$8–9k at
+   5%, or ~$6–7/h on $5k; deep-pen table hunting buys ~×0.75 on any of
+   them. Alternatively: accept crouch15-2r economics (the certified
+   +$40–44/h on ~$36–40k) as the "when the bankroll exists" plan and
+   park the hobby question.
+3. **OOS-certify whatever card survives** as the LITERAL human card
+   (crisp TC indexes from the E25 play list; E18/E23 pattern; next
+   fresh seed base 22.5e9+).
+4. **PyPy throughput experiment** (Matt's Rust question, 2026-07-19:
+   not yet — engine is pure stdlib, PyPy could buy 5–15× free,
+   possibly bit-identical; 30 minutes, before any Rust talk; decision
+   record M7 still governs).
 
 ## E23 DONE (2026-07-19): the literal pog2 card CERTIFIED LIVE — and priced at the real felt
 

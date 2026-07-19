@@ -94,7 +94,29 @@ question: **may a seated player sit out hands and rejoin mid-shoe?**
 honest lever left for a seated card is a resize-on-drawdown ladder
 (genuine RoR reduction, unbuilt machinery, costs hourly when down).
 
-**Seeds:** 21.4–22.3e9 consumed. Next unused block: **22.4e9+**.
+**E25c (same day): the walk lines' EVENT rates — and the verdict on
+Matt's spec.** Matt killed the sit-out card on table-culture grounds
+(skipping hands seated = too faux pas), moving the question to walk
+lines. `data/e25c_walks.py` (1M played rounds per threshold, seed
+22400000001, paired stream, live re-seat semantics): **tc ≤ −1 fires
+12.1 walks/h (87% of shoes) — fantasy; ≤ −2: 4.8/h, 67% of shoes;
+≤ −3: 2.9/h, 51%; ≤ −4: 1.9/h, 36% of shoes, median exit round 32** —
+i.e. the gentlest line we own carries exactly the walking load
+(1.7–1.9/h, ~37% of shoes) Matt already shelved as weekday-impractical
+in E18b, and still costs $10.9k. **The spec ($5k, low walking, $10/h,
+5% RoR) is over-determined at pen .75, and the physics is one line:**
+$10/h at 200 r/h on $5k at 5% RoR allows σ ≈ $12.9/round total; a $10
+floor played 90+% of rounds contributes ≈ $11.6/round by itself (~80%
+of the σ² budget) before a single jump is placed — and the jumps that
+must overcome the floor's −$8–12/h toll blow the remainder several
+times over. Remaining honest levers, logged in STATUS: the
+resize-on-drawdown ladder (the one real candidate — new machinery),
+the deep-pen table (~×0.75), or consciously relaxing one of the three
+numbers (e.g. the constraint set IS satisfiable near ~20% RoR, or at
+~$8–9k, or at ~$6–7/h).
+
+**Seeds:** 21.4–22.3e9 consumed (E25); E25c consumed 22400000001.
+Next fresh base: **22.5e9+**.
 
 ## E24 — the hobby card: minimum bankroll that still clears $15/h (M11 opened)
 
