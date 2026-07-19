@@ -2,6 +2,54 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E23 — the literal pog2 card certified LIVE; priced at the real felt ($25 tied max, ~100 r/h, deep pen)
+
+**Date:** 2026-07-19 · **Question:** does the human card as written — pog2
+start 24, stake ≤ 12, split 5s only while the side is out, flat main, no
+insurance — reproduce the E22 binned prediction when played end to end on
+real shoes? And what does it earn at the felt constraints Matt's recon
+delivered the same day: **side max $25, side ≤ main (tied 1:1), pace ~100
+hands/h, pen ~.79–.833** (1 to 1.25 decks cut — deeper than the .75
+assumption)?
+
+**Method:** `data/e23_run.py` (the E18 pattern): a `PogCardPlayer` wraps
+`OptimalStrategy` — farms 5,5 and stakes the side ONLY on trigger rounds;
+the runner keeps the literal human RC (value tags + red-2 bump, IRC 24,
+stake at RC ≤ 12 ≡ the pivot-zeroed RC ≤ 0 rung). Records realized
+per-round main/side moments split staked/unstaked INCLUDING the main×side
+cross product — retiring the mixed-bin stitch, cov(main,side)=0, and the
+EV_OUT constant in one run. 10 × 2M rounds, RIDE_FREE + PT1 cut_card:
+pen .75 seeds 20.4–20.8e9, pen .8333 seeds 20.9–21.3e9. Verdict:
+`data/e23_verdict.py`.
+
+**Findings (10M rounds per pen):**
+- **GATE 1 PASS:** staked 16.49% of rounds (predicted 16.5%), side EV
+  **+10.39% ± 0.39/unit vs the E22 bin prediction +10.13% (z +0.66)** —
+  the binned pipeline and the literal card agree end to end.
+- **GATE 2 PASS:** unstaked main −0.946% ± 0.037 vs the EV_OUT −0.95%
+  approximation (z +0.11). Window main (farming) −2.14%.
+- **The retired approximation was conservative:** realized
+  cov(main, side | staked) = **+0.72 u²** — positive (a farm split
+  doubles the main exposure exactly when a lammer lands), so prior
+  ledgers slightly UNDERstated variance; realized sd ≈ $53.7–56.5/round
+  at $15/$25 stakes. Token histogram healthy out to the 7-lammer jackpot
+  (7 in 1.65M staked rounds).
+- **Deep pen pays:** pen .8333 → staked **18.59%** of rounds at
+  **+11.18% ± 0.36/unit** (the signal is depth-fed: both frequency AND
+  quality rise). Rounds/shoe 42.5 → 47.1.
+- **THE OPERATIVE LEDGER (side tied ≤ main, max $25, 100 r/h, $15 main
+  otherwise — raise-on-trigger):** pen .75 → **+$22.13 ± 1.74/h, bank
+  ~$20.4k**; pen .8333 → **+$30.20 ± 1.83/h, N0 367h, bank ~$16.6k (5%
+  RoR)**. The observed .79–.833 felt brackets to **≈ +$26–30/h**. Flat
+  $15/$15 (never raising) ≈ +$13.5/h — the raise earns its keep. If the
+  tie were ever lifted: untied $25 → +$25.67 (.75) / +$34.33/h (.8333).
+- Context: half the pace halved the old headline, deep pen bought ~40%
+  of it back. ~+$30/h on a $17k bank at $25 stakes is bankroll-efficient
+  (compare crouch15-2r: +$40–44/h on ~$36–40k at 200 r/h heads-up — a
+  pace assumption weekdays may not deliver either).
+
+**Seeds:** 20.4–21.3e9 consumed. Next unused block: **21.4e9+**.
+
 ## E22b — Matt's simple variants: "hi-lo-57" TIES the pog2 card (whole tags, no gadget); KO is dead (35%)
 
 **Date:** 2026-07-18 · **Question (Matt):** can a simpler, more transferable

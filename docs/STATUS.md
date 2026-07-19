@@ -24,8 +24,32 @@ fusion, dual-trigger, and Red-7-reuse ALL lose to the specialist. E22b
 then certified Matt's simplification **"hi-lo-57"** (hi-lo with the 5
 and 7 swapped; start 10, stake ≤ 5) as a statistical TIE with pog2 —
 the practicality pick — while his KO variant died (35%). The felt read
-(side max, tie rule, pen, entry) sets the tier. Next: live verification
-of the literal card, pen-at-true-pen after recon.**
+LANDED (2026-07-19): $25 side max, TIED (side ≤ main), pen ~.79–.833,
+~100 r/h, split rules = the RIDE_FREE preset verbatim — and **E23
+certified the literal card live at both pens (both gates pass): the
+operating number is ≈ +$26–30/h on ~$16.6k at 5% RoR**
+(raise-on-trigger $15→$25). Next: trainer pog2 mode, optics note.**
+
+## E23 DONE (2026-07-19): the literal pog2 card CERTIFIED LIVE — and priced at the real felt
+
+**Both gates pass on 10M live rounds per pen** (`data/e23_run.py` /
+`e23_verdict.py`, seeds 20.4–21.3e9): the literal card (start 24, stake
+≤ 12, farm only while the side is out) staked 16.49% of rounds at side
+**+10.39% ± 0.39/unit vs the E22 bin prediction +10.13% (z +0.66)**;
+unstaked main −0.946% vs the EV_OUT −0.95% approximation (z +0.11).
+Realized cov(main, side | staked) = **+0.72 u²** (positive — prior
+ledgers slightly understated variance; now measured, approximations
+retired). Deep pen pays double: pen .8333 → **18.59% staked at
++11.18%/unit** (frequency AND quality rise; the signal is depth-fed).
+
+**THE OPERATING NUMBER (felt-true: side ≤ main, $25 max, 100 r/h,
+raise-on-trigger, pen .8333): +$30.20 ± 1.83/h, N0 367h, ~$16.6k bank
+at 5% RoR** (pen .75: +$22.13/h on $20.4k; the observed .79–.833
+brackets ≈ +$26–30/h). Flat $15/$15 ≈ +$13.5/h — raising to $25 on
+trigger earns its keep. Untied-world numbers (if the tie is ever
+lifted): $25 → +$25.67/.75 pen, +$34.33/h/.8333. Realized sd ≈
+$56/round; the 7-lammer jackpot landed 7 times in 1.65M staked rounds
+(histogram healthy to the top rung). Full entry: EXPERIMENTS E23.
 
 ## M10a DONE (2026-07-18, third session): Silver Stack = Pot of Gold, gated; WoO's table refuted on P(0)
 
@@ -161,24 +185,32 @@ it. Play the **Ride Free basic chart** (always take free doubles/splits;
 NOT the classic chart), no count deviations, no insurance. **At count ≤
 12: stake the side, and while the side is out split 5,5 instead of free-
 doubling** (the farm — the one playing deviation, unconditional at any
-side stake). If the placard ties side to main, raise the main to the
-required match ON TRIGGER ROUNDS ONLY, back to minimum the moment the
-side comes down. Side down → 5,5 takes the free double again. The main
-game is the toll; the side bet is the business.
+side stake). The tie is CONFIRMED (2026-07-19: side ≤ main, max $25),
+so the play is: **main $15 outside; on trigger, main $25 + side $25;
+back to $15 the moment the side comes down.** Side down → 5,5 takes the
+free double again. The main game is the toll; the side bet is the
+business. Felt-true expectation (E23, pen .8333, 100 r/h): **≈ +$30/h
+on ~$16.6k.**
 
-**Still unknown from the felt:** the Silver Stack side max AND whether
-the side is tied to the main bet, at what ratio (E21b: 1:1 costs ~25–30%
-of the hourly, 2:1 is the damaging one) — together these set the TIER:
-$25 ≈ crouch15 on half bankroll / $50+ dominates, no longer
-life-or-death; Ride Free table pen (assumed .75; tail is depth-fed),
-mid-shoe entry policy (wong mode only), resplit cap (assumed 4; farming
-leans on it — a 2-hand cap would trim the farm delta). **Next chunks (in
-order): pen .70/.80 sensitivity shards (fresh seeds 17.9e9+); the
-no-division human card (pivot-at-−2 unbalanced count via the E17 search;
-hi-lo is provably not the optimal lammer count — headroom for a
-POG-specific EOR derivation); live verification of the literal card (E18
-pattern — also retires the mixed-bin stitch and cov(main,side)=0
-approximations and measures realized farm variance); optics/heat note.**
+**FELT RECON LANDED (Matt, 2026-07-19):** the Silver Stack **side max is
+$25** — the tier question is answered at the bottom rung; **penetration
+is DEEP: one shoe cut ~1 deck (pen ≈ .833 = 5/6), the next ~1.25 decks
+(≈ .79)** — far better than the .75 assumption, and the signal is
+depth-fed; **pace is ~100 hands/h** (the game is slow — extra
+procedure), half the 200 r/h the ledgers assumed; **split rule
+confirmed: aces split once only to 2 hands, one card each; every other
+pair resplits to 4** — this is EXACTLY the `RIDE_FREE` preset
+(`resplit_aces=False, hit_split_aces=False, max_hands=4`), and every
+attack shard (E20/E21/E22/E22b) already ran on it: nothing re-runs.
+**Primary card re-confirmed pog2** on Matt's stated reason — its pivot
+rung is pen-independent, while hi-lo-57's fixed rung was tuned at pen
+.75 and the felt pen varies dealer to dealer. **Second recon answer
+(same day): the side IS TIED — side bet ≤ main bet, 1:1** → the play is
+E21b's raise-on-trigger (main $15 outside, main AND side $25 in the
+window; flat $15/$15 measures ~+$13.5/h, the raise is worth it, and it
+moves the main when the count FALLS — anti-correlated with hi-lo, cover
+not tell). Still unknown from the felt: mid-shoe entry policy (wong
+mode only). **E23 DONE — see below.**
 
 ## E18 DONE (2026-07-18): THE LOCKED CARD — crouch15-2r, certified live
 
@@ -236,8 +268,9 @@ session variance; M10a consumed 15.7–16.6e9 (gate shards) and 16.7/16.8e9
 (test pins); M10b consumed 16.9–17.8e9 (E20 curve shards; E21 farm arm
 REUSED the same block deliberately — paired CRN arms, not a replication);
 E22 consumed 17.9–18.3e9 (EOR shards) and 18.4–19.3e9 (count-curve
-shards); E22b consumed 19.4–20.3e9 (simple-count head-to-head). **Next
-unused seed block: 20.4e9+.**
+shards); E22b consumed 19.4–20.3e9 (simple-count head-to-head); E23
+consumed 20.4–21.3e9 (live-card certification, both pens). **Next
+unused seed block: 21.4e9+.**
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 
@@ -644,20 +677,13 @@ frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
 
 ## NEXT STEPS (M10 verdict in; field items now rule everything)
 
-0. **THE decisive field check (Matt, tomorrow 2026-07-19): the Silver Stack
-   table max on the Ride Free tables.** Farm-mixed ledger (E21, pen .75
-   assumed): $25 → **+$34–41/h on $17–22k** (≈ crouch15's hourly on half
-   the bankroll — no longer dead); $50 → **+$103–117/h on $21–29.5k**;
-   $100 → **+$240–268/h on $35–50.5k** (ranges = locked t−3 vs farm-era
-   t−2). **Second placard question (E21b): is the side TIED to the main
-   bet?** Untied → numbers above; tied 1:1 → raise-on-trigger keeps
-   70–77% ($25/$50/$100 → +$32/+$84/+$188/h on $30k/$43k/$47k); tied 2:1
-   → $25 dead, $100 +$127/h on $79k. While standing there, also read: the
-   Ride Free tables' cut-card depth (pen assumed .75 — the signal is
-   depth-fed), whether mid-shoe side staking / entry is unrestricted
-   (wong mode), and the resplit cap (assumed 4 hands; the farm leans on
-   it). Matt's prior: many side bets cap at $100, wouldn't be surprised
-   by $25.
+0. ~~THE decisive field check~~ **DONE (Matt, 2026-07-19): side max $25**
+   (his prior was right); **pen ≈ .79–.833** (1 to 1.25 decks cut — much
+   deeper than the .75 assumption); **pace ≈ 100 hands/h**; **resplit
+   rules confirmed = the RIDE_FREE preset** (aces once to 2 hands one
+   card each, others to 4 — the farm's resplit assumption holds). Still
+   open from the felt: side-tied-to-main (E21b scenarios priced),
+   mid-shoe entry policy.
 1. **M10 simulation chunks (reordered 2026-07-18 late session; the card
    came first on Matt's call):** ~~the farm arm~~ **DONE — E21**; ~~the
    no-division human card~~ **DONE — E22 (the pog2 card, beats the
@@ -820,6 +846,8 @@ uv run python data/e22_verdict.py             # E22: head-to-head, THE CARD
 uv run python data/e22_positive_end.py        # E22 step 0: RF positive end dead
 uv run python -u data/e22b_run.py SEED 2000000 out.json  # E22b shard
 uv run python data/e22b_verdict.py            # E22b: hi-lo-57 vs pog2 vs KO
+uv run python -u data/e23_run.py SEED 2000000 out.json 0.8333  # E23 live shard
+uv run python data/e23_verdict.py             # E23: live card gates + ledger
 ```
 
 ## Open items
