@@ -2,6 +2,54 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E21b — the side ≤ main scenario: the attack survives matching at ~70–77% of the hourly (banked-bin arithmetic, no new sims)
+
+**Date:** 2026-07-18 · **Question (Matt):** E20/E21 stake the side over a
+flat $15 main — but what if the placard ties the side bet to the main wager
+(side ≤ main, or the insurance-style side ≤ main/2)?
+
+**Method:** `data/m10b_matched_verdict.py`, pure arithmetic over the banked
+E20/E21 bins (both arms carry per-bin main AND side moments). The correct
+form under the constraint is **raise-on-trigger**: main stays at the $15 min
+outside the window and is raised to side/ratio only on trigger rounds
+(farming stays on — its main cost is ~40× smaller than its side gain at any
+qualifying stake). Per-stake threshold re-chosen under the constraint with
+the E20 ceremony (s01–05 choose by seated hourly, B-half scores blind);
+variance upgraded to measured per-bin main second moments, window/outside
+split, cov(main, side) = 0 as before.
+
+**Findings (seated, 200 r/h; net / N0 / bank at the A-chosen t\*):**
+
+| side | unconstrained (E21) | side ≤ main (1:1) | side ≤ main/2 |
+|---|---|---|---|
+| $25 | +$41/h, 362h, $22.3k (t −2) | **+$32/h, 630h, $29.9k** (t −2) | +$13/h, 2733h, $53k (t −3) |
+| $50 | +$117/h, 168h, $29.5k (t −2) | **+$84/h, 343h, $43.1k** (t −2) | +$51/h, 657h, $50.2k (t −3) |
+| $100 | +$268/h, 126h, $50.5k (t −2) | **+$188/h, 166h, $46.9k** (t −3) | +$127/h, 416h, $79.1k (t −3) |
+
+- **1:1 matching keeps 70–77% of the hourly** at ~1.3–1.5× the bankroll
+  (mid stakes); at $100 the threshold tightens back to −3 (the −2 bin's
+  +1.54% side can't carry a $100 main at −2.3%) and the bankroll actually
+  DIPS below unconstrained ($46.9k vs $50.5k — smaller window, less side
+  variance). Verdict order vs our other lines is unchanged.
+- **2:1 (side ≤ half main) is the damaging version:** $25 effectively dead
+  (N0 2,733h), $50 thin, $100 alive but at $79k. Still beats E20-no-farm
+  at equal stakes.
+- **Flat-matching is dominated and must not be played** (main = side every
+  round: +$12/$23/$47/h) — the toll scales with the side. Raise-on-trigger
+  only.
+- **Wong-in matched (1:1):** +$53/$107/$213 per hour per 200 observed
+  rounds at $25/$50/$100 (t −3).
+- **Optics bonus, on record:** raise-on-trigger means the main bet goes UP
+  when the count goes DOWN — anti-correlated with hi-lo, the opposite of
+  the counter's tell surveillance screens for. The cost of the constraint
+  buys real camouflage.
+
+**Felt read addition:** the Silver Stack placard/dealer question is now
+two-part — the side MAX, and whether the side is TIED to the main bet
+(and at what ratio). Consistency checks: the script's unconstrained rows
+reproduce the E21 ledger to the dime, and seated window net/round equals
+the wong-in figure in every mode. Seeds: none (arithmetic only).
+
 ## E21 — the farm arm: split 5s while the side is out → window EV +7.37% → +11.78%; the $25 max un-dies; t\* widens to −2
 
 **Date:** 2026-07-18 · **Question (Matt's catch, queued in E20):** E20's curve

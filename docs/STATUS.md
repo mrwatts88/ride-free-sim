@@ -80,9 +80,22 @@ t=−2 maximizes $/h. Machinery: `arm` tag through curve JSONs (mixed-arm
 pooling refused; banked pre-tag dumps load as normal), 295 tests green.
 Arithmetic: `data/m10b_farm_verdict.py` over `m10b_farm_p75_s*.json`.
 
-**Still unknown from the felt:** the Silver Stack side max (now sets the
-TIER: $25 ≈ crouch15 on half bankroll / $50+ dominates — no longer
-life-or-death), Ride Free table pen (assumed .75; tail is depth-fed),
+**E21b (same day, Matt's question): the side ≤ main scenario — priced
+from banked bins, no new sims (`data/m10b_matched_verdict.py`).** If the
+placard ties the side to the main wager, the play becomes
+**raise-on-trigger** (main $15 outside, raised to match only in the
+window; flat-matching is dominated: +$12–47/h). 1:1 matching keeps
+70–77% of the hourly: **$25 → +$32/h on $29.9k; $50 → +$84/h on $43.1k;
+$100 → +$188/h on $46.9k (t\* tightens back to −3 at $100)**. The
+insurance-style 2:1 hurts: $25 dead, $50 +$51/h, $100 +$127/h on $79k.
+Optics bonus on record: raise-on-trigger bumps the main when the count
+FALLS — anti-correlated with hi-lo, the opposite of the counter's tell.
+
+**Still unknown from the felt:** the Silver Stack side max AND whether
+the side is tied to the main bet, at what ratio (E21b: 1:1 costs ~25–30%
+of the hourly, 2:1 is the damaging one) — together these set the TIER:
+$25 ≈ crouch15 on half bankroll / $50+ dominates, no longer
+life-or-death; Ride Free table pen (assumed .75; tail is depth-fed),
 mid-shoe entry policy (wong mode only), resplit cap (assumed 4; farming
 leans on it — a 2-hand cap would trim the farm delta). **Next chunks (in
 order): pen .70/.80 sensitivity shards (fresh seeds 17.9e9+); the
@@ -559,11 +572,15 @@ frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
    assumed): $25 → **+$34–41/h on $17–22k** (≈ crouch15's hourly on half
    the bankroll — no longer dead); $50 → **+$103–117/h on $21–29.5k**;
    $100 → **+$240–268/h on $35–50.5k** (ranges = locked t−3 vs farm-era
-   t−2). While standing there, also read: the Ride Free tables' cut-card
-   depth (pen assumed .75 — the signal is depth-fed), whether mid-shoe side
-   staking / entry is unrestricted (wong mode), and the resplit cap
-   (assumed 4 hands; the farm leans on it). Matt's prior: many side bets
-   cap at $100, wouldn't be surprised by $25.
+   t−2). **Second placard question (E21b): is the side TIED to the main
+   bet?** Untied → numbers above; tied 1:1 → raise-on-trigger keeps
+   70–77% ($25/$50/$100 → +$32/+$84/+$188/h on $30k/$43k/$47k); tied 2:1
+   → $25 dead, $100 +$127/h on $79k. While standing there, also read: the
+   Ride Free tables' cut-card depth (pen assumed .75 — the signal is
+   depth-fed), whether mid-shoe side staking / entry is unrestricted
+   (wong mode), and the resplit cap (assumed 4 hands; the farm leans on
+   it). Matt's prior: many side bets cap at $100, wouldn't be surprised
+   by $25.
 1. **M10 simulation chunks queued behind the felt read (in order):** pen
    .70/.80 sensitivity shards (same pogcurve harness, fresh seeds 17.9e9+);
    ~~the farm arm~~ **DONE — E21** (window +11.78%/unit, t\* widened to −2,
@@ -714,6 +731,7 @@ uv run python -m ridefree.cli pogcurve --split-fives --seed S --json out.json
 uv run python -m ridefree.cli pogcombine data/m10b_rf_p75_s*.json
 uv run python data/m10b_verdict.py            # E20: threshold, OOS, ledger
 uv run python data/m10b_farm_verdict.py       # E21: paired deltas, farm ledger
+uv run python data/m10b_matched_verdict.py    # E21b: side<=main scenarios
 ```
 
 ## Open items
