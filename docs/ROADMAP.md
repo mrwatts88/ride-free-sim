@@ -55,7 +55,7 @@ evidence of engineering quality). The engine gives synthetic ground truth:
 plant known structure, deal through a shuffle model, measure what any human-
 constrained scheme recovers — non-enumerable room with an enumerable gate.
 
-### M12a — The synthetic shuffle lab + the Diaconis reproduction gate
+### M12a — The synthetic shuffle lab + the Diaconis reproduction gate ✅ (E26, 2026-07-19)
 
 Shuffle procedures become data in the doctrine's spirit (a `Shuffle` model the
 `Shoe` composes — riffle with a riffle-quality parameter, the Diaconis
@@ -70,6 +70,19 @@ sampling error; two passes must move both toward uniform (their fix). No
 attack work until this reproduces. Deliverable: the measurement framework
 (mutual information / guessing-advantage of an input-aware observer vs. the
 shuffle output) validated against known truth.
+
+**GATE PASSED (E26; `shuffle.py` + `forensics.py`, decision record in
+DESIGN.md; 19 new tests, 326 green).** The paper was fetched and the gate
+upgraded from the remembered headline to the published tables: DFH Table 1
+distances reproduced EXACTLY (12 shelf counts × TV/sep/l∞, zero sampling
+error); Table 2 guessing sweep m=1..64 reproduced within MC error (m=10:
+9.290 vs 9.3 — the "9.5" was the abstract's rounding); color changes
+17.196 ± 1.838 vs 17 ± 1.83; samplers z-gated against the exact class laws
+(worst |z| 2.30); Cor 4.2 two-pass ≡ 200-shelf confirmed live and the
+fix's residual measured (+0.021 ± 0.005 cards above chance); Bayer–
+Diaconis seven-shuffles 0.3341 vs 0.334 for the riffle arm. Key M12b
+input: one-pass guessing advantage +4.75 cards/52 (2.05× chance), decaying
+to 0.02 by two passes — the exploitable regime is single-pass/weak mixing.
 
 ### M12b — Conversion to a betting edge (two payoff arms)
 

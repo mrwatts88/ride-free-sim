@@ -275,7 +275,12 @@ pages) and labeled VERIFIED / REPORTED / LORE in the raw dumps. Distilled:
   changes 17 vs. 26 uniform. **Fix: run it twice** (≈ 200-shelf ≈ 8–9
   riffles). Manufacturer president: *"We are not pleased with your
   conclusions, but we believe them."* Still an active math topic (Ottolini
-  & Chen 2024 prove a cutoff at (5/4)·log₂₁₀ n).
+  & Chen 2024 prove a cutoff at (5/4)·log₂₁₀ n). (Precision note from the
+  M12a build, 2026-07-19: the "9½" is the intro's rounding — the paper's
+  own Table 2 Monte Carlo says **mean 9.3, variance 4.7** under the
+  conjectured-optimal strategy, Table 1 gives exact TV/sep/l∞ per shelf
+  count, and Corollary 4.2 makes two passes EXACTLY a 200-shelf machine.
+  E26 gates on the tables, not the abstract.)
 - **THE SOBERING FINDING — the flagships appear to have absorbed the
   lesson.** MD3 does **seven** full riffles, explicitly citing Diaconis.
   IOActive's 2023 teardown ("Shuffle Up and Deal," read in full) found the

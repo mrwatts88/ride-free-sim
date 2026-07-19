@@ -337,3 +337,43 @@ P(BJ|ace) vs first principles (verdict script). Known blur on record:
 later same-round divergences ride along with the first (exactly how a
 card of cells is played); policy effects compose additively in (μ, M2);
 the chosen card's live OOS certification plays the real combined policy.
+
+## Decision record: shuffle procedures as data the Shoe composes (M12a, 2026-07-19)
+
+**What:** `shuffle.py` — a `Shuffle` model is an immutable dataclass with one
+method, `permute(stack, rng) -> list`: `stack` is the pre-shuffle order (top
+first), `rng` a seeded `random.Random` supplying ALL randomness, and each
+pass draws a content-independent number of variates, so `(seed, stack,
+shuffle)` replays exactly (working rule 3 extended to paradigm 2). Models:
+`UniformShuffle` (the paradigm-1 null), `ShelfShuffle(shelves, passes)` (the
+Diaconis/Fulman/Holmes machine to its published spec: deal from the BOTTOM
+of the stack, uniform shelf, top-or-under at 1/2, unload in shelf order —
+unload order is distributionally irrelevant because shelf choices are i.i.d.),
+`RiffleShuffle(piles, passes)` (GSR a-shuffle: multinomial cut, uniform
+interleave; `piles`/`passes` are the quality knobs, a-then-b == ab), and
+`ComposedShuffle(stages)`. `Shoe` gained keyword-only `shuffle`/`stack`
+(default None/None = the historical Fisher–Yates path, asserted
+BYTE-IDENTICAL to explicit `UniformShuffle` in tests — zero validation
+transfer lost) and `raw_order()` (the full order, dealt + undealt, i.e. the
+successor shoe's pre-shuffle stack for inter-shoe forensics).
+
+**Why models permute abstract stacks, not cards:** the forensic instruments
+(guessing, color changes, class histograms) run on position labels 1..n with
+zero engine dependency, and the SAME model object drives a 416-card `Shoe`;
+one implementation, validated once (working rule 1's "variants are
+configurations" applied to physics). Dealer-clumpiness riffles and full hand
+procedures (wash/strip/box) are deferred to M12b's hand-procedure modeling —
+they compose from these primitives or land beside them as new dataclasses.
+
+**The measurement layer:** `forensics.py` holds exact arithmetic (valley /
+Eulerian class counts; DFH Theorem 3.1 and Bayer–Diaconis class
+probabilities as `Fraction`s; exact TV/sep/l∞) and seeded Monte Carlo
+instruments (`guessing_experiment` with the pluggable guesser protocol —
+`ShelfGuesser` is DFH's conjectured-optimal strategy verbatim, and M12b's
+input-aware observers plug in as new guessers; `color_change_experiment`;
+`valley_histogram` / `rising_sequence_histogram`). The load-bearing link is
+sampler-vs-closed-form: empirical class occupancies are z-gated against the
+exact laws, so the physical simulation and the arithmetic certify each other
+before any attack work (the paradigm-2 doctrine's "synthetic ground truth
+first"). Gates in tests/test_shuffle.py; the precision battery is E26
+(`data/e26_shelf_gate.py`).

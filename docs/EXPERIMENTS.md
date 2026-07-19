@@ -2,6 +2,71 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E26 — M12a: the synthetic shuffle lab reproduces Diaconis/Fulman/Holmes (paradigm 2 opens in code)
+
+**Date:** 2026-07-19 · **Question:** build the M12a lab — shuffle procedures
+as data the `Shoe` composes — and gate it hard on the published
+shelf-shuffler numbers before any attack work (ROADMAP M12a; the paradigm-2
+doctrine's "synthetic ground truth first").
+
+**Machinery (new; decision record in DESIGN.md):** `shuffle.py` —
+`UniformShuffle` / `ShelfShuffle(shelves, passes)` / `RiffleShuffle(piles,
+passes)` (GSR a-shuffle) / `ComposedShuffle`, immutable dataclasses with
+`permute(stack, rng)`, content-independent rng draws → exact replay under
+seed; `forensics.py` — exact class laws as `Fraction`s (Warren–Seneta valley
+counts, DFH Theorem 3.1, Eulerian counts, the Bayer–Diaconis a-shuffle law,
+exact TV/sep/l∞) plus seeded instruments (guessing-with-feedback with DFH's
+conjectured-optimal `ShelfGuesser`, pluggable for M12b observers; color
+changes; valley/rising-sequence histograms). `Shoe(…, shuffle=, stack=)`
+composes any model over any pre-shuffle order (default byte-identical to
+the historical uniform path — asserted in tests) and `raw_order()` exposes
+the full order as the successor shoe's stack. 326 tests green (19 new).
+
+**Source pinned:** arXiv:1107.2961v2 (Ann. Appl. Probab. 23(4) 2013)
+fetched and read in full this session. The "≈9.5/52" the strategy docs
+carried was the abstract's rounding — the paper's Table 2 Monte Carlo is
+**9.3 / var 4.7**; all gates pin the tables, not the abstract.
+
+**Gates (`data/e26_shelf_gate.py`, 100k trials per instrument, 200k for
+histograms; in-test pins 20k at seeds 22.4e9; ALL PASS):**
+- **Exact, zero sampling error:** DFH Table 1 reproduced to every printed
+  digit — 12 shelf counts × (TV, sep, l∞), incl. l∞ = 45,118 at m=25 (their
+  printed "∞" rows compute to 1.7e6–1.4e13, i.e. "effectively infinite" was
+  a display choice); BD seven-shuffles TV(52, 2⁷) = 0.3341 vs published
+  0.334, full k=1..10 canon reproduced (1 1 1 1 .924 .614 .334 .167 .085
+  .043).
+- **Guessing (Table 2):** m=1/2/4/10/20/64 → 39.008 / 27.024 / 17.577 /
+  **9.290** / 6.126 / 4.714 vs published 39 / 27 / 17.6 / **9.3** / 6.2 /
+  4.7 — all pass with their 10k-run MC error included; worst z −3.64 at
+  m=20 (Δ 0.074, inside their noise + print rounding; every other |z| ≤
+  0.95). Uniform baseline: 4.538 = H₅₂ (z −0.04), var 2.91 = analytic.
+- **Color changes (reds-on-top test):** uniform 26.017 ± 3.576 (pub 26 ±
+  3.6; 26 is exact by symmetry), one ten-shelf pass **17.196 ± 1.838** (pub
+  17 ± 1.83).
+- **Sampler ↔ closed form (the load-bearing link):** valley histogram vs
+  Theorem 3.1 worst |z| = 1.69; rising-sequence histogram of three composed
+  GSR passes vs the exact 8-shuffle law worst |z| = 1.02.
+- **The fix, measured (Cor 4.2):** two 10-shelf passes ≡ one 200-shelf pass
+  empirically (guessing z +0.56, color z +0.75; two-pass valley histogram
+  vs the exact 200-shelf law worst |z| = 2.30 over 12 pooled classes) — and
+  the residual of the fix is **+0.021 ± 0.005 cards above chance** (TV
+  0.0103): real, resolvable, worthless at a table. The instrument sees
+  leaks that small.
+- Top-card retention 0.0499 vs the ≥ 1/2m = 0.05 bound (uniform 0.0192).
+
+**Reading for M12b:** one pass of the real machine gives an input-aware
+observer **+4.75 correct guesses per 52 cards over chance (2.05×)** — the
+paradigm-2 thesis in one number. The advantage decays m=10 → 20 → 64 →
+two-pass as 4.75 → 1.59 → 0.18 → 0.02: the exploitable regime is
+single-pass / weak mixing, exactly the recalibrated target list (hand
+shuffles, weak/old batch machines). Next: convert guessing advantage into
+betting edge (M12b, house-game arm first).
+
+**Seeds:** test pins 22400000001–17; E26 22500000001–06 & 101–103
+(guessing), 22600000001–04 & 011–014 (color/histograms/top-card). Next
+unused block: **22.7e9+**. Artifacts: `data/e26_shelf_gate.py`,
+`data/e26_shelf_gate.json`.
+
 ## E25 — risk-averse deviations: honest second moments; the RA hypothesis measured (M11)
 
 **Date:** 2026-07-19 · **Question (Matt):** the deviations E24 priced are

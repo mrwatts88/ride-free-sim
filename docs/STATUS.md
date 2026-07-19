@@ -39,12 +39,46 @@ set the plan:
   premise weakest against a good DeckMate 2; needs an imperfect-permutation
   assumption to pay.
 
-**THE PRECISELY-SPECIFIED NEXT STEP: build M12a** — a `Shuffle` model as data
-that the `Shoe` composes (riffle-with-quality, the Diaconis ten-shelf model,
-N-pass composition), preserving the determinism contract, gated by reproducing
-the Diaconis ~9.5/52 and ~17-vs-26 color-change numbers within sampling error
-before any attack work. Everything below this block is paradigm 1 (M0–M11),
-DONE and preserved as-is.
+**M12a DONE (2026-07-19, same day the paradigm opened): the synthetic
+shuffle lab is built and GATED — every published Diaconis/Fulman/Holmes
+number reproduces (E26, ALL GATES PASS).** `shuffle.py` makes shuffle
+procedures immutable data the `Shoe` composes (`UniformShuffle` /
+`ShelfShuffle` / GSR `RiffleShuffle` / `ComposedShuffle`; the default Shoe
+path is asserted byte-identical to the old uniform null, so paradigm-1
+validation transfers untouched; `raw_order()` = the successor shoe's
+pre-shuffle stack); `forensics.py` is the measurement layer (exact
+`Fraction` class laws — DFH Thm 3.1, Bayer–Diaconis — plus the
+guessing/color/histogram instruments; the guesser is pluggable, which is
+where M12b's input-aware observers land). The paper itself was fetched and
+read: the "~9.5/52" this file used to carry was the ABSTRACT's rounding —
+the gates pin the tables (Table 2: mean 9.3, var 4.7). Headline results:
+DFH Table 1 exact to every printed digit (12 shelf counts × TV/sep/l∞);
+guessing sweep m=1..64 all inside MC error (m=10: 9.290 vs 9.3); color
+changes 17.196 ± 1.838 vs 17 ± 1.83; samplers vs closed-form laws worst
+|z| = 2.30; Cor 4.2 confirmed live (two 10-shelf passes ≡ one 200-shelf,
+z +0.56/+0.75) and the fix's residual MEASURED at +0.021 ± 0.005 cards
+above chance — the instrument resolves leaks that small; BD seven-shuffles
+TV = 0.3341 vs 0.334. **The M12b-facing number: one pass of the real
+machine = +4.75 correct guesses/52 over chance (2.05×) for an input-aware
+observer, decaying 4.75 → 1.59 → 0.18 → 0.02 at m=10/20/64/two-pass — the
+exploitable regime is single-pass/weak mixing, exactly the recalibrated
+target list.** 326 tests green (19 new). Seeds: 22.4e9 test pins,
+22.5–22.6e9 E26; **next unused block 22.7e9+** (the master ledger below is
+updated).
+
+**THE PRECISELY-SPECIFIED NEXT STEP: M12b, house-game arm first — convert
+guessing advantage into betting edge.** Rung 1: the input-aware observer
+at VALUE level. Give the observer shoe k's full order (`raw_order()` →
+`stack`), shuffle through a weak model (1-pass shelf; 1–3 GSR riffles),
+and build a next-card-VALUE posterior (10 classes, not 52 positions —
+plug a new guesser/tracker into the `forensics` protocol); measure the
+information by depth, then price the first toy payoff (bet when the
+posterior clears a threshold, baccarat-style flat game or blackjack
+insurance-grade spots) with the E17 `ramp`-pattern gate: a live bet-sim
+must realize the predicted edge within CI. The poker arm stays behind it
+(needs the fold/gather models — ROADMAP M12b); M13 stays parked behind
+M12b. Everything below this block is paradigm 1 (M0–M11), DONE and
+preserved as-is.
 
 ---
 
@@ -429,8 +463,14 @@ REUSED the same block deliberately — paired CRN arms, not a replication);
 E22 consumed 17.9–18.3e9 (EOR shards) and 18.4–19.3e9 (count-curve
 shards); E22b consumed 19.4–20.3e9 (simple-count head-to-head); E23
 consumed 20.4–21.3e9 (live-card certification, both pens); E25 consumed
-21.4–22.3e9 (RA-bank shards; E24 was arithmetic-only, none). **Next
-unused seed block: 22.4e9+.**
+21.4–22.3e9 (RA-bank shards; E24 was arithmetic-only, none); E25c used
+22400000001 as a walk-rate base (this ledger's old "next unused 22.4e9+"
+was already stale when written); E26/M12a test pins share the 22.4e9 block
+(22400000001–17) — deliberate, no overlap: E25c consumed it via
+`shoe_seeds()` derivation while the M12a pins are forensics rng streams and
+direct shoe seeds, so no shoe sequence repeats — and the E26 battery
+consumed 22.5–22.6e9. **Next unused seed block: 22.7e9+** (the M11 OOS
+certification, if it ever runs, takes its fresh block from here).
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 

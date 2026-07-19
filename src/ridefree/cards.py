@@ -14,6 +14,10 @@ Two card representations coexist (DESIGN.md, M8 decision record):
 
 import random
 from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ridefree.shuffle import Shuffle
 
 ACE = 1
 TEN = 10
@@ -59,9 +63,26 @@ class Shoe:
     and collapsed to values once, so a (decks, penetration, seed) triple always
     reproduces the identical sequence. `deal()` returns values; the raw twin of
     each dealt card is available via `raw_dealt()`.
+
+    M12a (shuffle forensics): the shoe composes an optional `Shuffle` model.
+    The default (`shuffle=None, stack=None`) is the paradigm-1 uniform null,
+    byte-identical to the historical path. Passing a model applies that
+    physical procedure to `stack` — the pre-shuffle order, top of the deck
+    first, defaulting to fresh-pack order — with all randomness drawn from
+    `random.Random(seed)`, so `(decks, penetration, seed, shuffle, stack)`
+    reproduces the identical sequence. A previous shoe's full order (for
+    inter-shoe structure work) is `raw_order()`.
     """
 
-    def __init__(self, decks: int, penetration: float, seed: int) -> None:
+    def __init__(
+        self,
+        decks: int,
+        penetration: float,
+        seed: int,
+        *,
+        shuffle: "Shuffle | None" = None,
+        stack: "Iterable[tuple[int, int]] | None" = None,
+    ) -> None:
         if decks < 1:
             raise ValueError("decks must be >= 1")
         if not 0.0 < penetration <= 1.0:
@@ -70,7 +91,16 @@ class Shoe:
         self.penetration = penetration
         self.seed = seed
         raw = [(rank, suit) for _ in range(decks) for suit in SUITS for rank in RAW_RANKS]
-        random.Random(seed).shuffle(raw)
+        if shuffle is None and stack is None:
+            random.Random(seed).shuffle(raw)
+        else:
+            if stack is not None:
+                base = list(stack)
+                if sorted(base) != sorted(raw):
+                    raise ValueError("stack must hold exactly this shoe's cards")
+            else:
+                base = raw
+            raw = shuffle.permute(base, random.Random(seed)) if shuffle else base
         self._raw = raw
         self._cards = [min(rank, 10) for rank, _ in raw]
         self._pos = 0
@@ -120,6 +150,11 @@ class Shoe:
         """Raw (rank, suit) cards dealt so far, in order — the raw twin of
         `dealt_cards()`, for side-bet settlement and suit-aware tracking."""
         return tuple(self._raw[: self._pos])
+
+    def raw_order(self) -> tuple[tuple[int, int], ...]:
+        """The complete raw-card order of this shoe, dealt and undealt — the
+        pre-shuffle `stack` for a successor shoe in inter-shoe forensics."""
+        return tuple(self._raw)
 
     def raw_slice(self, start: int, stop: int) -> tuple[tuple[int, int], ...]:
         """Raw cards at deal positions [start, stop) — for the engine to read a
