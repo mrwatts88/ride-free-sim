@@ -1,6 +1,6 @@
 # STATUS — read this first in a new session
 
-Updated 2026-07-18. This is the resume-here document: current state, key numbers,
+Updated 2026-07-19. This is the resume-here document: current state, key numbers,
 and the precisely-specified next step. Doc map at the bottom.
 
 **Current state in one line: all three research questions are ANSWERED and
@@ -28,7 +28,13 @@ LANDED (2026-07-19): $25 side max, TIED (side ≤ main), pen ~.79–.833,
 ~100 r/h, split rules = the RIDE_FREE preset verbatim — and **E23
 certified the literal card live at both pens (both gates pass): the
 operating number is ≈ +$26–30/h on ~$16.6k at 5% RoR**
-(raise-on-trigger $15→$25). Next: trainer pog2 mode, optics note.**
+(raise-on-trigger $15→$25). **MATT'S DECISION (same day): the play is
+SHELVED** — the $25 tied max caps the hourly too low, and the play
+style (side-jamming at trash counts, splitting 5s, nonstop table
+commentary at a social game) isn't worth the seat. **The operating game
+remains crouch15 blackjack.** Trainer pog2 mode SKIPPED. Final
+write-up DONE: `docs/ARTICLE_POG.md` — WoO-ready, carries the P(0)
+correction per the parked rule (play dead → correction ships).**
 
 ## E23 DONE (2026-07-19): the literal pog2 card CERTIFIED LIVE — and priced at the real felt
 
@@ -687,16 +693,12 @@ frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
 1. **M10 simulation chunks (reordered 2026-07-18 late session; the card
    came first on Matt's call):** ~~the farm arm~~ **DONE — E21**; ~~the
    no-division human card~~ **DONE — E22 (the pog2 card, beats the
-   division benchmark)**; **NEXT: live verification of the literal pog2
-   card** (E18 pattern: 10M+ rounds of the exact human card — start 24,
-   stake ≤ 12, farm while out — measuring realized combined variance;
-   retires cov(main,side)=0, the mixed-bin stitch, and the EV_OUT
-   constant); **pen sensitivity AFTER tomorrow's recon, at the TRUE pen**
-   (reading the cut card obsoletes the blind .70/.80 sweep; if pen is
-   unreadable, sweep then); trainer pog2 mode (drill the card before any
-   live session); optics/heat note for the article (side-jamming at trash
-   counts + always-splitting 5s + a count that ignores 5s is all novel,
-   visible behavior). Ledger structure note (E22 card, untied): net =
+   division benchmark)**; ~~live verification~~ **DONE — E23 (both gates
+   pass, both pens, approximations retired)**; ~~pen at true pen~~
+   **DONE — E23 ran .75 AND .8333**; ~~trainer pog2 mode~~ **SKIPPED
+   (Matt shelved the play 2026-07-19)**; ~~optics/heat note~~ **DONE —
+   folded into ARTICLE_POG.md's verdict section**. **M10 IS CLOSED.**
+   Ledger structure note (E22 card, untied): net =
    ≈ $3.34/h per side $ at 200 r/h minus ≈ $34/h flat toll (outside leg
    −$23.8 + window $15-main leg −$10.6) → breakeven side stake ≈ **$10.3**
    (was $12.45 under hi-lo); the max sets the ceiling on a fixed-cost
@@ -705,13 +707,14 @@ frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
    Dragon/Panda paytables (40:1/25:1 assumed), side-bet maxes, cut-card
    depth; weekday blackjack pace (all crouch15 $/h assume 200 r/h heads-up);
    only if 21+3 is ever played, its pen/CSM/entry policy.
-3. **PARKED (decided 2026-07-18): the WoO correction email.** The E19 P(0)
-   refutation is send-ready arithmetic, but touching their page invites
-   fresh analysis of Pot of Gold and the obscurity of the counting
-   vulnerability is an asset while the attack may be live. Rule: if the
-   side max / pen kills the play → send it (free credibility, pro-player
-   fix); if the play is live → hold; if the article ever publishes, the
-   correction rides along.
+3. ~~PARKED: the WoO correction email~~ **UNPARKED (2026-07-19): the
+   rule's condition fired** — the felt ($25 tied max) killed the play and
+   Matt shelved it, so the correction ships. It rides along in
+   `docs/ARTICLE_POG.md`, which Matt intends to put in front of Wizard of
+   Odds. The article carries the full arc: identification, the exact-P(0)
+   refutation (0.838228071 vs their 0.833420; real PT1 edge 8.25% not
+   5.77%), the countability discovery, pog2, the live certification, and
+   the honest shelving verdict.
 2. Optional realism passes if the field checks pass: visible-cards-only
    tracker (drop hole-card assumption — expect ~nil), full-table
    cards-per-round model, tiered-paytable re-derivation (pure configuration:
@@ -872,6 +875,9 @@ uv run python data/e23_verdict.py             # E23: live card gates + ledger
   two-count card, the toll-free ledger, verdict).
 - `docs/ARTICLE_BLACKJACK.md` — the E16 standard-blackjack summary (the
   cover-vs-money ledger, the crouch, the chosen $10-table operating point).
+- `docs/ARTICLE_POG.md` — the Pot of Gold / Silver Stack write-up (M10
+  arc: the P(0) refutation, the lammer count, pog2, live certification,
+  the shelving verdict; written for a Wizard of Odds audience).
 - `src/ridefree/baccarat.py` — the M9 engine (rules, tableau, exact
   enumeration, simulator); gates in `tests/test_baccarat.py`; ledger
   `data/e14_verdict.py`.
