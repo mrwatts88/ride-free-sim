@@ -2,6 +2,97 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E22 — THE POG2 CARD: a no-division count that BEATS hi-lo-with-division (106.6% capture); Matt's "ultimate card" answered three ways
+
+**Date:** 2026-07-18 · **Questions:** the no-division human card for the
+Silver Stack trigger; and Matt's parting hypothesis — is there an ultimate
+all-in-one count (raise mains at +TC, stake the side at −TC), or does a
+side-specialist win?
+
+**Step 0 — the positive end is DEAD on the Ride Free table (banked-bin
+arithmetic, scratchpad):** RF main EV doesn't cross zero until TC +5 (the
+dealer-22 push blunts ten-rich standing); the crouch-style ramp
+($100/$150/$200 at +2/+3/+4) is **−$0.47/h** ON this table; $200-at-+4
+top-only makes +$7/h against the side's $69–275/h. **Fusion refuted by
+dollars: the comprehensive play is a PORTFOLIO (side card at RF, crouch15-2r
+at classic), and the RF card carries no positive rungs.**
+
+**Stage 1 — POG side-EV EORs by regression (new machinery, gate-passed):**
+`run_pog_eor` accumulates additive OLS sufficient statistics (intercept +
+10 per-rank share deviations of the remaining shoe vs fresh → side profit
+AND main profit), solved by `solve_pog_eors` (tens pinned 0 — shares sum
+to 1, EORs are identified up to a constant; `unbalanced_bc` centers).
+`cli pogeor`; 5 × 2M farm-arm cut_card rounds, fresh seeds 17.9–18.3e9
+(`data/e22_eor_p75_s*.json`, solve in `data/e22_card.py`):
+- **G1 PASS: the main-profit regression reproduces E4a's calculator EORs
+  at weighted corr +0.9956** — the pipeline validates against an
+  independent derivation before the side EORs are trusted.
+- **Side EORs (per card removed, tens 0):** 2–8 are the fuel — removing
+  one costs the side bet −6.8% to −9.2% (the 7 as heavy as the 3: it makes
+  the 9/10/11 free-double totals); 9 half-strength (−4.0); A/T dead. Per-
+  rank se ≈ 0.1–0.2% (5 shards).
+- **As lammer counts (BC vs side EORs): hi-lo −0.9310** (the E20/E21
+  trigger; "provably not optimal" now quantified), **Red 7 −0.9652** (!),
+  perfect 1.0.
+- **Search** (`search_unbalanced_level1_pivot`: the E17 family generalized
+  to any per-deck imbalance, both bump signs, bet-LOW direction, secondary-
+  EOR column; E17 wrapper unchanged): odd pivots are UNREACHABLE (parity:
+  4·sum−16±2 is even), so pivot −2 it is. **Winner "pog2": A −1, RED 2s +1
+  (black 2s 0), 3/4/6/7 +1, 5/8/9 nothing, ten −1 → side BC −0.9726**,
+  main BC +0.80. The shape is the story: *the 5 — blackjack counting's
+  crown jewel — is IRRELEVANT to the lammer count, and the 7 is a full
+  point.* Anti-red-7 (hi-lo + red 7s −1) scores −0.876 — worse than raw
+  hi-lo; runner-ups within 0.005.
+
+**Stage 2 — head-to-head certification on one card stream**
+(`run_pog_count_curves`: side/main pog moments binned by hi-lo TC + custom
+pivot-zeroed RCs in one farm-arm pass; hilo_tc bins reproduce
+`run_pog_curve` EXACTLY, in-test; runner `data/e22_run.py`, 10 × 2M fresh
+seeds 18.4–19.3e9, A=s01–05 chooses / B=s06–10 scores;
+`data/e22_verdict.py`):
+- **E21 replication gate on fresh seeds: PASS** (hilo ≤ −2 window +7.52%
+  @ 20.85% vs E21's +7.26% @ 20.85%; ≈ +2σ with the pairwise se).
+- **pog2 captures 106.6% of the division benchmark** — 16.51% of rounds
+  at **+10.13% ± 0.27/unit** (B-half blind: +10.22) vs hi-lo's 20.85% at
+  +7.52%. Sharper window, more EV per staked dollar. **Both scenario
+  objectives (untied AND matched raise-on-trigger) pick the SAME rung —
+  the pivot, RC ≤ 0** — and the rung menu peaks exactly there (the A-sweep
+  found the pivot blind).
+- **Red 7 reuse REFUTED: 70.1% (untied) / 62.4% (matched) capture** at its
+  best off-pivot rungs (RC ≤ −13/−16). The 4-point pivot mismatch is
+  expensive — the E18 off-pivot-mush algebra, now priced. One-count-both-
+  tables costs $70–100/h at $100 side vs the specialist. **All three
+  readings of "ultimate card" (fusion count, dual triggering, drilled-count
+  reuse) lose to specialization by measurement.**
+
+**THE CARD (slide +12, E18 no-negatives doctrine):**
+
+> **Count: aces and tens −1; 3, 4, 6, 7 +1; RED 2s +1 (black 2s nothing);
+> 5s, 8s, 9s nothing. Start each shoe at 24. Stake the side — and split
+> 5s while it's out — at 12 or below.** (Same trigger untied or matched.)
+
+**Ledger at the pivot rung (pen .75, 200 r/h seated, $15 main outside):**
+
+| side | untied net | N0 | bank | matched 1:1 net | N0 | bank |
+|---|---|---|---|---|---|---|
+| $25 | **+$49/h** | 232h | $17.1k | +$42/h | 324h | $20.5k |
+| $50 | **+$133/h** | 119h | $23.6k | +$108/h | 186h | $30.2k |
+| $100 | **+$300/h** | 91h | $41.1k | +$240/h | 149h | $53.6k |
+
+(vs the hi-lo division card: untied $100 +$268, matched $100 +$240 at
+E21b's hi-lo rung — the no-division card nets +12% untied and its matched
+rung needs no re-derivation.)
+
+**Caveats:** outside-window toll uses the E21-pool normal-arm EV_OUT
+−0.95% (constant approximation); window main is farm-arm (correct for
+staked rounds); cov(main, side) = 0 as throughout; non-chosen rungs in the
+menu are descriptive, not A/B'd. All retired by the live verification of
+the literal card (E18 pattern), which is the next chunk. Trainer has no
+POG/pog2 mode yet — natural build alongside it.
+
+Seeds consumed: 17.9–18.3e9 (EOR shards), 18.4–19.3e9 (curve shards),
+16.8e9-block pins for tests. **Next unused block: 19.4e9+.**
+
 ## E21b — the side ≤ main scenario: the attack survives matching at ~70–77% of the hourly (banked-bin arithmetic, no new sims)
 
 **Date:** 2026-07-18 · **Question (Matt):** E20/E21 stake the side over a

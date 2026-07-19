@@ -405,6 +405,142 @@ def test_pog_curve_farm_arm_tags_pairs_and_merge_guard(tmp_path):
         merge_pog_curves([normal, farm])
 
 
+# --- E22 pog-EOR regression machinery ------------------------------------------
+
+def test_pog_eor_synthetic_recovery():
+    """The solver must recover a planted linear model exactly: rows with
+    share deviations summing to zero (the real-data null direction) and
+    y = intercept + sum(beta_r * x_r) with beta_ten = 0 pinned."""
+    import random
+
+    from ridefree.experiments import PogEorResult, solve_pog_eors
+
+    beta_side = {1: -2.0, 2: 0.7, 3: 0.3, 4: 0.9, 5: 1.5, 6: 0.8, 7: 0.1,
+                 8: -0.4, 9: -0.6, 10: 0.0}
+    beta_main = {1: 0.5, 2: -0.2, 3: 0.1, 4: -0.3, 5: 0.4, 6: 0.2, 7: 0.0,
+                 8: 0.3, 9: -0.1, 10: 0.0}
+    rng = random.Random(7)
+    res = PogEorResult(rules_name="synth", penetration=0.75)
+    for _ in range(500):
+        raw = [rng.uniform(-0.02, 0.02) for _ in range(10)]
+        m = sum(raw) / 10
+        devs = [v - m for v in raw]  # exact null: deviations sum to zero
+        x = [1.0] + devs
+        y_s = 3.0 + sum(beta_side[r] * devs[r - 1] for r in range(1, 11))
+        y_m = -1.0 + sum(beta_main[r] * devs[r - 1] for r in range(1, 11))
+        res.add_row(x, y_s, y_m)
+    eors = solve_pog_eors(res)
+    for r in range(1, 11):
+        assert eors["side"][r] == pytest.approx(-beta_side[r] / 51.0, abs=1e-9)
+        assert eors["main"][r] == pytest.approx(-beta_main[r] / 51.0, abs=1e-9)
+
+
+def test_pog_eor_run_determinism_additivity_and_json(tmp_path):
+    import json
+
+    from ridefree.experiments import (
+        load_pog_eor_json,
+        merge_pog_eors,
+        pog_eor_to_json,
+        run_pog_eor,
+    )
+
+    rules = dataclasses.replace(RIDE_FREE, side_bet_pot_of_gold=PAYTABLE_POG_1)
+    a = run_pog_eor(rules, seed=16_800_000_005, rounds=4_000, rules_name="rf")
+    b = run_pog_eor(rules, seed=16_800_000_005, rounds=4_000, rules_name="rf")
+    assert a.arm == "farm" and a.rounds == 4_000
+    assert a.xtx == b.xtx and a.xty_side == b.xty_side  # determinism
+    c = run_pog_eor(rules, seed=16_800_000_006, rounds=4_000, rules_name="rf")
+    m = merge_pog_eors([a, c])
+    assert m.rounds == 8_000
+    assert m.xtx[0][0] == pytest.approx(a.xtx[0][0] + c.xtx[0][0])
+    assert m.xty_main[3] == pytest.approx(a.xty_main[3] + c.xty_main[3])
+
+    path = tmp_path / "eor.json"
+    with open(path, "w") as f:
+        json.dump(pog_eor_to_json(a, 16_800_000_005), f)
+    back = load_pog_eor_json(str(path))
+    assert back.arm == "farm" and back.rounds == a.rounds
+    assert back.xtx == a.xtx and back.xty_side == a.xty_side
+
+    norm = run_pog_eor(rules, seed=16_800_000_006, rounds=1_000,
+                       rules_name="rf", farm=False)
+    with pytest.raises(AssertionError, match="arms"):
+        merge_pog_eors([a, norm])
+
+
+def test_pog_count_curves_identity_json_and_merge(tmp_path):
+    """The hilo_tc signal of the stage-2 harness must reproduce
+    run_pog_curve's bins EXACTLY on the same seed (same loop, same stream),
+    custom RC bins must partition the rounds, and the JSON/merge machinery
+    must round-trip the custom specs."""
+    import json
+
+    from ridefree.experiments import (
+        load_pog_count_curves_json,
+        merge_pog_count_curves,
+        pog_count_curves_to_json,
+        run_pog_count_curves,
+        run_pog_curve,
+    )
+
+    rules = dataclasses.replace(RIDE_FREE, side_bet_pot_of_gold=PAYTABLE_POG_1)
+    seed = 16_800_000_007
+    anti7 = ({1: -1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 0, 8: 0, 9: 0, 10: -1},
+             7, -1)
+    cc = run_pog_count_curves(rules, seed=seed, rounds=6_000, rules_name="rf",
+                              customs={"anti7_rc": anti7})
+    ref = run_pog_curve(rules, seed=seed, rounds=6_000, rules_name="rf",
+                        farm=True)
+    assert cc.arm == "farm"
+    assert {k: (b.rounds, b.pog_profit, b.main_profit, b.tokens)
+            for k, b in cc.by_signal["hilo_tc"].items()} == {
+        k: (b.rounds, b.pog_profit, b.main_profit, b.tokens)
+        for k, b in ref.bins.items()
+    }
+    assert sum(b.rounds for b in cc.by_signal["anti7_rc"].values()) == 6_000
+    assert sum(b.pog_profit for b in cc.by_signal["anti7_rc"].values()) == (
+        pytest.approx(cc.pog_total)
+    )
+
+    path = tmp_path / "cc.json"
+    with open(path, "w") as f:
+        json.dump(pog_count_curves_to_json(cc, seed), f)
+    back = load_pog_count_curves_json(str(path))
+    assert back.customs == {"anti7_rc": anti7}
+    assert {k: v.pog_profit for k, v in back.by_signal["anti7_rc"].items()} == {
+        k: v.pog_profit for k, v in cc.by_signal["anti7_rc"].items()
+    }
+    m = merge_pog_count_curves([cc, back])
+    assert m.rounds == 12_000
+    other = run_pog_count_curves(rules, seed=seed, rounds=1_000,
+                                 rules_name="rf", customs={})
+    with pytest.raises(AssertionError, match="specs"):
+        merge_pog_count_curves([cc, other])
+
+
+def test_search_unbalanced_pivot_generalizes_e17():
+    """imbalance=2 with positive bumps must reproduce the E17 search exactly;
+    imbalance=-2 must return counts whose full-shoe sum is -2 per deck."""
+    from ridefree.experiments import (
+        search_unbalanced_level1,
+        search_unbalanced_level1_pivot,
+    )
+
+    eors = {1: -0.006, 2: 0.004, 3: 0.002, 4: 0.003, 5: 0.005, 6: 0.004,
+            7: 0.001, 8: -0.001, 9: -0.001, 10: -0.002}
+    old = search_unbalanced_level1(eors, top=5)
+    new = search_unbalanced_level1_pivot(eors, imbalance=2, bump_signs=(1,),
+                                         top=5)
+    assert [(bc, base, bump) for bc, base, bump, _s, _b2 in new] == old
+    for _bc, base, bump, sign, _bc2 in search_unbalanced_level1_pivot(
+        eors, imbalance=-2, top=5
+    ):
+        tags = dict(base)
+        per_deck = 4 * sum(tags[r] for r in range(1, 10)) - 16 + 2 * sign
+        assert per_deck == -2
+
+
 def test_csm_always_bet_edge_near_nv_rules_prediction():
     """Smoke gate: 60k csm rounds inside 4 sigma of the NV-rules PT1 edge.
     WoO's published -5.7687% is under their sim's convention; correcting its

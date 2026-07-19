@@ -2080,21 +2080,54 @@ def search_unbalanced_level1(eors: dict[int, float], top: int = 3):
     Imbalance = 4*sum(base A..9) - 16 + 2*b = +2 with b=+1 forces
     sum(base A..9) = 4. Ranked by betting correlation vs `eors`. Analytic —
     nothing fit to simulation data."""
+    return [
+        (bc, base, bump)
+        for bc, base, bump, _sign, _bc2 in search_unbalanced_level1_pivot(
+            eors, imbalance=2, bump_signs=(1,), top=top
+        )
+    ]
+
+
+def search_unbalanced_level1_pivot(
+    eors: dict[int, float], *, imbalance: int, bump_signs=(1, -1),
+    top: int = 3, secondary_eors: dict[int, float] | None = None,
+    direction: int = 1,
+):
+    """The E17 search generalized to any per-deck imbalance (pivot at
+    TC ~ imbalance; E22 wants -2) and both half-bump signs (the red-7
+    device, either direction). Candidates are ranked by betting correlation
+    vs `eors` in the given trigger `direction`: +1 = bet-high counts (E17,
+    most positive BC wins), -1 = bet-LOW counts (the E22 side card triggers
+    when RC is low, so the most NEGATIVE BC wins — hi-lo's own side BC is
+    -0.93 and it is the E20 benchmark). If `secondary_eors` is given, each
+    result also carries the candidate's BC against it (the E22 dual-card
+    column). Returns tuples (bc, base_tags_sorted, bump_rank, bump_sign,
+    bc_secondary)."""
     import itertools
 
     results = []
     ranks = list(range(1, 10))
-    for tags in itertools.product((-1, 0, 1), repeat=9):
-        if sum(tags) != 4:
+    for sign in bump_signs:
+        # 4*sum(base A..9) - 16 + 2*sign = imbalance
+        num = 16 + imbalance - 2 * sign
+        if num % 4:
             continue
-        base = dict(zip(ranks, tags))
-        base[TEN_RANK] = -1
-        for bump in ranks:  # half-bump rank (raw suits exist only for 1..9)
-            eff = dict(base)
-            eff[bump] = eff[bump] + 0.5  # two of four suits at +1
-            bc = unbalanced_bc(eff, eors)
-            results.append((bc, tuple(sorted(base.items())), bump))
-    results.sort(reverse=True)
+        target = num // 4
+        for tags in itertools.product((-1, 0, 1), repeat=9):
+            if sum(tags) != target:
+                continue
+            base = dict(zip(ranks, tags))
+            base[TEN_RANK] = -1
+            for bump in ranks:  # half-rank bumps live on A..9 (raw suits)
+                eff = dict(base)
+                eff[bump] = eff[bump] + 0.5 * sign
+                bc = unbalanced_bc(eff, eors)
+                bc2 = (unbalanced_bc(eff, secondary_eors)
+                       if secondary_eors else 0.0)
+                results.append(
+                    (bc, tuple(sorted(base.items())), bump, sign, bc2)
+                )
+    results.sort(reverse=(direction > 0), key=lambda t: t[0])
     return results[:top]
 
 
@@ -2526,3 +2559,355 @@ def format_pog_curve(res: PogCurveResult, min_rounds: int = 1000) -> str:
             f"{b.tokens / b.rounds:10.4f} {b.tc_sum / b.rounds:+8.2f}"
         )
     return "\n".join(lines)
+
+
+# --- E22 stage 2: POG curves binned by candidate count signals ----------------
+
+@dataclass
+class PogCountCurvesResult:
+    """Side/main pog moments binned by several count signals in one pass —
+    the E17 count-curves pattern carrying PogBin instead of TcBin. Signal
+    'hilo_tc' uses the E20 ±12 TC bins (cross-harness comparable with
+    run_pog_curve); customs are pivot-zeroed running counts (RC 0 == pivot
+    TC at any depth)."""
+
+    rules_name: str
+    penetration: float
+    paytable: tuple[float, ...] = ()
+    arm: str = "farm"
+    customs: dict = field(default_factory=dict)  # name -> (tags, bump, sign)
+    rounds: int = 0
+    pog_total: float = 0.0
+    main_total: float = 0.0
+    by_signal: dict = field(default_factory=dict)  # name -> {bin -> PogBin}
+
+
+def run_pog_count_curves(
+    rules: Rules, *, seed: int, rounds: int, rules_name: str = "",
+    farm: bool = True, customs: dict | None = None,
+) -> PogCountCurvesResult:
+    """One flat-bet farm-arm pass (main 1u + Pot of Gold 1u every round)
+    binning side and main profit by hi-lo TC AND by each custom unbalanced
+    count's pivot-zeroed RC — same card stream, directly comparable.
+
+    customs: name -> (base_tags {1..10: int}, bump_rank 1..9, bump_sign ±1);
+    the bump adds ±1 on the two red suits of bump_rank (the red-7 device).
+    RC is dealt-cards arithmetic with IRC = -imbalance*decks, so RC 0 is the
+    pivot at any depth."""
+    from ridefree.player_ev import OptimalStrategy
+    from ridefree.strategy import AlwaysPotOfGold, SplitFives
+
+    assert rules.side_bet_pot_of_gold, "rules must offer the Pot of Gold bet"
+    inner = SplitFives(OptimalStrategy()) if farm else OptimalStrategy()
+    strategy = AlwaysPotOfGold(inner)
+    customs = dict(customs or {})
+    res = PogCountCurvesResult(
+        rules_name=rules_name, penetration=rules.penetration,
+        paytable=rules.side_bet_pot_of_gold, arm="farm" if farm else "normal",
+        customs=customs,
+    )
+    res.by_signal = {"hilo_tc": {}, **{n: {} for n in customs}}
+    decks = rules.decks
+    per_deck = {r: (16 if r == TEN_RANK else 4) for r in range(1, 11)}
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    tracker = CompositionTracker(decks)
+    raw = RawCompositionTracker(decks)
+    rounds_since = 0
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            tracker.new_shoe()
+            raw.new_shoe()
+            rounds_since = 0
+        tc = tracker.hilo_true()
+        keys = {"hilo_tc": _bin_tc12(tc)}
+        for name, (tags, bump, sign) in customs.items():
+            dealt = {
+                r: per_deck[r] * decks - tracker.counts[r] for r in range(1, 11)
+            }
+            bump_dealt = sum(decks - raw.counts[(bump, s)] for s in _RED_SUITS)
+            s_deck = sum(tags[r] * per_deck[r] for r in range(1, 11)) + 2 * sign
+            rc = (sum(tags[r] * dealt[r] for r in range(1, 11))
+                  + sign * bump_dealt - s_deck * decks)
+            keys[name] = _clamp_rc(rc)
+        start = shoe.snapshot()
+        result = play_round(rules, shoe, strategy, bet=1.0)
+        rounds_since += 1
+        tracker.observe_round(result)
+        raw.observe(shoe.raw_slice(start, shoe.snapshot()))
+        main = result.profit - result.pog_profit
+        res.rounds += 1
+        res.pog_total += result.pog_profit
+        res.main_total += main
+        for name, key in keys.items():
+            res.by_signal[name].setdefault(key, PogBin()).add(
+                result.pog_profit, main, tc, result.pog_tokens
+            )
+    return res
+
+
+def pog_count_curves_to_json(res: PogCountCurvesResult, seed: int) -> dict:
+    return {
+        "kind": "pog_count_curves",
+        "rules": res.rules_name,
+        "penetration": res.penetration,
+        "paytable": list(res.paytable),
+        "arm": res.arm,
+        "customs": {
+            n: {"tags": {str(r): t for r, t in tags.items()},
+                "bump": bump, "sign": sign}
+            for n, (tags, bump, sign) in res.customs.items()
+        },
+        "seed": seed,
+        "rounds": res.rounds,
+        "pog_total": res.pog_total,
+        "main_total": res.main_total,
+        "signals": {
+            name: {
+                str(k): [b.rounds, b.pog_profit, b.pog_sq, b.main_profit,
+                         b.main_sq, b.tc_sum, b.tokens]
+                for k, b in bins.items()
+            }
+            for name, bins in res.by_signal.items()
+        },
+    }
+
+
+def load_pog_count_curves_json(path: str) -> PogCountCurvesResult:
+    import json
+
+    with open(path) as f:
+        payload = json.load(f)
+    if payload.get("kind") != "pog_count_curves":
+        raise ValueError(f"{path} is not a pog_count_curves dump")
+    res = PogCountCurvesResult(
+        rules_name=payload["rules"],
+        penetration=payload["penetration"],
+        paytable=tuple(payload["paytable"]),
+        arm=payload["arm"],
+        customs={
+            n: ({int(r): t for r, t in c["tags"].items()}, c["bump"],
+                c["sign"])
+            for n, c in payload["customs"].items()
+        },
+        rounds=payload["rounds"],
+        pog_total=payload["pog_total"],
+        main_total=payload["main_total"],
+    )
+    for name, bins in payload["signals"].items():
+        res.by_signal[name] = {
+            int(k): PogBin(rounds=n, pog_profit=pp, pog_sq=p2, main_profit=mp,
+                           main_sq=m2, tc_sum=tcs, tokens=tok)
+            for k, (n, pp, p2, mp, m2, tcs, tok) in bins.items()
+        }
+    return res
+
+
+def merge_pog_count_curves(results: list) -> PogCountCurvesResult:
+    """Pool independently-seeded runs (bin stats additive; identical specs)."""
+    assert results
+    first = results[0]
+    merged = PogCountCurvesResult(
+        rules_name=first.rules_name, penetration=first.penetration,
+        paytable=first.paytable, arm=first.arm, customs=dict(first.customs),
+    )
+    merged.by_signal = {n: {} for n in first.by_signal}
+    for r in results:
+        assert (r.rules_name, r.penetration, r.paytable, r.arm, r.customs) == (
+            first.rules_name, first.penetration, first.paytable, first.arm,
+            first.customs
+        ), "cannot pool pog count curves from different specs"
+        merged.rounds += r.rounds
+        merged.pog_total += r.pog_total
+        merged.main_total += r.main_total
+        for name, bins in r.by_signal.items():
+            tgt = merged.by_signal[name]
+            for k, b in bins.items():
+                t = tgt.setdefault(k, PogBin())
+                t.rounds += b.rounds
+                t.pog_profit += b.pog_profit
+                t.pog_sq += b.pog_sq
+                t.main_profit += b.main_profit
+                t.main_sq += b.main_sq
+                t.tc_sum += b.tc_sum
+                t.tokens += b.tokens
+    return merged
+
+
+# --- E22: POG side-EV EORs by share-deviation regression ----------------------
+
+PER_DECK_SHARE = {r: (16 if r == TEN_RANK else 4) / 52.0 for r in range(1, 11)}
+
+
+@dataclass
+class PogEorResult:
+    """Additive sufficient statistics for regressing per-round profit (side
+    and main separately) on the pre-deal per-rank share deviations of the
+    remaining shoe: X'X and X'y with an intercept column. Poolable across
+    shards (plain sums). The solve happens in `solve_pog_eors`."""
+
+    rules_name: str
+    penetration: float
+    paytable: tuple[float, ...] = ()
+    arm: str = "farm"
+    rounds: int = 0
+    xtx: list = field(default_factory=lambda: [[0.0] * 11 for _ in range(11)])
+    xty_side: list = field(default_factory=lambda: [0.0] * 11)
+    xty_main: list = field(default_factory=lambda: [0.0] * 11)
+    side_sq: float = 0.0
+    main_sq: float = 0.0
+
+    def add_row(self, x: list, y_side: float, y_main: float) -> None:
+        self.rounds += 1
+        for i in range(11):
+            xi = x[i]
+            self.xty_side[i] += xi * y_side
+            self.xty_main[i] += xi * y_main
+            row = self.xtx[i]
+            for j in range(i, 11):
+                row[j] += xi * x[j]
+        self.side_sq += y_side * y_side
+        self.main_sq += y_main * y_main
+
+
+def run_pog_eor(
+    rules: Rules, *, seed: int, rounds: int, rules_name: str = "",
+    farm: bool = True,
+) -> PogEorResult:
+    """Instrumented pass for the E22 EOR derivation: main 1 unit + Pot of
+    Gold 1 unit every round; per round, accumulate the regression row
+    (intercept + 10 pre-deal share deviations vs a fresh shoe) against side
+    and main profit. cut_card mode supplies the composition variation — csm
+    has none."""
+    from ridefree.player_ev import OptimalStrategy
+    from ridefree.strategy import AlwaysPotOfGold, SplitFives
+
+    assert rules.side_bet_pot_of_gold, "rules must offer the Pot of Gold bet"
+    inner = SplitFives(OptimalStrategy()) if farm else OptimalStrategy()
+    strategy = AlwaysPotOfGold(inner)
+    res = PogEorResult(
+        rules_name=rules_name, penetration=rules.penetration,
+        paytable=rules.side_bet_pot_of_gold, arm="farm" if farm else "normal",
+    )
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    tracker = CompositionTracker(rules.decks)
+    rounds_since = 0
+    x = [1.0] * 11
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            tracker.new_shoe()
+            rounds_since = 0
+        n = tracker.cards_remaining
+        for r in range(1, 11):
+            x[r] = tracker.counts[r] / n - PER_DECK_SHARE[r]
+        result = play_round(rules, shoe, strategy, bet=1.0)
+        rounds_since += 1
+        tracker.observe_round(result)
+        res.add_row(x, result.pog_profit, result.profit - result.pog_profit)
+    return res
+
+
+def _solve_linear(a: list, b: list) -> list:
+    """Gaussian elimination with partial pivoting (small dense systems)."""
+    n = len(b)
+    m = [list(a[i]) + [b[i]] for i in range(n)]
+    for col in range(n):
+        piv = max(range(col, n), key=lambda r: abs(m[r][col]))
+        assert abs(m[piv][col]) > 1e-30, "singular regression system"
+        m[col], m[piv] = m[piv], m[col]
+        for r in range(col + 1, n):
+            f = m[r][col] / m[col][col]
+            for c in range(col, n + 1):
+                m[r][c] -= f * m[col][c]
+    out = [0.0] * n
+    for r in range(n - 1, -1, -1):
+        s = m[r][n] - sum(m[r][c] * out[c] for c in range(r + 1, n))
+        out[r] = s / m[r][r]
+    return out
+
+
+def solve_pog_eors(res: PogEorResult) -> dict:
+    """OLS solve of the accumulated normal equations -> Griffin-style
+    per-card-removed EORs (EV shift per one card of the rank removed from
+    one deck) for both responses. Shares sum to 1, so the system has an
+    exact null direction: tens are the pinned reference (EOR_ten = 0; EORs
+    are identified up to a constant, and `unbalanced_bc`/cross-checks
+    center before comparing)."""
+    # Reduced system: intercept + ranks 1..9 (drop the tens column).
+    idx = list(range(10))  # 0 = intercept, 1..9 = ranks 1..9
+    a = [[_sym(res.xtx, i, j) for j in idx] for i in idx]
+    out = {}
+    for name, xty in (("side", res.xty_side), ("main", res.xty_main)):
+        beta = _solve_linear(a, [xty[i] for i in idx])
+        eors = {r: -beta[r] / 51.0 for r in range(1, 10)}
+        eors[TEN_RANK] = 0.0
+        out[name] = eors
+    return out
+
+
+def _sym(xtx: list, i: int, j: int) -> float:
+    return xtx[i][j] if j >= i else xtx[j][i]
+
+
+def pog_eor_to_json(res: PogEorResult, seed: int) -> dict:
+    return {
+        "kind": "pog_eor",
+        "rules": res.rules_name,
+        "penetration": res.penetration,
+        "paytable": list(res.paytable),
+        "arm": res.arm,
+        "seed": seed,
+        "rounds": res.rounds,
+        "xtx": res.xtx,
+        "xty_side": res.xty_side,
+        "xty_main": res.xty_main,
+        "side_sq": res.side_sq,
+        "main_sq": res.main_sq,
+    }
+
+
+def load_pog_eor_json(path: str) -> PogEorResult:
+    import json
+
+    with open(path) as f:
+        payload = json.load(f)
+    if payload.get("kind") != "pog_eor":
+        raise ValueError(f"{path} is not a pog_eor dump")
+    return PogEorResult(
+        rules_name=payload["rules"],
+        penetration=payload["penetration"],
+        paytable=tuple(payload["paytable"]),
+        arm=payload["arm"],
+        rounds=payload["rounds"],
+        xtx=payload["xtx"],
+        xty_side=payload["xty_side"],
+        xty_main=payload["xty_main"],
+        side_sq=payload["side_sq"],
+        main_sq=payload["main_sq"],
+    )
+
+
+def merge_pog_eors(results: list) -> PogEorResult:
+    """Pool independently-seeded EOR runs (sufficient stats are additive)."""
+    assert results
+    first = results[0]
+    merged = PogEorResult(
+        rules_name=first.rules_name, penetration=first.penetration,
+        paytable=first.paytable, arm=first.arm,
+    )
+    for r in results:
+        assert (r.rules_name, r.penetration, r.paytable, r.arm) == (
+            first.rules_name, first.penetration, first.paytable, first.arm
+        ), "cannot pool pog EOR runs from different games/paytables/arms"
+        merged.rounds += r.rounds
+        merged.side_sq += r.side_sq
+        merged.main_sq += r.main_sq
+        for i in range(11):
+            merged.xty_side[i] += r.xty_side[i]
+            merged.xty_main[i] += r.xty_main[i]
+            for j in range(11):
+                merged.xtx[i][j] += r.xtx[i][j]
+    return merged

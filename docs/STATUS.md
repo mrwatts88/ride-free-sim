@@ -12,13 +12,17 @@ trainer web app; and M10 (below) turned Matt's "Silver Stack" recon find
 into the project's best per-bankroll verdict in one day: M10a gated the Pot
 of Gold engine and refuted the published table (real PT1 edge 8.25%, not
 5.77%); M10b proved the bet BEATABLE — TC ≤ −3 → +7.4%/unit on 11.7% of
-rounds, OOS-replicated; and the E21 farm arm (split 5s while the side is
-out — free by measurement, breakeven side stake < $1/bin) lifted the window
-to +11.8%/unit and widened t\* to −2: farm-mixed seated $25 → +$34–41/h on
-$17–22k (the $25 max UN-DIED), $50 → +$103–117/h, $100 → +$240–268/h.
-The felt read (side max, pen, entry policy) now sets the tier, not
-life-or-death. Next: pen sensitivity, the human card (pivot −2), live
-verification.**
+rounds, OOS-replicated; the E21 farm arm (split 5s while the side is
+out — free by measurement) lifted the window to +11.8%/unit and widened
+t\* to −2; E21b priced the side≤main scenarios (raise-on-trigger keeps
+70–77%); and E22 DELIVERED THE HUMAN CARD: **"pog2"** — A/T −1, 3/4/6/7
++1, red 2s +1, 5/8/9 nothing, start 24, stake ≤ 12 — a no-division count
+that BEATS hi-lo-with-division (106.6% capture, OOS'd): untied $25/$50/
+$100 → +$49/+$133/+$300/h on $17k/$24k/$41k; matched 1:1 → +$42/+$108/
++$240/h. Matt's "ultimate card" hypothesis answered by measurement:
+fusion, dual-trigger, and Red-7-reuse ALL lose to the specialist. The
+felt read (side max, tie rule, pen, entry) sets the tier. Next: live
+verification of the literal card, pen-at-true-pen after recon.**
 
 ## M10a DONE (2026-07-18, third session): Silver Stack = Pot of Gold, gated; WoO's table refuted on P(0)
 
@@ -91,6 +95,32 @@ insurance-style 2:1 hurts: $25 dead, $50 +$51/h, $100 +$127/h on $79k.
 Optics bonus on record: raise-on-trigger bumps the main when the count
 FALLS — anti-correlated with hi-lo, the opposite of the counter's tell.
 
+**E22 DONE (same day): THE POG2 CARD — the no-division count BEATS
+hi-lo-with-division.** Matt's "ultimate card" hypothesis triggered the
+full derivation chain, and every reading of it lost to specialization by
+measurement: (0) the RF positive end is DEAD (main EV crosses zero at TC
++5; crouch ramp −$0.47/h ON this table; $200@+4 +$7/h vs the side's
+$69–300) → portfolio, not fusion; (1) new EOR-by-regression machinery
+(`cli pogeor`, additive OLS stats, tens-pinned solve) gate-passed — the
+main-profit regression reproduces E4a's calculator EORs at corr +0.9956
+— and the side EORs say 2–8 are the fuel (7 as heavy as 3), 5/8/9
+sheddable, A/T dead; hi-lo scores −0.931 as a lammer count, Red 7
+−0.965, and the pivot-(−2) search winner **"pog2" −0.9726** (odd pivots
+parity-unreachable); (2) head-to-head on one card stream (10 × 2M fresh
+seeds, A/B): **pog2 at its pivot rung captures 106.6% of hi-lo-with-
+division** (16.5% of rounds at +10.13%/unit, B-half +10.22), both
+scenario objectives pick the SAME rung (RC ≤ 0 = the pivot), and **Red 7
+reuse is refuted — 70%/62% capture** (the 4-point off-pivot mush, priced).
+E21 replicated on fresh seeds along the way. **THE CARD: A/T −1, 3/4/6/7
++1, RED 2s +1, 5/8/9 nothing; start each shoe at 24, stake the side (and
+split 5s) at 12 or below.** Ledger (pen .75, 200 r/h): untied $25/$50/
+$100 → **+$49/+$133/+$300/h on $17.1k/$23.6k/$41.1k**; matched 1:1 →
++$42/+$108/+$240/h on $20.5k/$30.2k/$53.6k. Machinery:
+`run_pog_eor`/`solve_pog_eors`, `search_unbalanced_level1_pivot` (E17
+wrapper untouched), `run_pog_count_curves` (hilo bins == run_pog_curve,
+in-test); 299 tests green. Artifacts: `data/e22_card.py` (stage 1),
+`e22_run.py`/`e22_verdict.py` + `e22_eor_p75_s*.json`/`e22_cc_p75_s*.json`.
+
 **Still unknown from the felt:** the Silver Stack side max AND whether
 the side is tied to the main bet, at what ratio (E21b: 1:1 costs ~25–30%
 of the hourly, 2:1 is the damaging one) — together these set the TIER:
@@ -159,8 +189,9 @@ EXPERIMENTS E18b.
 Seed ledger through E18b: 14.9e9 wong depth, 15.0–15.5e9 E18b, 15.6e9
 session variance; M10a consumed 15.7–16.6e9 (gate shards) and 16.7/16.8e9
 (test pins); M10b consumed 16.9–17.8e9 (E20 curve shards; E21 farm arm
-REUSED the same block deliberately — paired CRN arms, not a replication).
-**Next unused seed block: 17.9e9+.**
+REUSED the same block deliberately — paired CRN arms, not a replication);
+E22 consumed 17.9–18.3e9 (EOR shards) and 18.4–19.3e9 (count-curve
+shards). **Next unused seed block: 19.4e9+.**
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 
@@ -581,20 +612,23 @@ frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
    (wong mode), and the resplit cap (assumed 4 hands; the farm leans on
    it). Matt's prior: many side bets cap at $100, wouldn't be surprised
    by $25.
-1. **M10 simulation chunks queued behind the felt read (in order):** pen
-   .70/.80 sensitivity shards (same pogcurve harness, fresh seeds 17.9e9+);
-   ~~the farm arm~~ **DONE — E21** (window +11.78%/unit, t\* widened to −2,
-   $25 max un-died; the farm rule is unconditional, breakeven side < $1);
-   the no-division human card — a pivot-at-−2 unbalanced count via the E17
-   `search_unbalanced_level1` machinery, plus a POG-specific EOR derivation
-   (hi-lo is provably not the optimal lammer count); live verification of
-   the literal card incl. realized combined variance (E18 pattern — retires
-   cov(main,side)=0 AND the E21 mixed-bin stitch); optics/heat note for the
-   article (side-jamming at trash counts + always-splitting 5s is novel,
-   visible behavior). Ledger structure note (updated by E21): net = linear
-   side income (≈ $2.75/h per side $ at 200 r/h, t−3 farm) minus a FLAT
-   toll (≈ $34/h) → breakeven side stake ≈ **$11.4–12.5**; the max sets
-   the ceiling on a fixed-cost business.
+1. **M10 simulation chunks (reordered 2026-07-18 late session; the card
+   came first on Matt's call):** ~~the farm arm~~ **DONE — E21**; ~~the
+   no-division human card~~ **DONE — E22 (the pog2 card, beats the
+   division benchmark)**; **NEXT: live verification of the literal pog2
+   card** (E18 pattern: 10M+ rounds of the exact human card — start 24,
+   stake ≤ 12, farm while out — measuring realized combined variance;
+   retires cov(main,side)=0, the mixed-bin stitch, and the EV_OUT
+   constant); **pen sensitivity AFTER tomorrow's recon, at the TRUE pen**
+   (reading the cut card obsoletes the blind .70/.80 sweep; if pen is
+   unreadable, sweep then); trainer pog2 mode (drill the card before any
+   live session); optics/heat note for the article (side-jamming at trash
+   counts + always-splitting 5s + a count that ignores 5s is all novel,
+   visible behavior). Ledger structure note (E22 card, untied): net =
+   ≈ $3.34/h per side $ at 200 r/h minus ≈ $34/h flat toll (outside leg
+   −$23.8 + window $15-main leg −$10.6) → breakeven side stake ≈ **$10.3**
+   (was $12.45 under hi-lo); the max sets the ceiling on a fixed-cost
+   business.
 2. **Older field checks (still open, lower stakes now):** the EZ table's
    Dragon/Panda paytables (40:1/25:1 assumed), side-bet maxes, cut-card
    depth; weekday blackjack pace (all crouch15 $/h assume 200 r/h heads-up);
@@ -732,6 +766,11 @@ uv run python -m ridefree.cli pogcombine data/m10b_rf_p75_s*.json
 uv run python data/m10b_verdict.py            # E20: threshold, OOS, ledger
 uv run python data/m10b_farm_verdict.py       # E21: paired deltas, farm ledger
 uv run python data/m10b_matched_verdict.py    # E21b: side<=main scenarios
+uv run python -m ridefree.cli pogeor --split-fives --seed S --json out.json
+                                              # E22: EOR regression shard
+uv run python data/e22_card.py                # E22 stage 1: EORs, gate, search
+uv run python -u data/e22_run.py SEED 2000000 out.json  # E22 stage 2 shard
+uv run python data/e22_verdict.py             # E22: head-to-head, THE CARD
 ```
 
 ## Open items
@@ -770,4 +809,7 @@ uv run python data/m10b_matched_verdict.py    # E21b: side<=main scenarios
   `m10b_verdict.py` + `m10b_rf_p75_s*.json` (the E20 attack bins — any
   threshold/ramp/side-max reprices by arithmetic over these),
   `m10b_farm_verdict.py` + `m10b_farm_p75_s*.json` (the E21 farm arm,
-  seed-paired with the E20 shards).
+  seed-paired with the E20 shards), `m10b_matched_verdict.py` (E21b),
+  `e22_card.py` + `e22_eor_p75_s*.json` (E22 stage 1: EOR regression +
+  search), `e22_run.py`/`e22_verdict.py` + `e22_cc_p75_s*.json` (E22
+  stage 2: the pog2 head-to-head and card ledger).

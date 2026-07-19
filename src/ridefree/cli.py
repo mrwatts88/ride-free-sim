@@ -468,6 +468,35 @@ def _pogcurve(args: argparse.Namespace) -> None:
         print(f"\npog-curve JSON written to {args.json}")
 
 
+def _pogeor(args: argparse.Namespace) -> None:
+    import json
+
+    from ridefree.experiments import pog_eor_to_json, run_pog_eor, solve_pog_eors
+    from ridefree.rules import PAYTABLE_POG_04, PAYTABLE_POG_2
+
+    paytables = {"1": PAYTABLE_POG_1, "2": PAYTABLE_POG_2, "04": PAYTABLE_POG_04}
+    name, rules, _, _ = VARIANTS[args.rules]
+    changes = {"side_bet_pot_of_gold": paytables[args.paytable]}
+    if args.penetration is not None:
+        changes["penetration"] = args.penetration
+    rules = dataclasses.replace(rules, **changes)
+    arm = "farm (SplitFives)" if args.split_fives else "normal"
+    print(f"ruleset: {name}   pen: {rules.penetration:.2f}   pay table "
+          f"{args.paytable}   arm: {arm}   (E22 EOR regression pass)")
+    res = run_pog_eor(rules, seed=args.seed, rounds=args.rounds, rules_name=name,
+                      farm=args.split_fives)
+    eors = solve_pog_eors(res)
+    print(f"rounds: {res.rounds:,}   per-card-removed EORs, tens pinned 0:")
+    print(f"  {'rank':>4s} {'side EOR':>9s} {'main EOR':>9s}")
+    for r in range(1, 11):
+        print(f"  {r:>4d} {100 * eors['side'][r]:+8.4f}% "
+              f"{100 * eors['main'][r]:+8.4f}%")
+    if args.json:
+        with open(args.json, "w") as f:
+            json.dump(pog_eor_to_json(res, args.seed), f)
+        print(f"\npog-eor sufficient stats written to {args.json}")
+
+
 def _pogcombine(args: argparse.Namespace) -> None:
     from ridefree.experiments import (
         format_pog_curve,
@@ -844,6 +873,22 @@ def main() -> None:
     pgc.add_argument("paths", nargs="+")
     pgc.add_argument("--min-rounds", type=int, default=1_000)
     pgc.set_defaults(func=_pogcombine)
+
+    pe = sub.add_parser(
+        "pogeor", help="E22: accumulate the share-deviation regression for "
+                       "POG side/main EORs (cut_card mode only — csm has no "
+                       "composition variation)"
+    )
+    pe.add_argument("--rules", choices=VARIANTS, default="ridefree")
+    pe.add_argument("--paytable", choices=("1", "2", "04"), default="1")
+    pe.add_argument("--penetration", type=float, default=None)
+    pe.add_argument("--split-fives", dest="split_fives", action="store_true",
+                    help="farm arm (the operative play for the E22 card)")
+    pe.add_argument("--seed", type=int, default=1)
+    pe.add_argument("--rounds", type=int, default=1_000_000)
+    pe.add_argument("--json", default=None,
+                    help="dump additive sufficient stats to this path")
+    pe.set_defaults(func=_pogeor)
 
     bx = sub.add_parser("bacexact", help="exact baccarat outcome table (enumeration)")
     bx.add_argument("--rules", choices=("ez", "classic"), default="ez")
