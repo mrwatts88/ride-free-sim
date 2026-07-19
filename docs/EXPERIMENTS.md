@@ -2,6 +2,71 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E27 — M12b rung 1: the exact shelf posterior — DFH's conjecture VERIFIED, the order-only value channel priced
+
+**Date:** 2026-07-19 · **Question:** convert M12a's guessing advantage into
+the game-free core M12b needs — the exact next-card posterior for an
+input-aware observer — and price the first payoff adapter under the
+two-layer rule (posterior core never imports a game; payoffs are thin
+adapters).
+
+**Machinery (new; `src/ridefree/posterior.py`):** `ShelfPosterior` — the
+EXACT sequential next-card law for an m-shelf pass of a known stack. Key
+fact: the shelf shuffle is a label sort (DFH Description 1 — each card
+i.i.d. uniform over 2m lanes, output = deterministic sort by slot), so
+filtering is exact over the global slot axis: a chain term h_t over the
+last observed card's slots plus a per-slot remaining-cards product,
+O(slots + remaining·lanes) per dealt card, float-exact. Multi-pass needs
+no new code (Cor 4.2: two 10-shelf passes ≡ shelf-200 — the E26-gated
+equivalence). `PosteriorGuesser` adapts it to the `forensics` guesser
+protocol and self-reports claimed hit probability (calibration for free);
+`proposition_experiment` is payoff adapter #1. Scope honesty: stack
+entries must be DISTINCT (one physical deck) — multi-deck shoes repeat
+cards and need copy-marginalization in the observation model (rung 2);
+the forward GSR riffle is not a label sort (its posterior is a separate
+easy cut-conditioned construction, deferred until a riffle target needs
+pricing). 332 tests green (6 new).
+
+**Gates (tests + `data/e27_posterior_gate.py`, ALL PASS):** brute force —
+posterior conditionals equal full lane-assignment enumeration through an
+INDEPENDENT physical pile simulation, at every step of every reachable
+output, (n=5, m=2) and (n=6, m=1), tol 1e-9; sampler consistency incl.
+two-pass output against the Cor-4.2-equivalent posterior; impossible
+observations raise; domination, calibration, and prediction-realization
+(below).
+
+**Findings (6k decks/arm unless noted, seeds 22.8e9):**
+1. **The DFH "conjectured optimal" strategy is VERIFIED (a result the
+   paper left open since 2013):** exact-posterior argmax — optimal by
+   construction — scores 9.300 (var 4.84); paired-on-identical-decks delta
+   vs their strategy **+0.0065 ± 0.0106 (z +0.61)**: statistically zero.
+   Their conjecture was right to ±0.01 cards/deck. Calibration z −0.04;
+   m=1 sanity 39.081 vs published 39.
+2. **The order-only value channel at one pass is LARGE.** Composition-fair
+   ten proposition (odds fair vs remaining composition ⇒ a PERFECT COUNTER
+   nets exactly zero on every offer; profit = pure order structure): θ=0 →
+   **24.2 bets/deck at +22.6%/bet = +5.47 u/deck**; θ=0.05 → 11.7 at
+   +38.1%; θ=0.10 → 4.9 at +58.0%. Realized == posterior-predicted within
+   z everywhere (worst −1.28) — the adapter's E17-pattern gate.
+3. **Information beyond the perfect counter: 8.95 bits/deck** at value
+   level; the depth curve of |p−q| on the ten axis rises 0.037 → 0.125
+   per card (the last 8 cards are richest) — late-shoe concentrated like
+   every paradigm-1 signal, but ON TOP of composition, not instead of it.
+4. **The manufacturer's fix closes the channel:** two passes → 0.00
+   bets/deck at θ=0.02 and 0.000 bits/deck (600 decks) — consistent with
+   E26's +0.021-card identity residual. Weak mixing is the whole game.
+
+**Honesty clauses:** composition-fair odds are a synthetic instrument — no
+casino offers them; these units price recoverable order information in
+betting currency, NOT a real-game edge (the real conversion — baccarat
+coups, insurance-grade spots — is rung 2). The observer premise (full
+knowledge of shoe k's order) is the baccarat-like ideal; degraded
+observation is a knob for later rungs.
+
+**Seeds:** test pins 22700000001–04; E27 battery 22800000001–04. Next
+unused block: **22.9e9+**. Artifacts: `data/e27_posterior_gate.py`,
+`data/e27_posterior_gate.json`.
+
 ## E26 — M12a: the synthetic shuffle lab reproduces Diaconis/Fulman/Holmes (paradigm 2 opens in code)
 
 **Date:** 2026-07-19 · **Question:** build the M12a lab — shuffle procedures

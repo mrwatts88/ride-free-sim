@@ -66,19 +66,66 @@ target list.** 326 tests green (19 new). Seeds: 22.4e9 test pins,
 22.5–22.6e9 E26; **next unused block 22.7e9+** (the master ledger below is
 updated).
 
-**THE PRECISELY-SPECIFIED NEXT STEP: M12b, house-game arm first — convert
-guessing advantage into betting edge.** Rung 1: the input-aware observer
-at VALUE level. Give the observer shoe k's full order (`raw_order()` →
-`stack`), shuffle through a weak model (1-pass shelf; 1–3 GSR riffles),
-and build a next-card-VALUE posterior (10 classes, not 52 positions —
-plug a new guesser/tracker into the `forensics` protocol); measure the
-information by depth, then price the first toy payoff (bet when the
-posterior clears a threshold, baccarat-style flat game or blackjack
-insurance-grade spots) with the E17 `ramp`-pattern gate: a live bet-sim
-must realize the predicted edge within CI. The poker arm stays behind it
-(needs the fold/gather models — ROADMAP M12b); M13 stays parked behind
-M12b. Everything below this block is paradigm 1 (M0–M11), DONE and
-preserved as-is.
+**M12b RUNG 1 DONE (same day — E27, ALL GATES PASS): the exact posterior
+exists, and the order-only channel is priced.** `posterior.py`:
+`ShelfPosterior` — the EXACT sequential next-card law for an input-aware
+observer (the shelf shuffle is a label sort per DFH Description 1, so
+filtering over the global slot axis is exact; gated against brute-force
+enumeration of the physical machine at 1e-9, every step of every
+reachable output; multi-pass needs no new code via Cor 4.2), plus
+`PosteriorGuesser` (argmax + self-calibration, plugs into the `forensics`
+protocol) and `proposition_experiment` (payoff adapter #1). Headlines
+(E27, 6k decks/arm): **DFH's 2013 "conjectured optimal" strategy is now
+VERIFIED** — the provably-optimal posterior argmax ties it, paired delta
++0.0065 ± 0.0106 (z +0.61), posterior mean 9.300, calibration z −0.04;
+**the one-pass value channel is big** — on the composition-fair ten
+proposition (odds fair vs remaining composition, so a PERFECT COUNTER
+nets exactly zero: profit isolates pure order structure) the observer
+takes 24.2 bets/deck at +22.6%/bet = **+5.47 u/deck**, realized ==
+predicted within z at every threshold (the E17-pattern gate);
+**8.95 bits/deck** of value-level information beyond the perfect counter,
+late-shoe concentrated (per-card |p−q| 0.037 → 0.125 by depth); and **two
+passes close the channel** (0.00 bets/deck, 0.000 bits — the fix holds at
+value level too). Honesty on record: composition-fair odds are a
+synthetic instrument — these units price recoverable order information,
+NOT a real-game edge; the observer premise is full knowledge of shoe k's
+order (the baccarat-like ideal). Scope: distinct cards only (one physical
+deck) — multi-deck shoes repeat cards and need copy-marginalization in
+the observation model. 332 tests green (6 new). Seeds: 22.7e9 test pins,
+22.8e9 E27 battery; **next unused block 22.9e9+**.
+
+**THE PRECISELY-SPECIFIED NEXT STEP: M12b rung 2 — the shoe-scale
+observation model + the first REAL-game adapter.** Two pieces, in order:
+(1) extend `ShelfPosterior` to shoes with repeated physical cards
+(multi-deck): the observer sees rank+suit but not which copy, so
+conditioning must marginalize over copy assignments — design the exact
+(or gated-approximate) treatment, brute-force-gate it on a tiny
+duplicated deck exactly like rung 1; (2) the baccarat coup adapter over
+the validated M9 engine: joint posterior over the next 4–6 cards (chain
+the sequential conditionals), price Player/Banker/Dragon/Panda bets from
+a known 8-deck stack through a weak shuffle, gate E17-style
+(predicted-vs-realized within CI). Throughput note: n=416 at m=10 is
+~8.3k slots/sweep (~seconds/shoe pure Python) — if rung 2 drags, the
+parked PyPy experiment (M7 record) becomes relevant before any Rust
+talk. Observation-degradation curves (partial view of shoe k) ride
+along as a knob, not a new rung. The single-deck machinery as built is
+already sufficient for the POKER arm's deck scale — that arm still waits
+on its fold/gather models and its own legality pass (ROADMAP M12b);
+M13 stays parked behind M12b. **The two-layer rule
+(Matt, 2026-07-19): the posterior core NEVER imports a game** — it lives
+at (known stack, shuffle model, observed prefix) → posterior over the
+remaining order, and its deliverable is the information curve, a property
+of the mixing process. Payoff arms are thin adapters over (posterior,
+game EV calculator), so swapping games is arithmetic, not new inference
+code (the paradigm-1 banked-bins doctrine). "Baccarat-style" names the
+FIRST adapter, not a target commitment — chosen because a flat
+no-decision bet is the cleanest conversion, the M9 baccarat engine is
+already validated, and it coincides with the convergence target where
+rung 1's full-observation model is closest to literally true. Blackjack
+insurance-grade spots are the natural second adapter; the full blackjack
+playing arm and the poker arm come later (game feeds back into
+observation and decisions there). Everything below this block is
+paradigm 1 (M0–M11), DONE and preserved as-is.
 
 ---
 
@@ -469,8 +516,10 @@ was already stale when written); E26/M12a test pins share the 22.4e9 block
 (22400000001–17) — deliberate, no overlap: E25c consumed it via
 `shoe_seeds()` derivation while the M12a pins are forensics rng streams and
 direct shoe seeds, so no shoe sequence repeats — and the E26 battery
-consumed 22.5–22.6e9. **Next unused seed block: 22.7e9+** (the M11 OOS
-certification, if it ever runs, takes its fresh block from here).
+consumed 22.5–22.6e9; E27/M12b-rung-1 consumed 22.7e9 (test pins
+22700000001–04) and 22.8e9 (battery 22800000001–04). **Next unused seed
+block: 22.9e9+** (the M11 OOS certification, if it ever runs, takes its
+fresh block from here).
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 

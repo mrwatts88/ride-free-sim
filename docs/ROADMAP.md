@@ -106,6 +106,19 @@ more-known input yields more edge at the same machine quality.
   pattern) realizes the predicted edge within CI; poker-room legality gets
   its own pass before any play framing (does NOT inherit the blackjack answer).
 
+**RUNG 1 ✅ (E27, 2026-07-19): the game-free posterior core.**
+`posterior.py`: exact sequential next-card posterior for the shelf machine
+(label-sort filtering; brute-force-enumeration gated; multi-pass via Cor
+4.2), the optimal guesser (VERIFIES DFH's 2013 conjectured-optimal
+strategy: paired delta +0.0065 ± 0.0106), and payoff adapter #1 (the
+composition-fair proposition — perfect counter nets zero by construction):
+one pass = +5.47 u/deck of pure order structure at 24.2 bets/deck, 8.95
+bits/deck beyond perfect counting, late-shoe concentrated; two passes =
+0.00 bets, 0.000 bits. Two-layer rule on record (STATUS): the posterior
+core never imports a game; payoffs are thin adapters. **Rung 2 (next,
+spec in STATUS): multi-deck copy-marginalization (shoes repeat physical
+cards) + the baccarat coup adapter over the M9 engine.**
+
 ### M12c — Human-constraint distillation
 
 Distill the computer-optimal recovery to something an unaided human executes

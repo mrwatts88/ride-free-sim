@@ -377,3 +377,44 @@ exact laws, so the physical simulation and the arithmetic certify each other
 before any attack work (the paradigm-2 doctrine's "synthetic ground truth
 first"). Gates in tests/test_shuffle.py; the precision battery is E26
 (`data/e26_shelf_gate.py`).
+
+## Decision record: the exact posterior filters over the label-sort slot axis (M12b rung 1, 2026-07-19)
+
+**What:** `posterior.ShelfPosterior` — the exact conditional next-card law
+for an m-shelf pass of a known stack, sequential in the dealt prefix.
+
+**Why exact filtering is possible at all:** the shelf shuffle is a *label
+sort* (DFH Description 1): each card independently draws one of 2m lanes,
+and the output is a deterministic sort by a fixed global key (shelf, side,
+±position). So each card occupies one of 2m known SLOTS in a fixed total
+order, independently and uniformly, and "the dealt prefix is o_1..o_t" is
+exactly "the t smallest realized slots belong to o_1..o_t in order". The
+posterior factorizes into (a) a chain term h_t over the last observed
+card's slots — h_{t+1}(s) ∝ H_t(s−1) on the new card's slots, where H is
+the running sum — and (b) a per-slot product of independent per-card
+survival factors F_d(s) = P(slot_d > s) over the remaining cards,
+maintained as one log-sweep with a zero-factor count. Cost O(slots +
+remaining·lanes) per dealt card; slots = 2m·n. Multi-pass costs nothing
+new: Cor 4.2 (E26-gated) says k passes ARE one bigger-shelf pass, so the
+two-pass posterior is `ShelfPosterior(shelves=200)`. The forward GSR
+riffle is NOT a label sort (its inverse is) — its exact posterior is a
+separate cut-conditioned construction (unique merge decomposition given
+the cuts), deferred until a riffle target needs pricing.
+
+**The two-layer rule (Matt):** the posterior core never imports a game.
+Payoff arms are thin adapters over (posterior, game EV calculator) —
+adapter #1 is `proposition_experiment`, a composition-fair value bet whose
+odds make every composition-only strategy worth exactly zero, isolating
+order structure as profit. Scope: stack entries must be distinct (one
+physical deck); multi-deck shoes repeat cards, so the observer can't tell
+copies apart — copy-marginalization in the observation model is rung 2's
+first piece.
+
+**Gates:** brute force — conditionals equal full lane-assignment
+enumeration through an INDEPENDENT physical pile simulation (deques, dealt
+from the bottom) at every step of every reachable output, 1e-9; the
+posterior argmax must not lose to DFH's conjectured-optimal strategy
+paired on identical decks (it ties: the 2013 conjecture is verified);
+self-calibration (claimed hit probability vs realized); adapter #1's
+realized profit equals its posterior-predicted edge within CI (the E17
+pattern). tests/test_posterior.py; battery `data/e27_posterior_gate.py`.
