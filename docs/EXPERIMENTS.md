@@ -2,6 +2,71 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E21 — the farm arm: split 5s while the side is out → window EV +7.37% → +11.78%; the $25 max un-dies; t\* widens to −2
+
+**Date:** 2026-07-18 · **Question (Matt's catch, queued in E20):** E20's curve
+played main-EV-optimal 5,5 (take the free double). With side ≫ main staked,
+free-splitting 5s ("farming": the split chain re-splits and free-doubles, each
+grant = another lammer) trades pennies of main EV for side EV. M10a priced the
+farm always-on (+3.08pp side / −0.17pp main, both matching WoO); how big is it
+INSIDE the trigger window, and does it move the verdict?
+
+**Method:** `run_pog_curve(..., farm=True)` = `AlwaysPotOfGold(SplitFives(
+OptimalStrategy()))`; curves now carry an `arm` tag ("normal"/"farm") through
+JSON and `merge_pog_curves` refuses to pool mixed arms (banked pre-tag dumps
+load as normal). 10 × 2M cut_card rounds, `RIDE_FREE` + PT1 pen .75, on **the
+same seeds as the E20 normal shards** (16.9e9–17.8e9 step 1e8) — deliberately
+paired, the M10a gate pattern: shoes are identical until a 5,5 decision
+diverges, so farm−normal deltas are common-random-number measurements (errors
+= sd across the 10 paired shard deltas). Not a replication — no fresh seeds
+consumed. Shards `data/m10b_farm_p75_s01..10.json`; arithmetic
+`data/m10b_farm_verdict.py`.
+
+**Findings:**
+- **Validation trio, tightest yet:** always-on paired side delta **+3.088% ±
+  0.033** (M10a csm gate +3.080 ± 0.185; WoO +3.019 — pairing cut the error
+  bar 5×); main cost **−0.144% ± 0.009** (gate −0.173; WoO −0.15).
+- **The farm delta is count-fed too** (5,5 and the chains live in small-card
+  shoes): per-bin Δside +2.97pp at TC 0 → +3.86 at −3 → +4.4 at −4 → +5.4 at
+  −8, every bin ≥ +30σ paired.
+- **Farming is essentially free:** per-bin breakeven side stake (vs $15 main)
+  is **< $1 everywhere** — the human rule is unconditional: *side bet out →
+  split 5s, always.* Window main EV moves only −2.528% → −2.632% (Δ −0.104 ±
+  0.021).
+- **Locked window (t\* = −3): side EV +7.369% → +11.775%/unit** (Δ +4.405 ±
+  0.089 paired; A/B split +4.344 ± 0.125 vs +4.466 ± 0.135, z −0.66, OOS
+  PASS).
+- **The threshold widens under farming:** re-run of E20's A-chooses/B-scores
+  ceremony picks **t\* = −2** (farm flips the −2 bin −1.884% → +1.541%);
+  B-half scores +7.476% on 20.87% of rounds. Seated staking rule is now
+  "farm side EV(bin) > 0" = TC ≤ −2.
+- **Farm-mixed ledger** (seated $15 main every round, farm iff side out,
+  pooled 20M/arm, 200 r/h; normal bins outside window / farm bins inside):
+
+  | side | t=−3 net | N0 | bank | t=−2 net | N0 | bank |
+  |---|---|---|---|---|---|---|
+  | $25 | **+$34/h** | 336h | $17.4k | **+$41/h** | 362h | $22.4k |
+  | $50 | **+$103/h** | 136h | $21.0k | **+$117/h** | 168h | $29.5k |
+  | $100 | **+$240/h** | 97h | $35.1k | **+$268/h** | 126h | $50.5k |
+
+  (E20 no-farm: +$9 / +$52 / +$138.) Breakeven side stake drops ~$20 →
+  **$11.4–12.5**. Wong-in at −2: +$62/$137/$289 per hour per 200 observed
+  rounds. t=−3 maximizes $/bankroll, t=−2 maximizes $/h — both on the menu.
+- **Doctrinal shift for the felt read: a $25 side max no longer kills the
+  play** — it caps it at ≈ crouch15-2r's hourly (+$34–41 vs +$40) on HALF
+  the bankroll ($17–22k vs $36–40k). $50+ dominates every line we own.
+
+**Caveats (inherited + new, all retired by the live-verification chunk):**
+mixed ledger stitches farm-arm window bins to normal-arm outside bins (live
+play transitions within one shoe — second-order, TC conditioning absorbs most
+of it); seated sd still sets cov(main, side) = 0; farming lengthens the payout tail,
+so window variance grows with it (seated sd/round 44.7 / 84.9 / 167.6 at
+side $25/$50/$100, t=−3 — already inside the table's N0/bank).
+Human-card note: the unbalanced-count pivot target is now **−2** (was −3).
+
+Seeds: **none consumed** (paired reuse of 16.9e9–17.8e9 by design). **Next
+unused block: 17.9e9+.**
+
 ## E20 — Silver Stack IS BEATABLE: hi-lo TC ≤ −3 makes the side bet +7.4%/unit on 11.7% of rounds (OOS-replicated)
 
 **Date:** 2026-07-18 · **Question:** M10b — does shoe composition swing Pot

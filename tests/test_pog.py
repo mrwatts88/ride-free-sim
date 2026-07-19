@@ -355,10 +355,54 @@ def test_pog_curve_json_round_trip(tmp_path):
     back = load_pog_curve_json(str(path))
     assert back.rounds == res.rounds
     assert back.paytable == res.paytable
+    assert back.arm == "normal"
     assert back.pog_total == res.pog_total
     assert {k: v.pog_profit for k, v in back.bins.items()} == {
         k: v.pog_profit for k, v in res.bins.items()
     }
+
+
+def test_pog_curve_farm_arm_tags_pairs_and_merge_guard(tmp_path):
+    """The E21 farm arm: same seed as a normal run gives paired arms whose
+    only divergence is the 5,5 line, so farming must show up as MORE lammers;
+    the arm tag survives JSON, defaults to "normal" for pre-tag banked dumps
+    (the E20 shards), and mixed-arm pooling is refused."""
+    import json
+
+    from ridefree.experiments import (
+        load_pog_curve_json,
+        merge_pog_curves,
+        pog_curve_to_json,
+        run_pog_curve,
+    )
+
+    rules = dataclasses.replace(RIDE_FREE, side_bet_pot_of_gold=PAYTABLE_POG_1)
+    seed = 16_800_000_004
+    normal = run_pog_curve(rules, seed=seed, rounds=20_000, rules_name="rf")
+    farm = run_pog_curve(rules, seed=seed, rounds=20_000, rules_name="rf",
+                         farm=True)
+    assert normal.arm == "normal" and farm.arm == "farm"
+    tokens = lambda r: sum(b.tokens for b in r.bins.values())  # noqa: E731
+    # Deterministic pin: identical shoes, and the farm line converts 5,5 free
+    # doubles (1 lammer) into split chains (>= 1, expected ~2+), so this seed
+    # must farm strictly more lammers than the normal arm.
+    assert tokens(farm) > tokens(normal)
+    assert normal.rounds == farm.rounds == 20_000
+
+    path = tmp_path / "farm.json"
+    payload = pog_curve_to_json(farm, seed)
+    with open(path, "w") as f:
+        json.dump(payload, f)
+    assert load_pog_curve_json(str(path)).arm == "farm"
+
+    # A pre-tag dump (banked E20 shards carry no "arm" key) loads as normal.
+    del payload["arm"]
+    with open(path, "w") as f:
+        json.dump(payload, f)
+    assert load_pog_curve_json(str(path)).arm == "normal"
+
+    with pytest.raises(AssertionError, match="arms"):
+        merge_pog_curves([normal, farm])
 
 
 def test_csm_always_bet_edge_near_nv_rules_prediction():

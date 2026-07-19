@@ -2381,6 +2381,7 @@ class PogCurveResult:
     rules_name: str
     penetration: float
     paytable: tuple[float, ...] = ()
+    arm: str = "normal"  # "normal" = main-EV-optimal 5,5; "farm" = SplitFives
     rounds: int = 0
     pog_total: float = 0.0
     main_total: float = 0.0
@@ -2388,18 +2389,25 @@ class PogCurveResult:
 
 
 def run_pog_curve(
-    rules: Rules, *, seed: int, rounds: int, rules_name: str = ""
+    rules: Rules, *, seed: int, rounds: int, rules_name: str = "",
+    farm: bool = False,
 ) -> PogCurveResult:
     """Flat-bet pass: main 1 unit + Pot of Gold 1 unit every round, binned by
-    pre-deal hi-lo true count. `rules` must carry side_bet_pot_of_gold."""
+    pre-deal hi-lo true count. `rules` must carry side_bet_pot_of_gold.
+
+    `farm=True` plays the lammer-farming line (free-split 5s instead of the
+    main-EV free double) — same seed as a normal run gives paired arms: shoes
+    are identical until a 5,5 decision diverges, so per-bin farm-minus-normal
+    deltas carry far less shoe noise than independent seeds would."""
     from ridefree.player_ev import OptimalStrategy
-    from ridefree.strategy import AlwaysPotOfGold
+    from ridefree.strategy import AlwaysPotOfGold, SplitFives
 
     assert rules.side_bet_pot_of_gold, "rules must offer the Pot of Gold bet"
-    strategy = AlwaysPotOfGold(OptimalStrategy())
+    inner = SplitFives(OptimalStrategy()) if farm else OptimalStrategy()
+    strategy = AlwaysPotOfGold(inner)
     res = PogCurveResult(
         rules_name=rules_name, penetration=rules.penetration,
-        paytable=rules.side_bet_pot_of_gold,
+        paytable=rules.side_bet_pot_of_gold, arm="farm" if farm else "normal",
     )
     seeds = shoe_seeds(seed)
     shoe = Shoe(rules.decks, rules.penetration, next(seeds))
@@ -2430,6 +2438,7 @@ def pog_curve_to_json(res: PogCurveResult, seed: int) -> dict:
         "rules": res.rules_name,
         "penetration": res.penetration,
         "paytable": list(res.paytable),
+        "arm": res.arm,
         "seed": seed,
         "rounds": res.rounds,
         "pog_total": res.pog_total,
@@ -2453,6 +2462,9 @@ def load_pog_curve_json(path: str) -> PogCurveResult:
         rules_name=payload["rules"],
         penetration=payload["penetration"],
         paytable=tuple(payload["paytable"]),
+        # Pre-farm-arm dumps (the banked E20 shards) predate the tag and are
+        # all normal-arm runs.
+        arm=payload.get("arm", "normal"),
         rounds=payload["rounds"],
         pog_total=payload["pog_total"],
         main_total=payload["main_total"],
@@ -2471,12 +2483,12 @@ def merge_pog_curves(results: list[PogCurveResult]) -> PogCurveResult:
     first = results[0]
     merged = PogCurveResult(
         rules_name=first.rules_name, penetration=first.penetration,
-        paytable=first.paytable,
+        paytable=first.paytable, arm=first.arm,
     )
     for r in results:
-        assert (r.rules_name, r.penetration, r.paytable) == (
-            first.rules_name, first.penetration, first.paytable
-        ), "cannot pool pog curves from different games/paytables"
+        assert (r.rules_name, r.penetration, r.paytable, r.arm) == (
+            first.rules_name, first.penetration, first.paytable, first.arm
+        ), "cannot pool pog curves from different games/paytables/arms"
         merged.rounds += r.rounds
         merged.pog_total += r.pog_total
         merged.main_total += r.main_total
@@ -2496,7 +2508,7 @@ def format_pog_curve(res: PogCurveResult, min_rounds: int = 1000) -> str:
     n = res.rounds
     lines = [
         f"rules: {res.rules_name}   penetration: {res.penetration:.2f}   "
-        f"paytable: {'/'.join(f'{p:g}' for p in res.paytable)}",
+        f"paytable: {'/'.join(f'{p:g}' for p in res.paytable)}   arm: {res.arm}",
         f"rounds: {n:,}   pog EV: {100 * res.pog_total / n:+.4f}%   "
         f"main EV: {100 * res.main_total / n:+.4f}%",
         "",

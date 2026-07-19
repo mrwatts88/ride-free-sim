@@ -456,9 +456,11 @@ def _pogcurve(args: argparse.Namespace) -> None:
     if args.penetration is not None:
         changes["penetration"] = args.penetration
     rules = dataclasses.replace(rules, **changes)
+    arm = "farm (SplitFives)" if args.split_fives else "normal"
     print(f"ruleset: {name}   pen: {rules.penetration:.2f}   "
-          f"pot of gold pay table {args.paytable}, always-bet 1 unit")
-    res = run_pog_curve(rules, seed=args.seed, rounds=args.rounds, rules_name=name)
+          f"pot of gold pay table {args.paytable}, always-bet 1 unit   arm: {arm}")
+    res = run_pog_curve(rules, seed=args.seed, rounds=args.rounds, rules_name=name,
+                        farm=args.split_fives)
     print(format_pog_curve(res, min_rounds=args.min_rounds))
     if args.json:
         with open(args.json, "w") as f:
@@ -828,6 +830,10 @@ def main() -> None:
     pg.add_argument("--paytable", choices=("1", "2", "04"), default="1",
                     help="Pot of Gold paytable (Potawatomi felt-confirmed: 1)")
     pg.add_argument("--penetration", type=float, default=None)
+    pg.add_argument("--split-fives", dest="split_fives", action="store_true",
+                    help="farm arm: free-split 5s (lammer farming) instead of "
+                         "the main-EV free double — run on the SAME seed as a "
+                         "normal shard for a paired delta")
     pg.add_argument("--seed", type=int, default=1)
     pg.add_argument("--rounds", type=int, default=1_000_000)
     pg.add_argument("--min-rounds", type=int, default=1_000)

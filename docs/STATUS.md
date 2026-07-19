@@ -12,9 +12,13 @@ trainer web app; and M10 (below) turned Matt's "Silver Stack" recon find
 into the project's best per-bankroll verdict in one day: M10a gated the Pot
 of Gold engine and refuted the published table (real PT1 edge 8.25%, not
 5.77%); M10b proved the bet BEATABLE — TC ≤ −3 → +7.4%/unit on 11.7% of
-rounds, OOS-replicated → ~+$52/h on $38k at a $50 side max ($100 → $138/h
-on $56k). Everything now hangs on one felt read: the Silver Stack table
-max. Next: pen sensitivity, the human card, live verification.**
+rounds, OOS-replicated; and the E21 farm arm (split 5s while the side is
+out — free by measurement, breakeven side stake < $1/bin) lifted the window
+to +11.8%/unit and widened t\* to −2: farm-mixed seated $25 → +$34–41/h on
+$17–22k (the $25 max UN-DIED), $50 → +$103–117/h, $100 → +$240–268/h.
+The felt read (side max, pen, entry policy) now sets the tier, not
+life-or-death. Next: pen sensitivity, the human card (pivot −2), live
+verification.**
 
 ## M10a DONE (2026-07-18, third session): Silver Stack = Pot of Gold, gated; WoO's table refuted on P(0)
 
@@ -55,15 +59,38 @@ round — toll charged per-TC, −2.53% inside the window): side $50 →
 max → +$9/h (dead). Wong-in stronger still (needs entry policy). New
 machinery: `cli pogcurve/pogcombine` (side+main binned separately, ±12
 clamp), verdict `data/m10b_verdict.py`, shards `data/m10b_rf_p75_s*.json`.
-**Field status: 6-lammer rung felt-confirmed 300:1 → PT1 exactly. THE ONE
-NUMBER THAT NOW RULES EVERYTHING: the Silver Stack table max** ($25 kills
-it, $50+ beats every blackjack line we own). Also unknown: Ride Free
-table pen (assumed .75; tail is depth-fed), mid-shoe entry policy (wong
-mode only), resplit cap (assumed 4). **Next chunks (in order): pen
-.70/.80 sensitivity shards; the no-division human card (pivot-at-−3
-unbalanced count via the E17 search; hi-lo is provably not the optimal
-lammer count — headroom for a POG-specific EOR derivation); live
-verification of the literal card (E18 pattern); optics/heat note.**
+**Field status: 6-lammer rung felt-confirmed 300:1 → PT1 exactly.**
+
+**E21 DONE (same day): THE FARM ARM — splitting 5s while the side is out
+is free money, and it changes the verdict tiers.** 10 × 2M farm-arm rounds
+(`pogcurve --split-fives`) on the SAME seeds as the E20 shards (paired
+arms = CRN deltas; M10a gate pattern, no fresh seeds consumed): always-on
+delta +3.088% ± 0.033 re-validates the gate AND WoO's +3.019; **window
+side EV +7.37% → +11.78%/unit (Δ +4.41 ± 0.09, OOS PASS); per-bin
+breakeven side stake < $1 → the human rule is unconditional ("side out →
+split 5s"); the A/B threshold ceremony re-run under farming picks t\* = −2**
+(the −2 bin flips positive: 20.9% of rounds at +7.26%). Farm-mixed seated
+ledger ($15 main, 200 r/h): **$25 side → +$34/h (t−3, $17.4k bank) or
++$41/h (t−2, $22.4k); $50 → +$103/+$117/h ($21–29.5k); $100 →
++$240/+$268/h ($35–50.5k)**; breakeven side stake ~$20 → **$11.4–12.5**;
+wong-in at −2 ≈ +$62/$137/$289 per 200 observed. **The $25-max scenario no
+longer kills the play — it matches crouch15-2r's hourly on half the
+bankroll; $50+ dominates everything we own.** t=−3 maximizes $/bankroll,
+t=−2 maximizes $/h. Machinery: `arm` tag through curve JSONs (mixed-arm
+pooling refused; banked pre-tag dumps load as normal), 295 tests green.
+Arithmetic: `data/m10b_farm_verdict.py` over `m10b_farm_p75_s*.json`.
+
+**Still unknown from the felt:** the Silver Stack side max (now sets the
+TIER: $25 ≈ crouch15 on half bankroll / $50+ dominates — no longer
+life-or-death), Ride Free table pen (assumed .75; tail is depth-fed),
+mid-shoe entry policy (wong mode only), resplit cap (assumed 4; farming
+leans on it — a 2-hand cap would trim the farm delta). **Next chunks (in
+order): pen .70/.80 sensitivity shards (fresh seeds 17.9e9+); the
+no-division human card (pivot-at-−2 unbalanced count via the E17 search;
+hi-lo is provably not the optimal lammer count — headroom for a
+POG-specific EOR derivation); live verification of the literal card (E18
+pattern — also retires the mixed-bin stitch and cov(main,side)=0
+approximations and measures realized farm variance); optics/heat note.**
 
 ## E18 DONE (2026-07-18): THE LOCKED CARD — crouch15-2r, certified live
 
@@ -118,8 +145,9 @@ its low point (P10 low −$3,100). Expectation-setting numbers, in
 EXPERIMENTS E18b.
 Seed ledger through E18b: 14.9e9 wong depth, 15.0–15.5e9 E18b, 15.6e9
 session variance; M10a consumed 15.7–16.6e9 (gate shards) and 16.7/16.8e9
-(test pins); M10b consumed 16.9–17.8e9 (E20 curve shards). **Next unused
-seed block: 17.9e9+.**
+(test pins); M10b consumed 16.9–17.8e9 (E20 curve shards; E21 farm arm
+REUSED the same block deliberately — paired CRN arms, not a replication).
+**Next unused seed block: 17.9e9+.**
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 
@@ -527,29 +555,29 @@ frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
 ## NEXT STEPS (M10 verdict in; field items now rule everything)
 
 0. **THE decisive field check (Matt, tomorrow 2026-07-19): the Silver Stack
-   table max on the Ride Free tables.** $25 → dead (+$9/h); $50 → +$52/h on
-   ~$38k; $100 → +$138/h on ~$56k (E20 ledger, pen .75 assumed). While
-   standing there, also read: the Ride Free tables' cut-card depth (pen
-   assumed .75 — the signal is depth-fed), whether mid-shoe side staking /
-   entry is unrestricted (wong mode), and the resplit cap (assumed 4 hands).
-   Matt's prior: many side bets cap at $100, wouldn't be surprised by $25.
+   table max on the Ride Free tables.** Farm-mixed ledger (E21, pen .75
+   assumed): $25 → **+$34–41/h on $17–22k** (≈ crouch15's hourly on half
+   the bankroll — no longer dead); $50 → **+$103–117/h on $21–29.5k**;
+   $100 → **+$240–268/h on $35–50.5k** (ranges = locked t−3 vs farm-era
+   t−2). While standing there, also read: the Ride Free tables' cut-card
+   depth (pen assumed .75 — the signal is depth-fed), whether mid-shoe side
+   staking / entry is unrestricted (wong mode), and the resplit cap
+   (assumed 4 hands; the farm leans on it). Matt's prior: many side bets
+   cap at $100, wouldn't be surprised by $25.
 1. **M10 simulation chunks queued behind the felt read (in order):** pen
    .70/.80 sensitivity shards (same pogcurve harness, fresh seeds 17.9e9+);
-   **the farm arm (Matt's catch, 2026-07-18): E20's +7.37% window EV is
-   CONSERVATIVE — the curve played main-EV-optimal 5,5 (free double); with
-   side ≫ main staked, splitting 5s is right (M10a measured the farm at
-   ~+3pp side EV always-on for −0.15pp of main; bigger conditional on the
-   trigger window). One more pogcurve arm with SplitFives + a stake-aware
-   wrapper prices it exactly**; the no-division human card — a pivot-at-−3
-   unbalanced count via the E17 `search_unbalanced_level1` machinery, plus
-   a POG-specific EOR derivation (hi-lo is provably not the optimal lammer
-   count); live verification of the literal card incl. realized combined
-   variance (E18 pattern — the ledger's cov(main,side)=0 approximation gets
-   replaced by measurement); optics/heat note for the article (side-jamming
-   at trash counts). Ledger structure note (same discussion): net = linear
-   side income (≈ $1.72/h per side $ at 200 r/h) minus a FLAT toll
-   (≈ $34/h) → breakeven side stake ≈ $20; the max sets the ceiling on a
-   fixed-cost business.
+   ~~the farm arm~~ **DONE — E21** (window +11.78%/unit, t\* widened to −2,
+   $25 max un-died; the farm rule is unconditional, breakeven side < $1);
+   the no-division human card — a pivot-at-−2 unbalanced count via the E17
+   `search_unbalanced_level1` machinery, plus a POG-specific EOR derivation
+   (hi-lo is provably not the optimal lammer count); live verification of
+   the literal card incl. realized combined variance (E18 pattern — retires
+   cov(main,side)=0 AND the E21 mixed-bin stitch); optics/heat note for the
+   article (side-jamming at trash counts + always-splitting 5s is novel,
+   visible behavior). Ledger structure note (updated by E21): net = linear
+   side income (≈ $2.75/h per side $ at 200 r/h, t−3 farm) minus a FLAT
+   toll (≈ $34/h) → breakeven side stake ≈ **$11.4–12.5**; the max sets
+   the ceiling on a fixed-cost business.
 2. **Older field checks (still open, lower stakes now):** the EZ table's
    Dragon/Panda paytables (40:1/25:1 assumed), side-bet maxes, cut-card
    depth; weekday blackjack pace (all crouch15 $/h assume 200 r/h heads-up);
@@ -681,8 +709,11 @@ uv run python -m ridefree.cli sim --rules ridefree_woo --shoe-mode csm \
 uv run python -u data/m10a_gate.py normal 15700000001 2000000  # gate shard
 uv run python data/m10a_verdict.py            # pool shards, score the battery
 uv run python -m ridefree.cli pogcurve --rounds 2000000 --seed S --json out.json
+uv run python -m ridefree.cli pogcurve --split-fives --seed S --json out.json
+                                              # E21 farm arm (pair seeds!)
 uv run python -m ridefree.cli pogcombine data/m10b_rf_p75_s*.json
 uv run python data/m10b_verdict.py            # E20: threshold, OOS, ledger
+uv run python data/m10b_farm_verdict.py       # E21: paired deltas, farm ledger
 ```
 
 ## Open items
@@ -719,4 +750,6 @@ uv run python data/m10b_verdict.py            # E20: threshold, OOS, ledger
   `e12_verdict.py` (the E12 ledger arithmetic), `m10a_gate.py` /
   `m10a_verdict.py` + `m10a_*.json` (the M10a token-histogram gate),
   `m10b_verdict.py` + `m10b_rf_p75_s*.json` (the E20 attack bins — any
-  threshold/ramp/side-max reprices by arithmetic over these).
+  threshold/ramp/side-max reprices by arithmetic over these),
+  `m10b_farm_verdict.py` + `m10b_farm_p75_s*.json` (the E21 farm arm,
+  seed-paired with the E20 shards).
