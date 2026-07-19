@@ -2911,3 +2911,352 @@ def merge_pog_eors(results: list) -> PogEorResult:
             for j in range(11):
                 merged.xtx[i][j] += r.xtx[i][j]
     return merged
+
+
+# --- E25: the RA bank — paired second moments for risk-averse play ----------
+#
+# The E24 hobby objective (min bankroll s.t. an hourly target) prices every
+# decision by its EV *and* its variance, but the banked deviation data carried
+# EV deltas only. This harness banks, per hi-lo TC bin, the paired moments that
+# price any playing layer's effect on BOTH: for each candidate change,
+# (d, d^2, p*d) against the chart timeline, where p is the chart-arm profit
+# and d the profit change — so Delta E[p^2] = E[2*p*d + d^2] exactly.
+#
+# Three layers share one canonical timeline (the chart's cards, the E5/E8/E16
+# replay pattern):
+#   1. chart arm: per-bin (n, p, p^2) — the self-contained pricing base;
+#   2. candidate cells: every chart DOUBLE/SPLIT decision, replayed with that
+#      one cell suppressed (the RA question "is this chart play worth its
+#      variance at this bet?" — includes Matt's off-the-top candidates);
+#   3. composition deviations (bins >= dev_tc_min only — the EVCalculator
+#      replay costs ~0.5k rounds/s): aggregate paired moments per bin PLUS
+#      per-play attribution keyed by the FIRST diverging decision.
+# Insurance needs no replay: on an ace-up round the overlay settle is +1.0
+# (dealer natural) or -0.5 per unit main bet, so per-bin counts and the
+# chart-profit cross sums price any TC-threshold insurance rule exactly,
+# hedging term included. Dealer-natural rounds have no decisions, so every
+# play delta is 0 there and the dev cross term needs only sum(d | ace up).
+
+RA_ACTION_LETTER = {"hit": "H", "stand": "S", "double": "D", "split": "P"}
+
+
+@dataclass
+class RaCell:
+    """Paired moments of one play-class change vs the chart, one TC bin."""
+
+    rounds: int = 0
+    d_sum: float = 0.0
+    d_sq: float = 0.0
+    pd_sum: float = 0.0  # sum of p_chart * d — with d_sq gives Delta E[p^2]
+
+    def add(self, p: float, d: float) -> None:
+        self.rounds += 1
+        self.d_sum += d
+        self.d_sq += d * d
+        self.pd_sum += p * d
+
+
+@dataclass
+class RaBin:
+    """Chart-arm moments + insurance overlay + aggregate composition-dev
+    moments for one hi-lo TC bin."""
+
+    rounds: int = 0
+    p_sum: float = 0.0
+    p_sq: float = 0.0
+    tc_sum: float = 0.0
+    ins_rounds: int = 0  # ace-up rounds (insurance offered)
+    ins_bj: int = 0  # ...where the hole completed a dealer natural
+    ins_p_sum: float = 0.0  # chart profit over ace-up rounds
+    ins_p_bj_sum: float = 0.0  # chart profit over dealer-natural rounds
+    dev_rounds: int = 0  # rounds given the composition replay
+    dev_d_sum: float = 0.0
+    dev_d_sq: float = 0.0
+    dev_pd_sum: float = 0.0
+    dev_ins_d_sum: float = 0.0  # dev delta over ace-up rounds (cross term)
+
+    FIELDS = ("rounds", "p_sum", "p_sq", "tc_sum", "ins_rounds", "ins_bj",
+              "ins_p_sum", "ins_p_bj_sum", "dev_rounds", "dev_d_sum",
+              "dev_d_sq", "dev_pd_sum", "dev_ins_d_sum")
+
+
+@dataclass
+class RaBankResult:
+    rules_name: str
+    penetration: float
+    dev_tc_min: int
+    rounds: int = 0
+    bins: dict[int, RaBin] = field(default_factory=dict)
+    # cell key -> tc bin -> RaCell. Keys: "noD:h10v6" / "noP:p8vT" (candidate
+    # suppressions of chart cells) and "dev:h12v3:H>S" (composition play,
+    # first diverging decision; blur note: later same-round divergences ride
+    # along in d — rare, and exactly how a human plays a card of cells).
+    cells: dict[str, dict[int, RaCell]] = field(default_factory=dict)
+
+
+class _ViewRecorder:
+    """Transparent strategy wrapper recording (view, action) per decision."""
+
+    def __init__(self, inner) -> None:
+        self._inner = inner
+        self.trace: list = []
+
+    def choose(self, view, rules):
+        action = self._inner.choose(view, rules)
+        self.trace.append((view, action))
+        return action
+
+
+def _ra_hand_desc(view, *actions) -> str:
+    """The chart row a human reads for this decision: pair row when a split
+    is involved, hard/soft total row otherwise."""
+    from ridefree.engine import Action
+
+    if view.pair_rank is not None and Action.SPLIT in actions:
+        rank = "A" if view.pair_rank == 1 else ("T" if view.pair_rank == 10 else str(view.pair_rank))
+        return f"p{rank}"
+    return f"{'s' if view.soft else 'h'}{view.total}"
+
+
+def _ra_up_desc(up: int) -> str:
+    return "A" if up == 1 else ("T" if up == 10 else str(up))
+
+
+def _ra_cell_key(view, action) -> str:
+    """Candidate-suppression key for a chart DOUBLE/SPLIT decision."""
+    letter = RA_ACTION_LETTER[action.value]
+    return (f"no{letter}:{_ra_hand_desc(view, action)}"
+            f"v{_ra_up_desc(view.dealer_up)}")
+
+
+def _choose_excluding(calc, view, banned):
+    """Best chart action at this view with `banned` removed (the suppressed
+    cell's alternative, from the same infinite-deck calculator as the chart)."""
+    from ridefree.engine import Action
+    from ridefree.player_ev import choose_with_calc  # noqa: F401 (doc link)
+
+    legal = view.legal - {banned}
+    own, free = view.own_wager, view.free_wager
+    if len(view.cards) == 2:
+        c1, c2 = view.cards
+        evs = calc.two_card_evs(
+            c1, c2, view.dealer_up, own, free,
+            is_split=view.is_split_hand,
+            allow_split=Action.SPLIT in legal,
+        )
+        legal_evs = {a: v for a, v in evs.items() if a in legal}
+        return max(legal_evs, key=legal_evs.get)
+    stand = calc.ev_final(view.total, own, free, view.dealer_up)
+    hit = calc.ev_hit(view.total, view.soft, own, free, view.dealer_up)
+    if Action.HIT not in legal:
+        return Action.STAND
+    return Action.HIT if hit > stand else Action.STAND
+
+
+class _SuppressCell:
+    """Chart play with ONE cell deleted: whenever the chart would take the
+    suppressed action at the matching (row, upcard), take the best remaining
+    action instead. Matches every recurrence in the round (split cascades) —
+    the semantics of a human deleting the cell from their card."""
+
+    def __init__(self, chart, cell_key: str) -> None:
+        self._chart = chart
+        self._cell = cell_key
+
+    def choose(self, view, rules):
+        action = self._chart.choose(view, rules)
+        from ridefree.engine import Action
+
+        if action in (Action.DOUBLE, Action.SPLIT) and len(view.cards) == 2:
+            if _ra_cell_key(view, action) == self._cell:
+                return _choose_excluding(self._chart._calc(rules), view, action)
+        return action
+
+
+def run_ra_bank(
+    rules: Rules,
+    *,
+    seed: int,
+    rounds: int,
+    dev_tc_min: int = 2,
+    rules_name: str = "",
+    self_check: bool = False,
+) -> RaBankResult:
+    """One pass banking every RA-pricing moment (module comment above).
+
+    The chart timeline is canonical: its cards advance the shoe and feed the
+    tracker; every replay restores the shoe around itself. Insurance is taken
+    on NO arm (the overlay is priced from the banked settle indicators), so
+    the chart arm here is exactly the E16 "basic" arm — cross-gate at verdict
+    time. `self_check` re-replays the chart from the snapshot and asserts the
+    profit reproduces (mechanics gate, tests only)."""
+    from ridefree.hand import is_blackjack
+    from ridefree.player_ev import CompositionStrategy, OptimalStrategy
+
+    chart_inner = OptimalStrategy()
+    base = _ViewRecorder(chart_inner)
+    dev_inner = CompositionStrategy()
+    dev = _ViewRecorder(dev_inner)
+    from ridefree.engine import Action
+
+    seeds = shoe_seeds(seed)
+    shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+    tracker = CompositionTracker(rules.decks)
+    rounds_since = 0
+    res = RaBankResult(
+        rules_name=rules_name, penetration=rules.penetration,
+        dev_tc_min=dev_tc_min,
+    )
+    for _ in range(rounds):
+        if _needs_reshuffle(rules, shoe, rounds_since):
+            shoe = Shoe(rules.decks, rules.penetration, next(seeds))
+            tracker.new_shoe()
+            rounds_since = 0
+        tc = tracker.hilo_true()
+        tc_bin = _bin_tc8(tc)
+        base.trace.clear()
+        start = shoe.snapshot()
+        r_base = play_round(rules, shoe, base, bet=1.0)
+        end = shoe.snapshot()
+        p = r_base.profit
+        b = res.bins.setdefault(tc_bin, RaBin())
+        b.rounds += 1
+        b.p_sum += p
+        b.p_sq += p * p
+        b.tc_sum += tc
+        ace_up = r_base.dealer_cards[0] == 1
+        if ace_up:
+            b.ins_rounds += 1
+            if is_blackjack(list(r_base.dealer_cards[:2])):
+                b.ins_bj += 1
+                b.ins_p_bj_sum += p
+            b.ins_p_sum += p
+
+        if self_check:
+            shoe.restore(start)
+            r_again = play_round(rules, shoe, _ViewRecorder(chart_inner), bet=1.0)
+            assert r_again.profit == p, "replay does not reproduce the chart round"
+
+        # candidate cells: every distinct chart DOUBLE/SPLIT decision this round
+        fired = {
+            _ra_cell_key(view, action)
+            for view, action in base.trace
+            if action in (Action.DOUBLE, Action.SPLIT) and len(view.cards) == 2
+        }
+        for cell in fired:
+            shoe.restore(start)
+            r_alt = play_round(rules, shoe, _SuppressCell(chart_inner, cell), bet=1.0)
+            d = r_alt.profit - p
+            res.cells.setdefault(cell, {}).setdefault(tc_bin, RaCell()).add(p, d)
+
+        # composition deviations (the expensive replay), bins >= dev_tc_min
+        if tc_bin >= dev_tc_min:
+            shoe.restore(start)
+            dev_inner.set_composition(rules, tracker.counts)
+            dev.trace.clear()
+            r_dev = play_round(rules, shoe, dev, bet=1.0)
+            d = r_dev.profit - p
+            b.dev_rounds += 1
+            b.dev_d_sum += d
+            b.dev_d_sq += d * d
+            b.dev_pd_sum += p * d
+            if ace_up:
+                b.dev_ins_d_sum += d
+            base_actions = [a for _, a in base.trace]
+            dev_actions = [a for _, a in dev.trace]
+            if base_actions != dev_actions:
+                i = next(
+                    (j for j, (x, y) in enumerate(zip(base_actions, dev_actions))
+                     if x != y),
+                    None,  # equal prefix, unequal length: unreachable (same
+                )  # actions => same cards => same round end) — but never crash
+                if i is not None:
+                    view, a_base = base.trace[i]
+                    a_dev = dev_actions[i]
+                    key = (f"dev:{_ra_hand_desc(view, a_base, a_dev)}"
+                           f"v{_ra_up_desc(view.dealer_up)}:"
+                           f"{RA_ACTION_LETTER[a_base.value]}>"
+                           f"{RA_ACTION_LETTER[a_dev.value]}")
+                    res.cells.setdefault(key, {}).setdefault(
+                        tc_bin, RaCell()).add(p, d)
+
+        shoe.restore(end)  # canonical timeline: the chart's cards
+        tracker.observe_round(r_base)
+        rounds_since += 1
+        res.rounds += 1
+    return res
+
+
+def ra_bank_to_json(res: RaBankResult, seed: int) -> dict:
+    return {
+        "kind": "ra_bank",
+        "rules": res.rules_name,
+        "penetration": res.penetration,
+        "dev_tc_min": res.dev_tc_min,
+        "seed": seed,
+        "rounds": res.rounds,
+        "bins": {
+            str(k): [getattr(b, f) for f in RaBin.FIELDS]
+            for k, b in sorted(res.bins.items())
+        },
+        "cells": {
+            cell: {
+                str(k): [c.rounds, c.d_sum, c.d_sq, c.pd_sum]
+                for k, c in sorted(by_bin.items())
+            }
+            for cell, by_bin in sorted(res.cells.items())
+        },
+    }
+
+
+def load_ra_bank_json(path: str) -> RaBankResult:
+    import json
+
+    with open(path) as f:
+        payload = json.load(f)
+    assert payload["kind"] == "ra_bank", f"{path} is not an ra_bank dump"
+    res = RaBankResult(
+        rules_name=payload["rules"],
+        penetration=payload["penetration"],
+        dev_tc_min=payload["dev_tc_min"],
+        rounds=payload["rounds"],
+    )
+    for k, vals in payload["bins"].items():
+        b = RaBin()
+        for name, v in zip(RaBin.FIELDS, vals):
+            setattr(b, name, v)
+        res.bins[int(k)] = b
+    for cell, by_bin in payload["cells"].items():
+        res.cells[cell] = {
+            int(k): RaCell(rounds=v[0], d_sum=v[1], d_sq=v[2], pd_sum=v[3])
+            for k, v in by_bin.items()
+        }
+    return res
+
+
+def merge_ra_banks(results: list[RaBankResult]) -> RaBankResult:
+    """Pool independently-seeded RA banks (all sufficient stats are additive)."""
+    assert results
+    first = results[0]
+    merged = RaBankResult(
+        rules_name=first.rules_name, penetration=first.penetration,
+        dev_tc_min=first.dev_tc_min,
+    )
+    for r in results:
+        assert (r.rules_name, r.penetration, r.dev_tc_min) == (
+            first.rules_name, first.penetration, first.dev_tc_min
+        ), "cannot pool RA banks from different games/pens/dev windows"
+        merged.rounds += r.rounds
+        for k, b in r.bins.items():
+            acc = merged.bins.setdefault(k, RaBin())
+            for name in RaBin.FIELDS:
+                setattr(acc, name, getattr(acc, name) + getattr(b, name))
+        for cell, by_bin in r.cells.items():
+            dst = merged.cells.setdefault(cell, {})
+            for k, c in by_bin.items():
+                acc = dst.setdefault(k, RaCell())
+                acc.rounds += c.rounds
+                acc.d_sum += c.d_sum
+                acc.d_sq += c.d_sq
+                acc.pd_sum += c.pd_sum
+    return merged

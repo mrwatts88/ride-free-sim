@@ -379,6 +379,30 @@ def _curvecombine(args: argparse.Namespace) -> None:
     print(format_tc_curve(merged, min_rounds=args.min_rounds))
 
 
+def _rabank(args: argparse.Namespace) -> None:
+    import json
+
+    from ridefree.experiments import ra_bank_to_json, run_ra_bank
+
+    name, rules, _, _ = VARIANTS[args.rules]
+    if args.penetration is not None:
+        rules = dataclasses.replace(rules, penetration=args.penetration)
+    print(f"ruleset: {name}   pen: {rules.penetration:.2f}   "
+          f"composition-dev replay at tc bins >= {args.dev_tc_min:+d}")
+    res = run_ra_bank(
+        rules, seed=args.seed, rounds=args.rounds,
+        dev_tc_min=args.dev_tc_min, rules_name=name,
+    )
+    n_dev = sum(b.dev_rounds for b in res.bins.values())
+    n_ins = sum(b.ins_rounds for b in res.bins.values())
+    print(f"rounds {res.rounds:,}   dev-replayed {n_dev:,}   "
+          f"ace-up {n_ins:,}   cells {len(res.cells)}")
+    if args.json:
+        with open(args.json, "w") as f:
+            json.dump(ra_bank_to_json(res, args.seed), f)
+        print(f"ra-bank JSON written to {args.json}")
+
+
 def _countcurve(args: argparse.Namespace) -> None:
     import json
 
@@ -810,6 +834,22 @@ def main() -> None:
     cc.add_argument("paths", nargs="+", help="curve JSON files to merge")
     cc.add_argument("--min-rounds", type=int, default=1_000)
     cc.set_defaults(func=_curvecombine)
+
+    rb = sub.add_parser(
+        "rabank", help="E25: paired RA moments — chart bins + suppressed-cell "
+                       "deltas + composition-dev attribution + insurance "
+                       "overlay, one pass"
+    )
+    rb.add_argument("--rules", choices=VARIANTS, default="h17")
+    rb.add_argument("--penetration", type=float, default=None,
+                    help="override cut-card depth (default: ruleset's 0.75)")
+    rb.add_argument("--dev-tc-min", type=int, default=2,
+                    help="composition replay only at tc bins >= this "
+                         "(~0.5k rounds/s where active)")
+    rb.add_argument("--seed", type=int, default=1)
+    rb.add_argument("--rounds", type=int, default=500_000)
+    rb.add_argument("--json", default=None, help="dump the bank to this path")
+    rb.set_defaults(func=_rabank)
 
     kc = sub.add_parser(
         "countcurve", help="EV bins for unbalanced RUNNING counts (red7/KO/"

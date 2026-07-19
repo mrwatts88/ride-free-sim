@@ -300,3 +300,40 @@ exact-P(0), the k>=2 shape, the convention-free split-fives deltas, and the
 bridge — not blind agreement with a table our own arithmetic refutes. The
 real-rules PT1 house edge is ~7.7%, not the advertised 5.77% — the M10b
 attack must clear the honest number.
+
+## Decision record: the RA bank prices variance without new strategy code (M11/E25, 2026-07-19)
+
+**What:** `experiments.run_ra_bank` — one paired pass banking, per hi-lo TC
+bin, everything needed to price a playing layer's effect on the mean AND the
+second moment of round profit: chart-arm moments (n, Σp, Σp²); for every
+candidate play change the paired (n, Σd, Σd², Σp·d) where d is the profit
+delta against the chart timeline (so ΔE[p²] = E[2pd + d²] exactly); and the
+insurance overlay as counts (ace-up rounds, dealer naturals, Σp and Σp over
+naturals — the settle is ±½/+1 per unit, so any TC-threshold insurance rule
+prices in closed form, hedging cross term included; dealer-natural rounds
+have no decisions, so play deltas vanish there by construction).
+
+**Why paired replay, not new arms:** the E24 hobby objective (min bankroll
+at an hourly floor) trades EV against variance at an exchange rate set by
+the whole card, so play selection must be re-derivable for ANY card — the
+bank stores per-play moments and `data/e25_ra.py` selects at arithmetic
+time (the E4c/E16/E24 "simulate once, evaluate ramps analytically" doctrine
+extended to its second moment). Three sources on one canonical timeline
+(the chart's cards, the E5/E8 snapshot-replay pattern): candidate cells =
+every chart DOUBLE/SPLIT decision replayed with that one cell suppressed
+(`_SuppressCell`, alternative from the same infinite-deck calculator);
+composition deviations replayed at bins >= dev_tc_min (default +2 — the
+EVCalculator replay is the expensive part and hobby money above the floor
+lives there), attributed to the FIRST diverging decision; insurance needs
+no replay at all. Selection groups cells by (chart row, upcard) and picks
+one policy per group — a dev cell and its suppression touch the same
+rounds, so they are alternatives, never teammates.
+
+**Gates:** bit-exact agreement of the dev accumulators with the certified
+`run_deviation_value` on the same seed (tests/test_ra_bank.py); the
+aggregate-equals-sum-of-cells identity; chart bins vs the banked E16 basic
+curve and dev values vs the E16 paired values on fresh seeds; insurance
+P(BJ|ace) vs first principles (verdict script). Known blur on record:
+later same-round divergences ride along with the first (exactly how a
+card of cells is played); policy effects compose additively in (μ, M2);
+the chosen card's live OOS certification plays the real combined policy.

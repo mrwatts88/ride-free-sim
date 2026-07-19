@@ -42,8 +42,16 @@ walk at TC ≤ −1 ~$10k (the walk line is the money decision — and it's
 where division earns its keep; no-division walk cards cost $20k+),
 sit-out shapes $5–7k (conditional on felt policy), and deviations are
 worth a THIRD of the bank (Matt's hunch, priced: $9.7k → $6.4k on the
-same card). Candidate card: $15 floor while TC ≥ 0, $70 at +4, walk at
-−1 → +$16/h on $10.4k. Awaiting Matt's shape pick + OOS certification.**
+same card). E25 (same day) built the RA bank (paired SECOND moments per
+play — `cli rabank`, 40M rounds, 4 gates green) and answered Matt's
+"variance-tuned deviations" question by measurement: honest-variance
+deviations cut 35–45% of the bank in every shape (**walk $7.1k at
++$15.4/h; sit-out $3.9k; never-leave $21.4k at +$30.7/h**), the engine
+re-derived the classic index card ranked by bankroll impact (16vT = 30%
+of play value; top 5 ≈ 60%), insurance-at-jump-bins fell out as the
+derived rule — but RA-vs-EV-max itself is ~1–2% of bank (the real RA
+content: skip 2,2v3 / 3,3v3 splits, DON'T split T,T v 3 even when +EV).
+Awaiting Matt's shape pick, then OOS-certify the literal human card.**
 
 ## M11 OPEN — the hobby question; E24 DONE (2026-07-19): the frontier from banked bins
 
@@ -78,25 +86,42 @@ Honesty: N0 425h, 46% of 4h sessions lose (P5 −$975), a full 200h year
 is +$3.1k ± $4.4k (~24% chance a correct year loses). Winner's-curse +
 zero-friction-walk caveats in EXPERIMENTS E24.
 
-**Next chunks (menu, Matt picks the shape first — walk vs sit-out vs
-never-leave is a lifestyle call the sim can't make):**
-1. **OOS-certify the picked card** on fresh seeds (E18 pattern, cheap;
-   next unused block 21.4e9+).
-2. **Deviation distillation:** which specific indexes carry the $3.3k
-   ceiling gap at the hobby card's bins (needs per-play attribution —
-   `cli deviations` is per-TC aggregate today).
-3. **RA/variance-aware indices + off-the-top strategy:** deviation
-   VARIANCE is unmodeled (ceiling reuses ins-arm E[profit²]); Matt's
-   "maybe basic itself changes" lives here. New machinery: per-decision
-   variance deltas, then risk-averse index search.
-4. **The walk-pivot count:** unbalanced level-1 with pivot AT the walk
+**E25 DONE (same day): the RA bank — see EXPERIMENTS E25.** Machinery:
+`cli rabank` (chart moments + per-play paired (d, d², p·d) + exact
+insurance overlay, one pass, ~10k r/s) and `data/e25_ra.py` (gates →
+per-shape chart/EV-max/RA layer table → the ranked play list). All four
+gates green on 40M fresh rounds; deviation second moments are now
+MEASURED, retiring E24's reused-variance approximation (walk-shape
+honest ceiling $7.1k, was $6.1–6.4k approximate). Headline per shape
+(honest variance, $15 floor, ≥$15/h): **walk $7.1k / sit-out $3.9k /
+never-leave $21.4k at +$30.7/h**; the distilled card is short (top 5
+plays ≈ 60% of play value: 16vT, 15vT, 12v3, 12v2, 14vT; insure ≥ +4 =
+"insure when the jump is out", derived); RA-specific selection is worth
+only ~1–2% of bank over honest EV-max — measured, no longer a hunch.
+
+**Next chunks (menu, Matt picks the shape — walk vs sit-out vs
+never-leave is a lifestyle call the sim can't make; honest numbers now
+in hand):**
+1. **OOS-certify the picked card as the LITERAL human card** (crisp
+   TC-threshold indexes from the E25 play list, the E18/E23 pattern;
+   closes the composition-vs-crisp gap, the additivity approximation,
+   and the play-level winner's curse in one run; next unused block
+   22.4e9+).
+2. **The walk-pivot count:** unbalanced level-1 with pivot AT the walk
    line (per-deck imbalance −1 → pivot TC −1 → the walk becomes
    depth-EXACT, jumps go blurred instead — E22b's plateau logic says
    jump blur is the cheap side). One new `countcurve` signal run could
-   deliver a division-free ~$10k walk card.
-5. **Felt items now decisive:** weekday floor ($10 seen never/Saturday
+   deliver a division-free ~$10k walk card. (Sit-out shapes already
+   have a division-free ~$5.4k row from E24 §4.)
+3. **Felt items now decisive:** weekday floor ($10 seen never/Saturday
    only?), weekday pace, sit-out-while-others-play policy, mid-shoe
    re-entry.
+4. **PyPy throughput experiment** (Matt's "should we port to Rust?"
+   question, 2026-07-19 answer: not yet): the engine is pure stdlib —
+   PyPy could buy 5–15× for zero code changes, possibly bit-identical
+   (MT19937-compatible random). 30-minute experiment before any Rust
+   talk; Rust only if a question demands a scale PyPy can't reach
+   (decision record M7 still governs).
 
 ## E23 DONE (2026-07-19): the literal pog2 card CERTIFIED LIVE — and priced at the real felt
 
@@ -337,8 +362,9 @@ session variance; M10a consumed 15.7–16.6e9 (gate shards) and 16.7/16.8e9
 REUSED the same block deliberately — paired CRN arms, not a replication);
 E22 consumed 17.9–18.3e9 (EOR shards) and 18.4–19.3e9 (count-curve
 shards); E22b consumed 19.4–20.3e9 (simple-count head-to-head); E23
-consumed 20.4–21.3e9 (live-card certification, both pens). **Next
-unused seed block: 21.4e9+.**
+consumed 20.4–21.3e9 (live-card certification, both pens); E25 consumed
+21.4–22.3e9 (RA-bank shards; E24 was arithmetic-only, none). **Next
+unused seed block: 22.4e9+.**
 
 ## TRAINER SHIPPED (2026-07-18, second session): the crouch15 drill room
 
@@ -745,12 +771,13 @@ frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
 
 ## NEXT STEPS (M10 closed; M11 — the hobby card — is the active question)
 
--1. **M11 (ACTIVE, 2026-07-19):** Matt picks the operating shape (walk /
-   sit-out / never-leave — see the M11 section's menu), then: OOS
-   certification of the card; the deviation distillation (per-play
-   attribution machinery); the RA-index/variance layer (new sims); the
-   walk-pivot count (one countcurve signal run); weekday felt recon
-   (floor, pace, sit-out and mid-shoe policy).
+-1. **M11 (ACTIVE, 2026-07-19):** ~~deviation distillation~~ and
+   ~~RA-index/variance layer~~ **DONE — E25** (the RA bank; honest
+   per-shape numbers: walk $7.1k / sit-out $3.9k / never-leave $21.4k).
+   Remaining: Matt picks the operating shape (see the M11 section's
+   menu), then OOS-certify the literal human card; optional walk-pivot
+   count run; weekday felt recon (floor, pace, sit-out and mid-shoe
+   policy); PyPy throughput experiment.
 
 0. ~~THE decisive field check~~ **DONE (Matt, 2026-07-19): side max $25**
    (his prior was right); **pen ≈ .79–.833** (1 to 1.25 decks cut — much
@@ -920,6 +947,10 @@ uv run python -u data/e22b_run.py SEED 2000000 out.json  # E22b shard
 uv run python data/e22b_verdict.py            # E22b: hi-lo-57 vs pog2 vs KO
 uv run python -u data/e23_run.py SEED 2000000 out.json 0.8333  # E23 live shard
 uv run python data/e23_verdict.py             # E23: live card gates + ledger
+uv run python data/e24_hobby.py [15 15 200]   # E24: min-bank hobby frontier
+uv run python -m ridefree.cli rabank --rounds 4000000 --seed S \
+    --json data/e25_ra_p75_sNN.json           # E25: RA-bank shard (~7 min)
+uv run python data/e25_ra.py [15 15 200]      # E25: gates + the RA card
 ```
 
 ## Open items

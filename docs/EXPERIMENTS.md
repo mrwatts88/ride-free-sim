@@ -2,6 +2,81 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E25 — risk-averse deviations: honest second moments; the RA hypothesis measured (M11)
+
+**Date:** 2026-07-19 · **Question (Matt):** the deviations E24 priced are
+EV-maximizing, and its ceiling arm reused the no-deviation variance. Could
+we find deviations tweaked in favor of LOWER VARIANCE instead — and what do
+honest second moments do to the hobby bankroll? Per the session agreement,
+no shape is chosen: everything derives per shape (walk / sit-out /
+never-leave) from one shape-independent bank.
+
+**Machinery (new, gate-passed):** `experiments.run_ra_bank` + `cli rabank`
+(decision record in DESIGN.md): one paired pass on the chart's canonical
+timeline banking, per hi-lo TC bin: chart moments (n, Σp, Σp²); for every
+play change the paired (n, Σd, Σd², Σp·d) — so ΔE[p²] = E[2pd + d²] is
+exact per play; and the insurance overlay as counts (settle is ±½/+1 per
+unit, any TC-threshold rule prices in closed form, hedge term included).
+Three sources: candidate cells (every chart DOUBLE/SPLIT replayed with that
+one cell suppressed), composition deviations at bins ≥ +2 (the EVCalculator
+replay is the cost; attribution to the first diverging decision), insurance
+(no replay needed). `data/e25_ra.py` selects per shape: plays grouped by
+(chart row, upcard), ONE policy per group (chart / suppress ≥ j / dev ≥ j —
+alternatives, never teammates), bet shape re-searched after selection so
+the $/h floor binds the card, not each play. 307 tests green (7 new),
+including a bit-exact cross-gate: the bank's dev accumulators equal
+`run_deviation_value`'s on the same seed.
+
+**Gates (40M rounds, 10 × 4M shards, seeds 21.4–22.3e9, pen .75):** chart
+bins vs the banked e16 basic curve (fresh seeds): worst |z| = 2.12,
+overall −0.625% vs −0.630% ✅; composition-dev value per bin vs the e16
+paired values (independent seeds): worst |z| = 1.65 ✅; aggregate ==
+sum-of-attributed-cells: exact ✅; P(dealer BJ | ace up) = 0.3081 ± 0.0003
+vs fresh-shoe 96/311 = 0.3087 — 2σ LOW, in the direction the known
+cut-card effect predicts (ten-poor residuals deal more rounds) ✅.
+
+**Findings ($15 floor, ≥ $15/h at 200 r/h, 5% RoR, honest variance):**
+- **Deviations cut ~35–45% of the bankroll in every shape** — and that
+  survives honest second moments: walk chart-only $11.1k → **$7.1k**
+  (+$15.40/h, card $15 floor from 0, $35 at +4, $70 at +6, insure ≥ +4);
+  sit-out $6.3k → **$3.9k**; never-leave $38.3k → **$21.4k at +$30.7/h**
+  (the solver overshoots the hourly because that lowers the bank).
+- **The RA hypothesis, measured: mostly a null at hobby stakes.** RA
+  selection beats EV-max by only ~1–2% of bank ($7.2k → $7.1k walk). The
+  genuine RA content: 2 pure-variance suppressions added (skip split 2,2
+  v 3 at ≥ +4; skip 3,3 v 3 at ≥ +1), 3 EV-max plays rejected for
+  variance — including **T,T v 3 (don't split tens v 3 even when the
+  count makes it +EV; T,T v 5/6 stay, at rungs ≥ +5/+7)** — and 6
+  thresholds moved. Real but small: the big money was honest-variance
+  EV-max all along, because σ/round DROPS 24 → 19 under deviations (the
+  stand-more plays outweigh the extra doubles/splits at these stakes).
+- **The engine re-derived the classic index card from raw moments,
+  ranked by bankroll impact:** 16vT ($569 of bank, 30% of play value),
+  15vT ($233), 12v3 ($149), 12v2 ($99), 14vT ($85), 10vT double ($56),
+  16v9, 16v7/8/A, 10vA double, T,T v 5/6, 9v2, 8v6 doubles… Top 5 ≈ 60%
+  of play value, top 18 ≈ 88%, the 45-play tail pools to $221. A short
+  card captures most of it.
+- **Insurance lands at bins ≥ +4 in every shape** — exactly "insure when
+  the jump bet is out" (the E18 human rule), now derived rather than
+  assumed. The hedging cross term is priced (dealer-natural rounds have
+  no play deltas, so the overlay is exact).
+- **Honest correction to E24's ceiling:** walk-shape all-indexes was
+  $6.1–6.4k with reused variance; the honest number is **$7.1k**.
+  Attribution split three ways, on record: real deviation variance,
+  TC-threshold insurance vs composition-exact, and the unmodeled
+  bins-0/+1 dev EV (~$1–2/h, none of it variance-relevant).
+
+**Caveats on record:** policy effects compose additively in (μ, M2)
+(ins × dev cross banked as aggregate, not applied — tiny); selection is an
+argmin over ~200 play groups (winner's curse at the play level, min cell
+250 rounds; the top plays ride 10⁴–10⁵ samples); dev plays exist only at
+bins ≥ +2 (the replay window); the play list is composition-exact per bin —
+crisp "at TC ≥ j do X" indexes are its human approximation; pen .75 only.
+The chosen card's fresh-seed OOS certification (E18/E23 pattern) runs the
+literal human card and closes all four gaps at once.
+
+**Seeds:** 21.4–22.3e9 consumed. Next unused block: **22.4e9+**.
+
 ## E24 — the hobby card: minimum bankroll that still clears $15/h (M11 opened)
 
 **Date:** 2026-07-19 · **Question (Matt):** the pro framing ("max $/h per
