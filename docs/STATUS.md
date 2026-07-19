@@ -3,6 +3,51 @@
 Updated 2026-07-19. This is the resume-here document: current state, key numbers,
 and the precisely-specified next step. Doc map at the bottom.
 
+**PARADIGM 2 OPENED (2026-07-19) — read `docs/PARADIGM2.md` first.** After
+M11 closed, Matt asked whether there's "a different side we're not seeing" —
+whether *non-enumerable* games have more room than the state-machine shoe
+games paradigm 1 exhausted. They do: an edge is the gap between the true
+price and the price the counterparty acts on; in enumerable games everyone
+holds the true price, but in non-enumerable ones nobody does, so the edge is
+the superiority of your estimate — renewable (can't be published and burned
+like hi-lo) and compounding with data. Two tracks chosen on Matt's "beat the
+randomness itself" instinct: **M12 shuffle forensics** and **M13 live-dealer
+data QC**. A same-day two-agent research pass (fully sourced, in PARADIGM2.md)
+set the plan:
+
+- **Order: M12 first, starting with the fully synthetic rung M12a** — zero
+  external dependency, an exact gate (reproduce the Diaconis ten-shelf
+  result: ~9.5/52 guessable after one pass vs. 4.5 chance), engine-native.
+- **Honest recalibration:** modern flagship machines look adequate (MD3 does
+  7 riffles citing Diaconis; DeckMate 2 computes a good-PRNG permutation —
+  IOActive found only a tampering vector, not mix bias; CSMs are dead by
+  design). The live *legal* targets are **hand shuffles and weak/old batch
+  machines** — which one is on a floor is a recon question. Nobody has
+  published a measured edge against a named modern machine: that vacuum is
+  the opening.
+- **The exciting convergence:** Evolution live baccarat is an 8-deck shoe,
+  **hand-shuffled at the table, fully card-observable, broadcast 24/7** —
+  simultaneously Track A's cleanest physics target and Track B's data
+  channel. M13 is reframed around it (roulette-bias arm demoted: betting
+  closes before ball launch, auto-wheels randomize rotor speed, no clean
+  public data archive) and parked behind M12b (it needs the model to know
+  what to look for).
+- **Matt's poker dual-attack (Track A × class 5):** poker's Deck Mate is a
+  single-deck shuffler in a rake-indifferent peer game, and the pre-shuffle
+  stack is unusually *known* (pre-flop folds are ten-poor; later discards
+  anti-correlate with the board) → a poker-equity payoff arm in M12b. Physics
+  premise weakest against a good DeckMate 2; needs an imperfect-permutation
+  assumption to pay.
+
+**THE PRECISELY-SPECIFIED NEXT STEP: build M12a** — a `Shuffle` model as data
+that the `Shoe` composes (riffle-with-quality, the Diaconis ten-shelf model,
+N-pass composition), preserving the determinism contract, gated by reproducing
+the Diaconis ~9.5/52 and ~17-vs-26 color-change numbers within sampling error
+before any attack work. Everything below this block is paradigm 1 (M0–M11),
+DONE and preserved as-is.
+
+---
+
 **Current state in one line: all three research questions are ANSWERED and
 written up (Ride Free: dominated; 21+3: beatable, grind-scale; Dragon 7 +
 Panda 8: beatable, the strongest verdict — `docs/ARTICLE_EZBAC.md`); E16
@@ -986,9 +1031,15 @@ uv run python data/e25_ra.py [15 15 200]      # E25: gates + the RA card
 ## Doc map
 
 - `CLAUDE.md` — working doctrine (rules-as-data, one engine, determinism, ledger).
+- `docs/PARADIGM2.md` — **the paradigm-2 strategy map (read first if resuming
+  the new direction):** the taxonomy of where a legal edge can live, the two
+  chosen tracks (M12 shuffle forensics, M13 live-dealer data QC), Matt's poker
+  dual-attack, the 2026-07-19 research pass (fully sourced), the ordering
+  decision, and the non-negotiable epistemic doctrine for non-enumerable work.
 - `docs/DESIGN.md` — architecture, money model, shoe-end modes, counting design,
   suit-aware card / M8 decision records, Rust decision record.
-- `docs/ROADMAP.md` — milestones M0–M8 with gates and results.
+- `docs/ROADMAP.md` — milestones M0–M13 with gates and results (M12/M13 are
+  paradigm 2, near the top).
 - `docs/EXPERIMENTS.md` — experiment log E1–E12 (newest first), reproducible.
 - `docs/ARTICLE.md` — the Free Bet (Ride Free) write-up.
 - `docs/ARTICLE_21P3.md` — the 21+3 side bet write-up (M8 arc, quad-Q, verdict).

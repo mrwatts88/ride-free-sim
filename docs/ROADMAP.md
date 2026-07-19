@@ -24,6 +24,123 @@ machinery was built to close. Structural appeal over 21+3: no main-bet toll
 penetration in the house (~14-16 cards from the end of 8 decks), and native
 scorecard camouflage. Honest risk: 40:1 variance — the E12-style ledger decides.
 
+**PARADIGM 2 OPENED (2026-07-19): beating the implementation of randomness.**
+Strategy and taxonomy in `docs/PARADIGM2.md`. Paradigm 1 (M0–M11: shoes as
+state machines, condition the bet on visible decay) is mined and largely
+shelved on operational texture. The new question — Matt's — is whether
+*non-enumerable* edges have more room: edges that come from the superiority
+of an estimate nobody (not even the house) holds exactly, which are renewable
+(can't be published and burned like hi-lo) and compound with data. Two tracks
+chosen on Matt's "beat the randomness itself" criterion: **M12 shuffle
+forensics** (infer the residual structure real shuffle procedures leave) and
+**M13 live-dealer data QC** (audit broadcast physical outcomes at scale). A
+2026-07-19 research pass (findings in PARADIGM2.md) set the order: **M12 first**
+(zero external dependency, exact synthetic gate), M13 reframed around the
+live-baccarat convergence and parked behind M12b. The epistemic doctrine is
+load-bearing here — this territory is full of unfalsifiable claims, so every
+method faces a synthetic ground-truth gate before any real data, IS/OOS
+separation always, multiple-testing arithmetic in every claim, effect sizes
+in dollars, kill criteria stated in advance.
+
+## M12 — Shuffle forensics (the physics of the shuffle; synthetic gate first)
+
+**Hypothesis:** real shuffle procedures (hand shuffles; weak/single-pass or
+older batch machines — NOT modern 7-riffle MD3 / good-PRNG DeckMate 2, which
+the research pass found adequate, and NOT CSMs, which give zero penetration by
+design) leave measurable mutual information between the observed order of one
+shoe/deck and the dealt order of the next, some of which converts to a legal
+human edge (observation + memory only; no devices — NRS 465.075 is a felony
+line, and the IOActive DeckMate tampering path is cheating, cited only as
+evidence of engineering quality). The engine gives synthetic ground truth:
+plant known structure, deal through a shuffle model, measure what any human-
+constrained scheme recovers — non-enumerable room with an enumerable gate.
+
+### M12a — The synthetic shuffle lab + the Diaconis reproduction gate
+
+Shuffle procedures become data in the doctrine's spirit (a `Shuffle` model the
+`Shoe` composes — riffle with a riffle-quality parameter, the Diaconis
+ten-shelf shelf model, hand-procedure models, N-pass composition), so variants
+are configurations, never forked code. The deterministic seed contract holds:
+`(rules, seed, shuffle, strategy)` reproduces exact sequences.
+**Gate (hard, exact — the paradigm-1 pattern):** implement the Diaconis/
+Fulman/Holmes ten-shelf model to its published spec and reproduce its
+headline numbers — a feedback guesser scores **≈ 9.5 correct of 52 after one
+pass vs. ≈ 4.5 chance**, color-changes **≈ 17 vs. 26 uniform** — within
+sampling error; two passes must move both toward uniform (their fix). No
+attack work until this reproduces. Deliverable: the measurement framework
+(mutual information / guessing-advantage of an input-aware observer vs. the
+shuffle output) validated against known truth.
+
+### M12b — Conversion to a betting edge (two payoff arms)
+
+With the lab gated, measure what recovered structure is worth. The key reframe
+(PARADIGM2.md): the exploitable quantity is **I(player's knowledge of the
+input order ; output order)**, not textbook distance-from-uniform — a richer,
+more-known input yields more edge at the same machine quality.
+- **House-game arm:** feed the recovered posterior into blackjack/baccarat
+  betting/playing; price the edge vs. shuffle quality (riffle count, shelf
+  passes) under an honest human-memory observation model.
+- **Poker arm (Track A × class 5 — Matt's dual-attack):** single deck, peer
+  pool (rake-indifferent house, no backoff-for-winning). The synthetic gate
+  must model (i) a parameterized player-strategy fold model that makes
+  discards non-random (pre-flop muck is ten-poor; later-street discards
+  anti-correlate with the board), (ii) the dealer gather procedure that
+  orders the pre-shuffle stack, (iii) a seat's realistic observation set
+  (never let the sim see a card a live player couldn't). Physics premise is
+  weakest against a good DeckMate 2 (computed permutation → ≈ 0 residual);
+  needs an imperfect-permutation / older-machine / hand-shuffle assumption to
+  pay — stated with every result. **Gate:** a live bet-sim (E17 `ramp`
+  pattern) realizes the predicted edge within CI; poker-room legality gets
+  its own pass before any play framing (does NOT inherit the blackjack answer).
+
+### M12c — Human-constraint distillation
+
+Distill the computer-optimal recovery to something an unaided human executes
+at table pace (the crouch15 / pog2 precedent). **Gate:** a measured
+error-rate-at-pace analysis showing the human approximation keeps a stated
+fraction of the ceiling; recon items (which machine/procedure is on the target
+floor, penetration, pass count) enumerated as a rack-card checklist.
+
+## M13 — Live-dealer data QC (reframed around the baccarat convergence)
+
+**Reframe from the research pass:** the online-roulette-bias arm is demoted
+(betting closes before ball launch → static bias only; auto-wheels run Random
+Rotor Speed; studios rotate/monitor wheels; public data caps at 72h / 500
+spins, no API, ToS/Cloudflare barriers → self-collection with doubtful
+wheel-identity stability). It stays on the board as a lower-priority option.
+The lead is the **convergence target: Evolution live baccarat — an 8-deck
+shoe, hand-shuffled at the table, fully card-observable, broadcast 24/7** —
+simultaneously Track A's cleanest legal physics target and Track B's data
+channel. This needs the M12 model to know what inter-shoe structure to look
+for, so M13 sequences behind M12b.
+
+### M13a — Data-source audit + power analysis ✅ (done by the 2026-07-19 research pass)
+
+Findings in PARADIGM2.md §"Research pass". Verdict: no clean public archive;
+per-wheel roulette histories need self-collection (~25–75k spins/wheel/month)
+against active countermeasures; baccarat card-level data needs video OCR
+(public tools are outcome-level only). Roulette breakeven arithmetic
+(straight-up needs only +2.8% relative pocket bias) and detection power
+(~8k spins for a +20%-relative pocket at 3σ) recorded. **Kill criterion, per
+doctrine: if a stable per-wheel archive at ~10⁴–10⁵ spins can't be obtained,
+the roulette arm dies cheaply — which the pass already largely establishes.**
+
+### M13b — Collection capability (baccarat card-level OCR)
+
+Build/validate a collector that turns a live-baccarat video stream into a
+card-level, shoe-delimited archive. **Gate:** OCR accuracy validated against
+hand-logged ground truth on a sample; shoe boundaries correctly segmented;
+throughput sufficient for statistical power (shoes/day/table × tables).
+
+### M13c — The bias/shuffle screen
+
+Run the M12-derived hand-shuffle forensic model against the collected baccarat
+archive (and any roulette data collected): screen for inter-shoe structure /
+wheel bias. **Gate (doctrine-mandated):** IS/OOS separation (screen on one
+window, confirm on fresh); multiple-testing control stated (wheels × pockets,
+or shoes × structure-hypotheses); any positive reported as a dollar effect
+size with texture/ops costs, and only after the fresh-window confirmation.
+
 ## M8a — Suit-aware card model, one engine (the invasive step; gate hard) ✅
 
 21+3 pays on the 3-card poker hand of (player card 1, player card 2, dealer up):
