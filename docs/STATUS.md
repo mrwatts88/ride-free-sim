@@ -545,6 +545,13 @@ frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
    Dragon/Panda paytables (40:1/25:1 assumed), side-bet maxes, cut-card
    depth; weekday blackjack pace (all crouch15 $/h assume 200 r/h heads-up);
    only if 21+3 is ever played, its pen/CSM/entry policy.
+3. **PARKED (decided 2026-07-18): the WoO correction email.** The E19 P(0)
+   refutation is send-ready arithmetic, but touching their page invites
+   fresh analysis of Pot of Gold and the obscurity of the counting
+   vulnerability is an asset while the attack may be live. Rule: if the
+   side max / pen kills the play → send it (free credibility, pro-player
+   fix); if the play is live → hold; if the article ever publishes, the
+   correction rides along.
 2. Optional realism passes if the field checks pass: visible-cards-only
    tracker (drop hole-card assumption — expect ~nil), full-table
    cards-per-round model, tiered-paytable re-derivation (pure configuration:
