@@ -75,6 +75,25 @@ crisp "at TC ≥ j do X" indexes are its human approximation; pen .75 only.
 The chosen card's fresh-seed OOS certification (E18/E23 pattern) runs the
 literal human card and closes all four gaps at once.
 
+**E25b addendum (same day): Matt's honest hobby spec, priced.** The real
+bar, stated after seeing E25: **bank ≤ $5k at 5% RoR, walk ≤ 10% of the
+time, ≥ $10/h.** Added walk-at-−4/−3 shapes (6.5%/11.6% of rounds) and a
+walk% column to `e25_ra.py`; everything from the same bank, no new sims.
+Verdict: **a stay-seated-and-betting card cannot meet the spec** — with
+the full honest play layer and the target relaxed to $10/h, walk ≤ 6.5%
+costs $16.3k ($15 floor) / $10.9k ($10 floor) at pen .75; the min-bank
+solver overshoots the hourly (+$17–26/h), so earning less buys nothing —
+the −2..−1 floor toll sets a variance floor ~2–3× the budget; pen .80
+(~×0.75 from E24 evidence) still lands ≈ $8k. **The SIT-OUT shape passes
+all three numbers with margin at realistic peopled-table pace (140 r/h,
+zero walking — you keep the seat and bet ~36% of rounds): $15 floor →
+$3.8k at +$10.4/h; $10 floor → $3.2k at +$10.1/h** (σ/round ~$14: a 4h
+session swings ~±$330 — hobby texture). M11 therefore hangs on ONE felt
+question: **may a seated player sit out hands and rejoin mid-shoe?**
+(plus: do $10 tables exist weekdays?). If the policy is hostile, the one
+honest lever left for a seated card is a resize-on-drawdown ladder
+(genuine RoR reduction, unbuilt machinery, costs hourly when down).
+
 **Seeds:** 21.4–22.3e9 consumed. Next unused block: **22.4e9+**.
 
 ## E24 — the hobby card: minimum bankroll that still clears $15/h (M11 opened)

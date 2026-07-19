@@ -382,17 +382,22 @@ print(f"  4. insurance: P(dealer BJ | ace up) = {p_bj:.4f} ± {se_bj:.4f} "
       f"(fresh-shoe first principles 96/311 = {96 / 311:.4f}; depth blends it)")
 print()
 
-# -- the shape table --
+# -- the shape table -- (walk% = rounds not played, from the banked bins;
+# Matt's honest spec 2026-07-19: walk <= ~10% of rounds, so -4/-3 rows)
 SHAPES = (
-    ("walk at tc<=-1 (floor from 0)", 0 - 1),
-    ("sit-out below +1 (floor from +1)", 0),
     ("never leave", -99),
+    ("walk at tc<=-4", -4),
+    ("walk at tc<=-3", -3),
+    ("walk at tc<=-2", -2),
+    ("walk at tc<=-1 (floor from 0)", -1),
+    ("sit-out below +1 (floor from +1)", 0),
 )
 HDR = f"{'layer':<46s} {'$/h':>8s} {'σ/rd':>5s} {'N0':>7s} {'bank':>7s}"
 
 results = {}
 for shape_label, leave_t in SHAPES:
-    print(f"SHAPE: {shape_label}")
+    walked = sum(r["f"] for k, r in BINS.items() if k <= leave_t)
+    print(f"SHAPE: {shape_label}   (walked/sat out: {100 * walked:.1f}% of rounds)")
     print(HDR)
     card = search_card(leave_t, {}, None)
     if card is None:

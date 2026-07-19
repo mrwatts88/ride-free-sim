@@ -99,23 +99,30 @@ plays ≈ 60% of play value: 16vT, 15vT, 12v3, 12v2, 14vT; insure ≥ +4 =
 "insure when the jump is out", derived); RA-specific selection is worth
 only ~1–2% of bank over honest EV-max — measured, no longer a hunch.
 
-**Next chunks (menu, Matt picks the shape — walk vs sit-out vs
-never-leave is a lifestyle call the sim can't make; honest numbers now
-in hand):**
-1. **OOS-certify the picked card as the LITERAL human card** (crisp
+**E25b (same day): MATT'S HONEST SPEC — bank ≤ $5k, walk ≤ 10%,
+≥ $10/h — is INFEASIBLE seated-and-betting (walk ≤ 6.5% costs $16.3k at
+the $15 floor / $10.9k at $10 / ≈$8k at pen .80: the −2..−1 floor toll
+is a variance floor 2–3× the budget) but the SIT-OUT card passes all
+three with margin: $3.8k at +$10.4/h ($15 floor) or $3.2k at +$10.1/h
+($10 floor), 140 r/h, zero walking, betting ~36% of rounds from a kept
+seat.** The whole hobby now hangs on one felt question.
+
+**Next chunks (E25b reordered — the felt now gates everything):**
+1. **THE decisive recon (Matt, next casino visit):** may a seated
+   player sit out hands and rejoin mid-shoe (house policy + dealer
+   practice at the $15 tables)? Secondary: weekday $10 tables? weekday
+   pace? If sit-out is allowed → the spec-passing card exists; then
+   chunk 2. If hostile → the resize-on-drawdown ladder is the one
+   honest lever left for a seated card (new machinery, real RoR
+   reduction, costs hourly when down).
+2. **OOS-certify the sit-out card as the LITERAL human card** (crisp
    TC-threshold indexes from the E25 play list, the E18/E23 pattern;
    closes the composition-vs-crisp gap, the additivity approximation,
    and the play-level winner's curse in one run; next unused block
    22.4e9+).
-2. **The walk-pivot count:** unbalanced level-1 with pivot AT the walk
-   line (per-deck imbalance −1 → pivot TC −1 → the walk becomes
-   depth-EXACT, jumps go blurred instead — E22b's plateau logic says
-   jump blur is the cheap side). One new `countcurve` signal run could
-   deliver a division-free ~$10k walk card. (Sit-out shapes already
-   have a division-free ~$5.4k row from E24 §4.)
-3. **Felt items now decisive:** weekday floor ($10 seen never/Saturday
-   only?), weekday pace, sit-out-while-others-play policy, mid-shoe
-   re-entry.
+3. **The walk-pivot count** (only if a walk shape revives): unbalanced
+   level-1 with pivot AT the walk line (imbalance −1 → pivot TC −1 →
+   the walk depth-EXACT). One new `countcurve` signal run.
 4. **PyPy throughput experiment** (Matt's "should we port to Rust?"
    question, 2026-07-19 answer: not yet): the engine is pure stdlib —
    PyPy could buy 5–15× for zero code changes, possibly bit-identical
