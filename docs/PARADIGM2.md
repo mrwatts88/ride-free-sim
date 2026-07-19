@@ -306,6 +306,25 @@ pages) and labeled VERIFIED / REPORTED / LORE in the raw dumps. Distilled:
   unverifiable claim of a European AP who tracks "one specific model" — lore,
   but a proof of concept that the vacuum may hide a real target.
 
+**"Is the target the machine the 2013 paper did NOT fix?" (Matt, 2026-07-19) —
+crisp answer, because it recurs.** No, not that specific unit. The Diaconis/
+Fulman/Holmes paper's own machine WAS fixed (the manufacturer adopted their
+"run it twice" remedy = a 200-shelf-equivalent = adequate; our E26 reproduces
+both the flaw and the fix). The 2013 machine is our **lab and gate**, not the
+live target — we rebuild its ONE-pass behavior in the engine to validate our
+forensic tools against known truth, then use "one weak pass" as the *model*
+for weak mixing in general. The **live target is the weak-mixing regime
+itself**, wherever it still exists on a floor: (i) **hand shuffles** (no
+machine to fix — high-limit blackjack, and the flagship convergence target,
+hand-shuffled live baccarat), and (ii) **weak / old / single-pass batch
+machines** (older DeckMate 1, single-pass configs, cheap units). Modern
+flagships (7-riffle MD3, computed-permutation DeckMate 2) look adequate, so
+they are NOT the target on current evidence. The deliverable is therefore
+**the method + the number** — how weak must a shuffle be to be beatable, and
+what is it worth — with recon deciding whether a floor is actually that weak.
+We are not betting on one unfixed machine; we are pricing the whole
+weak-mixing spectrum and letting recon find where a real floor sits on it.
+
 ### B. The live-dealer data channel (Track B)
 
 - **In-client history is shallow, trackers are capped, no API exists.**

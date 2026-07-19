@@ -105,13 +105,17 @@ exact, distinct-values reduces to rung-1 exact deterministically). **The
 parked PyPy experiment was run (M7): bit-identical, 4.3× on the posterior
 walk / 2.7× engine, suite green — PyPy is the sanctioned accelerator; Rust
 stays unneeded.** Trend (probe scale, 10-shelf, composition-fair value-8
-prop): **copy ambiguity does NOT kill the channel** (2 decks +21 u/shoe,
-18.2 bits, z −0.18; 3 decks +17.6 u/shoe) — but **the copy tax is real**
-(bits 18.2 → 9.3 from 2→3 decks despite the bigger stack) and **the PF
-loses fidelity as copies grow** (z −3.07 at 3 decks/60 particles —
-impoverishment). Two-pass fix collapses the channel at multi-deck too
-(0 bets). 335 tests green. Seeds 22.9e9. Artifacts: `data/e28_multideck.*`,
-`data/bench_pypy.py`.
+prop): **copy ambiguity does NOT kill the channel at 2–3 copies** (2 decks
++21 u/shoe, 18.2 bits, z −0.18; 3 decks +17.6 u/shoe) — but the bits trend
+is **NON-MONOTONIC: 9.0 (1 deck) → 18.2 (2) → 9.3 (3)**, up then down, so
+**8-deck (8-copy) behavior is UNKNOWN — do NOT extrapolate** (an earlier
+"8 copies don't destroy the edge" line was an overstatement; only 2–3 were
+measured). Two forces fight: more cards ⇒ the fixed 10-shelf mixes worse
+(bits up); more copies ⇒ harder to read (bits down). And **the PF loses
+fidelity as copies grow** (z −3.07 at 3 decks/60 particles — the tool
+wobbles before the edge dies). Two-pass fix collapses the channel at
+multi-deck too (0 bets). 335 tests green. Seeds 22.9e9. Artifacts:
+`data/e28_multideck.*`, `data/bench_pypy.py`.
 
 **THE PRECISELY-SPECIFIED NEXT STEP: two immediate builds, then the real
 baccarat adapter.** (1) **The O(slots) assumed-density (soft-assignment)
@@ -1151,7 +1155,8 @@ uv run python data/e25_ra.py [15 15 200]      # E25: gates + the RA card
   suit-aware card / M8 decision records, Rust decision record.
 - `docs/ROADMAP.md` — milestones M0–M13 with gates and results (M12/M13 are
   paradigm 2, near the top).
-- `docs/EXPERIMENTS.md` — experiment log E1–E12 (newest first), reproducible.
+- `docs/EXPERIMENTS.md` — experiment log E1–E28 (newest first), reproducible;
+  E26–E28 are the paradigm-2 shuffle-forensics rungs (M12a/M12b).
 - `docs/ARTICLE.md` — the Free Bet (Ride Free) write-up.
 - `docs/ARTICLE_21P3.md` — the 21+3 side bet write-up (M8 arc, quad-Q, verdict).
 - `docs/ARTICLE_EZBAC.md` — the Dragon 7 / Panda 8 write-up (M9 arc, the

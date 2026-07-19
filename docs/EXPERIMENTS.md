@@ -44,18 +44,28 @@ baccarat-value-8 proposition; `data/e28_multideck.json`):**
 | 3 | 1 | 156 | 35.7 | +49.3% | +17.6 | 9.3 | −3.07 |
 | 2 | 2 | 104 | 0.0 | — | 0.0 | 0.035 | — |
 
-1. **Copy ambiguity does NOT obliterate the channel.** A 2-deck shoe through
-   one 10-shelf pass leaks +21 u/shoe (18.2 bits), gate-clean (z −0.18); 3
-   decks still +17.6 u/shoe. The observer inverts the shuffle through the
-   copy fog.
-2. **But the copy tax is real and measured.** bits/shoe fell **18.2 → 9.3**
-   from 2 to 3 decks *despite* the larger stack (more cards alone would raise
-   bits) — more copies per card is genuinely harder to invert.
-3. **The PF loses fidelity as copies grow.** z slid to −3.07 at 3 decks /
+1. **Copy ambiguity does NOT obliterate the channel at 2–3 copies.** A 2-deck
+   shoe through one 10-shelf pass leaks +21 u/shoe (18.2 bits), gate-clean
+   (z −0.18); 3 decks still +17.6 u/shoe. The observer inverts the shuffle
+   through the copy fog.
+2. **The bits trend is NON-MONOTONIC — do NOT extrapolate to 8 decks.**
+   bits/shoe went **9.0 (1 deck, E27) → 18.2 (2) → 9.3 (3)** — up then down,
+   because two forces fight: more cards makes the fixed 10-shelf machine mix
+   *worse* (pushes bits up), more copies makes reading a card *harder* (pushes
+   bits down). There is no clean line to ride to 8 decks; 8-copy behavior is
+   genuinely UNKNOWN and could land anywhere. (Earlier session text that read
+   "8 copies don't destroy the edge" was an overstatement — only 2 and 3 were
+   measured; corrected here.) Untangling the two forces is exactly step-2
+   below.
+3. **The copy tax is real** (the down-arm of finding 2): holding the
+   confound aside, more copies per card is genuinely harder to invert.
+4. **The PF loses fidelity as copies grow.** z slid to −3.07 at 3 decks /
    60 particles (realized below predicted — particle impoverishment at higher
    latent dimension). Inside the 4.5 gate but a clear signal that particle
-   count must scale with decks.
-4. **The two-pass fix collapses the channel at multi-deck too** (0 bets,
+   count must scale with decks — the tool wobbles *before* the edge dies, so
+   an 8-deck number needs both more particles (or the ADF) AND the isolation
+   study to be trustworthy.
+5. **The two-pass fix collapses the channel at multi-deck too** (0 bets,
    0.035 bits) — the E26/E27 single-deck result holds up the ladder.
 
 **Two honesty flags carried forward:**
