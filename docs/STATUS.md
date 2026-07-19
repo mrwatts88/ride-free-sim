@@ -535,12 +535,21 @@ frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
    Matt's prior: many side bets cap at $100, wouldn't be surprised by $25.
 1. **M10 simulation chunks queued behind the felt read (in order):** pen
    .70/.80 sensitivity shards (same pogcurve harness, fresh seeds 17.9e9+);
-   the no-division human card — a pivot-at-−3 unbalanced count via the E17
-   `search_unbalanced_level1` machinery, plus a POG-specific EOR derivation
-   (hi-lo is provably not the optimal lammer count); live verification of
-   the literal card incl. realized combined variance (E18 pattern — the
-   ledger's cov(main,side)=0 approximation gets replaced by measurement);
-   optics/heat note for the article (side-jamming at trash counts).
+   **the farm arm (Matt's catch, 2026-07-18): E20's +7.37% window EV is
+   CONSERVATIVE — the curve played main-EV-optimal 5,5 (free double); with
+   side ≫ main staked, splitting 5s is right (M10a measured the farm at
+   ~+3pp side EV always-on for −0.15pp of main; bigger conditional on the
+   trigger window). One more pogcurve arm with SplitFives + a stake-aware
+   wrapper prices it exactly**; the no-division human card — a pivot-at-−3
+   unbalanced count via the E17 `search_unbalanced_level1` machinery, plus
+   a POG-specific EOR derivation (hi-lo is provably not the optimal lammer
+   count); live verification of the literal card incl. realized combined
+   variance (E18 pattern — the ledger's cov(main,side)=0 approximation gets
+   replaced by measurement); optics/heat note for the article (side-jamming
+   at trash counts). Ledger structure note (same discussion): net = linear
+   side income (≈ $1.72/h per side $ at 200 r/h) minus a FLAT toll
+   (≈ $34/h) → breakeven side stake ≈ $20; the max sets the ceiling on a
+   fixed-cost business.
 2. **Older field checks (still open, lower stakes now):** the EZ table's
    Dragon/Panda paytables (40:1/25:1 assumed), side-bet maxes, cut-card
    depth; weekday blackjack pace (all crouch15 $/h assume 200 r/h heads-up);
