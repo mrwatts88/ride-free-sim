@@ -51,9 +51,16 @@ re-derived the classic index card ranked by bankroll impact (16vT = 30%
 of play value; top 5 ≈ 60%), insurance-at-jump-bins fell out as the
 derived rule — but RA-vs-EV-max itself is ~1–2% of bank (the real RA
 content: skip 2,2v3 / 3,3v3 splits, DON'T split T,T v 3 even when +EV).
-Awaiting Matt's shape pick, then OOS-certify the literal human card.**
+**M11 CLOSED (same day, Matt's call): the honest spec ($5k / walk ≤10% /
+$10/h) is over-determined — E25b/c proved it (sit-out killed on table
+culture; walk-line event rates measured; the σ-budget one-liner). FINAL
+ANSWER: the −3 walk card — $10 floor, $35 at +3, $85 at +6, insure ≥ +4,
+walk at TC ≤ −3 (2.9 walks/h) — +$14.3/h on $7.2k at Matt's chosen 10%
+RoR ("it's a hobby anyways"; $9.3k at 5%). Conditional on a weekday $10
+floor (UNCONFIRMED) and NOT live-certified — OOS is the mandatory gate
+if it ever hits the felt. Write-up: `docs/ARTICLE_HOBBY.md`.**
 
-## M11 OPEN — the hobby question; E24 DONE (2026-07-19): the frontier from banked bins
+## M11 CLOSED (2026-07-19) — the hobby question; E24 opened it, E25c closed it
 
 **Matt's reframe:** a 5%-RoR bankroll is honest only if you'd truly lose
 all of it — "I'll quit if I drop $5–10k" silently voids the 5%. So the pro
@@ -114,27 +121,28 @@ spec is over-determined at pen .75 — the $10 floor played 90% of rounds
 alone consumes ~80% of the σ² budget that $10/h-on-$5k allows. No card
 we own, or can own, meets all three numbers at this game as played.**
 
-**Next chunks (M11 near a verdict; Matt chooses whether to continue):**
-1. **The resize-on-drawdown ladder — the ONE remaining honest lever:**
-   drop stakes when the bank dips (real RoR reduction, unlike
-   quit-if-down which voids the RoR). Could plausibly make a ~$9–11k
-   static card behave like ~$5–6k effective. Needs new machinery (a
-   session simulator with dynamic stakes over banked bins, or live);
-   costs hourly when down. Build ONLY if Matt wants the hobby badly
-   enough at these numbers.
-2. **Spec-relaxation menu (no new work, just Matt's call):** the three
-   numbers ARE mutually satisfiable at ~20% RoR on $5k, or ~$8–9k at
-   5%, or ~$6–7/h on $5k; deep-pen table hunting buys ~×0.75 on any of
-   them. Alternatively: accept crouch15-2r economics (the certified
-   +$40–44/h on ~$36–40k) as the "when the bankroll exists" plan and
-   park the hobby question.
-3. **OOS-certify whatever card survives** as the LITERAL human card
-   (crisp TC indexes from the E25 play list; E18/E23 pattern; next
-   fresh seed base 22.5e9+).
-4. **PyPy throughput experiment** (Matt's Rust question, 2026-07-19:
-   not yet — engine is pure stdlib, PyPy could buy 5–15× free,
-   possibly bit-identical; 30 minutes, before any Rust talk; decision
-   record M7 still governs).
+**M11 RESOLUTION (Matt, 2026-07-19, after the E25c walk-texture
+numbers):** resize ladder DECLINED ("not a lot of dropping down you can
+do" from a $10 floor); the −3 fixed-point card taken at hobby-honest
+odds. **THE HOBBY CARD: $10 floor from −2, $35 at +3, $85 at +6, insure
+≥ +4, walk at TC ≤ −3, basic + the E25 short index set → +$14.3/h at
+200 r/h on $7.2k at 10% RoR** (chosen; $9.3k at 5%, $5.0k at 20% — same
+card, only the honesty knob moves). Walk texture: 2.9/h, 51% of shoes,
+median exit round 28. Write-up (for us, E16-article style):
+`docs/ARTICLE_HOBBY.md`. **Two conditions ride the card, on record:**
+the weekday $10 floor is UNCONFIRMED (at $15: $10.7k at 10%, +$22.5/h),
+and the card is bin-arithmetic-grade — the E18/E23-pattern OOS
+certification of the literal human card is the MANDATORY gate before
+felt play (next fresh seed base 22.5e9+).
+
+**Parked with M11 (revive only if the card heads to the felt):** OOS
+certification (mandatory, above); weekday recon ($10 tables? pace?);
+the walk-pivot count (imbalance −1 → the walk line depth-exact, would
+make the card division-free; one countcurve signal run). Independent of
+M11: **PyPy throughput experiment** (Matt's Rust question, 2026-07-19
+answer: not yet — engine is pure stdlib, PyPy could buy 5–15× free,
+possibly bit-identical; 30 minutes, before any Rust talk; decision
+record M7 still governs).
 
 ## E23 DONE (2026-07-19): the literal pog2 card CERTIFIED LIVE — and priced at the real felt
 
@@ -991,6 +999,9 @@ uv run python data/e25_ra.py [15 15 200]      # E25: gates + the RA card
 - `docs/ARTICLE_POG.md` — the Pot of Gold / Silver Stack write-up (M10
   arc: the P(0) refutation, the lammer count, pog2, live certification,
   the shelving verdict; written for a Wizard of Odds audience).
+- `docs/ARTICLE_HOBBY.md` — the M11 hobby-card write-up (for us, E16
+  style: the honest-RoR framing, the floor-toll σ-budget, the RA bank,
+  walk texture, the final $7.2k/+$14.3/h card and its conditions).
 - `src/ridefree/baccarat.py` — the M9 engine (rules, tableau, exact
   enumeration, simulator); gates in `tests/test_baccarat.py`; ledger
   `data/e14_verdict.py`.

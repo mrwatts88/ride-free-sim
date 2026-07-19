@@ -115,6 +115,17 @@ the deep-pen table (~×0.75), or consciously relaxing one of the three
 numbers (e.g. the constraint set IS satisfiable near ~20% RoR, or at
 ~$8–9k, or at ~$6–7/h).
 
+**MATT'S DECISION (2026-07-19) — M11 CLOSED:** resize ladder declined;
+the −3 fixed point taken at hobby-honest odds. **Final answer: the −3
+walk card ($10 floor from −2, $35 at +3, $85 at +6, insure ≥ +4, E25
+index set) → +$14.3/h at 200 r/h on $7.2k at 10% RoR** ("it's a hobby
+anyways"; $9.3k at 5%, $5.0k at 20% — the same card at every rung, only
+the honesty knob moves; below +$14.3/h no cheaper card exists, the
+U-shape floor). Conditions on record: weekday $10 floor unconfirmed
+($15 floor → $10.7k at 10%, +$22.5/h); pen .75; 200 r/h; NOT
+live-certified — OOS certification is the mandatory gate before felt
+play. Write-up: `docs/ARTICLE_HOBBY.md`.
+
 **Seeds:** 21.4–22.3e9 consumed (E25); E25c consumed 22400000001.
 Next fresh base: **22.5e9+**.
 
