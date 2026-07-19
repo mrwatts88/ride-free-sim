@@ -1,10 +1,10 @@
 # ride-free-sim
 
 A seed-deterministic simulator and analysis toolkit for casino card games and
-side bets, built to answer one question honestly, four times over: *can this
+side bets, built to answer one question honestly, five games over: *can this
 game be counted?*
 
-**Four write-ups:**
+**Six write-ups:**
 
 - **[docs/ARTICLE.md](docs/ARTICLE.md)** — Free Bet Blackjack ("Ride Free"):
   the first published effect-of-removal table for the game and the **RF-L2**
@@ -29,6 +29,25 @@ game be counted?*
   pricing real betting patterns in $/h, N0, bankroll, and corr(bet, TC) —
   including the *crouch*, a bimodal min-bet-then-jump shape that beats
   graduated ramps on every column because the TC +1 rung is breakeven.
+- **[docs/ARTICLE_POG.md](docs/ARTICLE_POG.md)** — the **Pot of Gold side
+  bet** (Free Bet lammers, sold as "Silver Stack"): an exact strategy-free
+  P(0) that **refutes the published analysis** (0.838228071 vs 0.833420 —
+  the real Pay Table 1 edge is ~8.25%, not the advertised 5.77%), the
+  upside-down lammer count that fires at *negative* true counts, and
+  **pog2** — a no-division count that beats hi-lo-with-division — certified
+  live end to end. Verdict: genuinely beatable (~+$30/h on ~$17k at the
+  felt's $25 tied max), and shelved anyway on play-style grounds; written
+  for a Wizard of Odds audience, correction included.
+- **[docs/ARTICLE_HOBBY.md](docs/ARTICLE_HOBBY.md)** — the **hobby
+  question** on standard blackjack, a summary like the E16 piece: minimum
+  bankroll under an *honest* risk-of-ruin (a 5% RoR bankroll you'd quit
+  before losing was never 5%), a paired second-moment bank that prices
+  every playing deviation's variance (risk-averse re-tuning measured ≈
+  null; the classic index card re-derived and ranked by bankroll impact),
+  walk-line event rates, and proof the $5k-and-barely-walk spec is
+  over-determined by the floor toll's σ² budget. Verdict: the closest
+  honest card is +$14.3/h on $7.2k at a chosen 10% RoR, walking every ~20
+  minutes — priced, not certified, and knowingly left on the shelf.
 
 ## What's here
 
@@ -52,7 +71,7 @@ game be counted?*
 Requires [uv](https://docs.astral.sh/uv/) (Python 3.12+ is fetched automatically).
 
 ```bash
-uv run pytest -q                                       # 222 tests
+uv run pytest -q                                       # 307 tests
 uv run python -m ridefree.cli demo --rules ridefree --seed 44 --hands 6
 uv run python -m ridefree.cli validate --rules ridefree --rounds 2000000
 uv run python -m ridefree.cli sbev --rounds 1000000    # 21+3 exact-EV ceiling scan
@@ -70,7 +89,9 @@ Docs: [STATUS](docs/STATUS.md) · [DESIGN](docs/DESIGN.md) ·
 [ROADMAP](docs/ROADMAP.md) · [EXPERIMENTS](docs/EXPERIMENTS.md) ·
 [ARTICLE](docs/ARTICLE.md) · [ARTICLE_21P3](docs/ARTICLE_21P3.md) ·
 [ARTICLE_EZBAC](docs/ARTICLE_EZBAC.md) ·
-[ARTICLE_BLACKJACK](docs/ARTICLE_BLACKJACK.md)
+[ARTICLE_BLACKJACK](docs/ARTICLE_BLACKJACK.md) ·
+[ARTICLE_POG](docs/ARTICLE_POG.md) ·
+[ARTICLE_HOBBY](docs/ARTICLE_HOBBY.md)
 
 Built in human–AI collaboration: research direction, hypotheses, and final claims
 by Matt Watts; implementation, analysis, and drafting with Claude (Anthropic).
