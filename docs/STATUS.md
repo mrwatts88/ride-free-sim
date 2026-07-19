@@ -35,6 +35,68 @@ commentary at a social game) isn't worth the seat. **The operating game
 remains crouch15 blackjack.** Trainer pog2 mode SKIPPED. Final
 write-up DONE: `docs/ARTICLE_POG.md` — WoO-ready, carries the P(0)
 correction per the parked rule (play dead → correction ships).**
+**M11 OPENED (2026-07-19, Matt's hobby reframe): minimum bankroll that
+still clears $15/h at 200 r/h on classic blackjack — E24 (below) priced
+the whole frontier from banked bins in one pass: never-leave ~$31k,
+walk at TC ≤ −1 ~$10k (the walk line is the money decision — and it's
+where division earns its keep; no-division walk cards cost $20k+),
+sit-out shapes $5–7k (conditional on felt policy), and deviations are
+worth a THIRD of the bank (Matt's hunch, priced: $9.7k → $6.4k on the
+same card). Candidate card: $15 floor while TC ≥ 0, $70 at +4, walk at
+−1 → +$16/h on $10.4k. Awaiting Matt's shape pick + OOS certification.**
+
+## M11 OPEN — the hobby question; E24 DONE (2026-07-19): the frontier from banked bins
+
+**Matt's reframe:** a 5%-RoR bankroll is honest only if you'd truly lose
+all of it — "I'll quit if I drop $5–10k" silently voids the 5%. So the pro
+objective (max $/h per bankroll) flips: **min bankroll s.t. ≥ $15/h at
+200 r/h** on classic 6d H17, simplest system, non-division preferred,
+deviations/index plays reopened (his hunch: that's where low variance
+lives, possibly including changed off-the-top strategy).
+
+**E24 answered the frontier without a single new sim**
+(`data/e24_hobby.py` over the banked E16 TC curves + E17 RC curves):
+
+| shape (ins arm, $15 floor, pen .75) | $/h | bank @5% RoR |
+|---|---|---|
+| seated, never leave (best human card) | +$28.12 | $30.8k |
+| **walk at TC ≤ −1: floor from 0, $70 at +4** (1-jump pick) | **+$15.96** | **$10.4k** |
+| walk at TC ≤ −1: $50 at +4, $90 at +6 (2-jump optimum) | +$15.28 | $9.7k (theory floor $9.4k) |
+| same 2-jump card, all-indexes ceiling | +$23.16 | $6.4k |
+| sit-out below +1 / wong shapes (TC or RC, division-free) | +$15–16 | $5.1–6.2k |
+
+Structure: the $15 floor toll at negative counts is everything —
+never-leave is pro-priced; the walk line at −1 does the work, and it's
+the one decision Red 7 RC can't express (RC = d_rem·(TC−2) blurs
+off-pivot: best no-division WALK card $20.1k — the pro/hobby inversion:
+crouch15's jump was pivot-exact, the hobby's walk needs division).
+Deviations cut a third of the bank; insurance alone $2k, all at the jump
+bins (E18's human rule transfers). Sensitivities: pen .70 → +$11.6/h
+(below target — the deep table decides); pen .80 → +$22/h on $7.7k; $10
+weekday floor → $7.2–7.9k walk / $4.7–5.2k sit-out; 140 r/h → $10.7k.
+Honesty: N0 425h, 46% of 4h sessions lose (P5 −$975), a full 200h year
+is +$3.1k ± $4.4k (~24% chance a correct year loses). Winner's-curse +
+zero-friction-walk caveats in EXPERIMENTS E24.
+
+**Next chunks (menu, Matt picks the shape first — walk vs sit-out vs
+never-leave is a lifestyle call the sim can't make):**
+1. **OOS-certify the picked card** on fresh seeds (E18 pattern, cheap;
+   next unused block 21.4e9+).
+2. **Deviation distillation:** which specific indexes carry the $3.3k
+   ceiling gap at the hobby card's bins (needs per-play attribution —
+   `cli deviations` is per-TC aggregate today).
+3. **RA/variance-aware indices + off-the-top strategy:** deviation
+   VARIANCE is unmodeled (ceiling reuses ins-arm E[profit²]); Matt's
+   "maybe basic itself changes" lives here. New machinery: per-decision
+   variance deltas, then risk-averse index search.
+4. **The walk-pivot count:** unbalanced level-1 with pivot AT the walk
+   line (per-deck imbalance −1 → pivot TC −1 → the walk becomes
+   depth-EXACT, jumps go blurred instead — E22b's plateau logic says
+   jump blur is the cheap side). One new `countcurve` signal run could
+   deliver a division-free ~$10k walk card.
+5. **Felt items now decisive:** weekday floor ($10 seen never/Saturday
+   only?), weekday pace, sit-out-while-others-play policy, mid-shoe
+   re-entry.
 
 ## E23 DONE (2026-07-19): the literal pog2 card CERTIFIED LIVE — and priced at the real felt
 
@@ -681,7 +743,14 @@ buys ~4pp on d7, Panda tail high-order; the two-count card is the human
 frontier). E16 consumed 8.9e9–13.3e9, E17 13.4e9–14.1e9 (sections above).
 **Next unused block: 14.2e9+.**
 
-## NEXT STEPS (M10 verdict in; field items now rule everything)
+## NEXT STEPS (M10 closed; M11 — the hobby card — is the active question)
+
+-1. **M11 (ACTIVE, 2026-07-19):** Matt picks the operating shape (walk /
+   sit-out / never-leave — see the M11 section's menu), then: OOS
+   certification of the card; the deviation distillation (per-play
+   attribution machinery); the RA-index/variance layer (new sims); the
+   walk-pivot count (one countcurve signal run); weekday felt recon
+   (floor, pace, sit-out and mid-shoe policy).
 
 0. ~~THE decisive field check~~ **DONE (Matt, 2026-07-19): side max $25**
    (his prior was right); **pen ≈ .79–.833** (1 to 1.25 decks cut — much

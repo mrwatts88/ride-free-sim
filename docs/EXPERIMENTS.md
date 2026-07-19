@@ -2,6 +2,79 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E24 — the hobby card: minimum bankroll that still clears $15/h (M11 opened)
+
+**Date:** 2026-07-19 · **Question (Matt):** the pro framing ("max $/h per
+bankroll") prices real play out of reach — a 5%-RoR bankroll only means 5%
+if you're genuinely willing to lose all of it, and $35k is real money.
+Reframe: on the classic blackjack next door (6d H17 DAS, $15 floor), what
+is the MINIMUM 5%-RoR bankroll that still clears **$15/h at 200 r/h**, and
+what's the simplest system that does it? Non-division preferred; deviations
+and index plays are back on the table (Matt's hunch: that's where the low
+variance lives — "everything's an index play, even off-the-top strategy").
+
+**Method:** `data/e24_hobby.py` — pure arithmetic over banked bins, no new
+sims, no seeds: the E16 per-TC curves (60M rounds, arms basic / ins /
+dev-paired ceiling) and the E17 multi-signal RC curves (48M rounds,
+`red7_rc`). Two solvers. (1) Continuous KKT frontier: min variance s.t.
+EV ≥ target with a seated floor bet — raised bins get bets ∝
+edge/E[profit²] (the Kelly shape); the constraint is an inequality, so the
+solver keeps raising λ while bankroll still FALLS (the floor toll's
+variance is fixed; overshooting the target hourly can be optimal — and is,
+at every never-leave row). (2) Exhaustive human cards: 1–2 jumps on a $5
+chip grid × walk lines, all three arms; the same search on Red 7 RC bins
+with walk-line validity enforced — a "walk" line at or above the
+fresh-shoe IRC −12 never sits down (the first pass's rc≤−12/−8 rows were
+wong shapes in disguise; caught and relabeled).
+
+**Findings (pen .75, ins arm = chart + exact insurance unless noted):**
+- **Seated never-leave is NOT hobby-cheap: ~$31k** (best human card
+  +$28.12/h on $30.8k — the solver overshoots because at $15/h sharp the
+  bank is even worse). The $15 floor toll at negative counts is the whole
+  problem; $15/h with money on every round costs pro-scale capital.
+- **The walk line is the money decision.** Walk at TC ≤ −1 and the bank
+  collapses to **$9.7k**: floor from 0, **$50 at +4, $90 at +6** →
+  +$15.28 ± 0.58/h, σ $22/round, N0 425h. The 1-jump version — **$15
+  floor, $70 at +4, walk at TC ≤ −1** — is +$15.96 ± 0.61/h on **$10.4k**
+  and is the simplicity pick (crouch15-2r's little sibling: same skeleton,
+  softer jump, tighter walk). Continuous frontier says $9.4k — the human
+  card captures essentially all of it. Walk at ≤−2 instead: ~$15–16k.
+- **Deviations are worth a third of the bankroll (Matt's hunch, priced):**
+  the SAME winner card on the all-indexes ceiling arm: $9.7k → **$6.4k**
+  (+$23.16/h); best ceiling-searched card $6.1k. Insurance alone is $2k of
+  it (basic $11.7k → ins $9.7k), concentrated at the jump bins where the
+  E18 human rule ("insure iff the jump bet is out") transfers.
+- **No-division walk cards leak ~$10k:** best Red 7 walk card $20.1k. The
+  hobby walk line lives at TC ≈ −1, far off Red 7's +2 pivot, and
+  RC ≈ d_rem·(TC−2) blurs it across depth. This INVERTS the pro finding:
+  crouch15's money decision (the jump) sat at the pivot and was
+  depth-exact; the hobby's money decision (the walk) is exactly where
+  division earns its keep.
+- **Sit-out shapes reach $5.1–5.6k, division-free included** (e.g. RC:
+  sit until Red 7 RC > −3, floor, $60 at +6 → +$15.40/h on $5.4k; TC:
+  floor from +1, $50 at +4 → $5.6k; wong-in $35 at +2 → $6.2k) — all
+  CONDITIONAL on open felt items (sit-out while others play, mid-shoe
+  re-entry) and on a peopled table's real pace: re-solved at 140 r/h they
+  cost $6.7–7.5k.
+- **Sensitivities:** pen .70 → the winner earns **+$11.6/h — below
+  target**; pen .80 → +$22.3/h on $7.7k (the deep-cut table is the
+  difference between a business and a perch). $10 weekday floor → walk
+  card $7.2–7.9k, sit-out $4.7–5.2k, ceiling $4.3k. 140 r/h → the winner
+  re-solves to $65 at +4 / $125 at +6 on $10.7k.
+- **Hobby honesty:** N0 ≈ 425h ≈ 2 years at 4h/week; 46% of 4h sessions
+  lose (P10 −$746, P5 −$975); at 200h/year the year is +$3.1k ± 4.4k —
+  roughly a 1-in-4 chance a full YEAR of correct play loses money.
+
+**Caveats on record:** ceiling arm reuses ins-arm variance (deviation
+variance unmodeled — the risk-averse-index question needs new machinery);
+walk rows are zero-friction (E18b's friction is per-walk, and a TC ≤ −1
+line walks most shoes); card $/h are argmaxes over ~30k candidates
+(winner's curse, se ~$0.6–1.5/h) — whatever card is picked gets
+fresh-seed OOS certification before the felt (E18/E23 pattern).
+
+**Seeds:** none consumed (arithmetic over banked E16/E17 shards). Next
+unused block: **21.4e9+**.
+
 ## E23 — the literal pog2 card certified LIVE; priced at the real felt ($25 tied max, ~100 r/h, deep pen)
 
 **Date:** 2026-07-19 · **Question:** does the human card as written — pog2
