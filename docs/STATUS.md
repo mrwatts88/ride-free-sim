@@ -138,6 +138,16 @@ practicality pick: hi-lo-57, start 10, stake at ≤ 5.** Caveat: its fixed
 rung is tuned at pen .75 (pog2's pivot is pen-robust by construction) —
 re-price the rung at the true pen after recon. Tag quality is equal
 across all three (BC −0.973-ish); the whole game is the pivot.
+**Rung-risk BOUNDED (banked-bin flatness, late session): both peaks are
+plateaus — ±1 rung ≈ 3–7% of capture, ±2 ≈ 7–14%; a .70↔.80 pen move
+shifts hi-lo-57's optimum ~1 rung → worst case ≈ $10–30/h at $50–100.
+pog2's optimal rung provably cannot move (the pivot is TC −2 at every
+depth; the EV zero-crossing is pen-independent) and it self-corrects for
+dealer-to-dealer cut variation, which a fixed rung quietly leaks on.
+DECISION PATH (Matt + Claude): drill pog2 as PRIMARY; hi-lo-57 stays the
+certified fallback; once the trainer gets a POG mode, drill both and let
+measured error rates at pace decide — execution error costs more than
+the bounded rung risk.**
 
 **THE OPERATING DOCTRINE (confirmed with Matt, 2026-07-18 late session —
 the complete play in one paragraph):** count pog2 (A/T −1; 3/4/6/7 +1;
