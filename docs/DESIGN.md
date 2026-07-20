@@ -468,3 +468,109 @@ ordered-posterior machinery of its own and is scoped separately.
 tracks exact within MC error at every step; first step exact; distinct-values
 reduces to rung-1 exact); E17 predicted-vs-realized on the adapter (`z`).
 tests/test_posterior.py; measurement `data/e28_multideck.py`.
+
+## Decision record: the O(slots) assumed-density filter (M12b rung 3a, 2026-07-19)
+
+**What:** `posterior.AssumedDensityShelfPosterior` — a next-VALUE posterior
+whose per-step cost is independent of any particle count, built because the
+rung-2 particle filter's O(particles × slots) is the throughput wall in
+front of every 8-deck number (E28).
+
+**The state is the exact filter's sufficient statistic, softened only where
+copy ambiguity forces it:** per-position fractional occupancy `alive[i]`
+(rung 1's boolean remaining-set, made soft) plus ONE chain law over the last
+dealt slot (rung 1's h_t/H_t, now a mixture over which same-value copy each
+observation was). Remaining positions keep their ORIGINAL uniform slot laws
+and the chain stores DEFERRED weights exactly as rung 1 does (survival
+factors applied at query time, never baked into the chain — baking them
+double-counts at the next query). Consequence, gated in tests: **with
+distinct values the ADF IS the rung-1 exact posterior, deterministically**
+(1e-9 gate); with copies it is the projection of the exact mixture over
+copy-assignment histories onto this product family, and its bias is
+measured, never assumed.
+
+**Four structural rules, each the cure for a measured disease** (all found
+on E28's 2-3-deck probe shoes, all reproduced in tests/comments):
+1. **Capped water-fill subtraction.** Per class, sum(alive) == copies −
+   dealt is EXACT bookkeeping, so observing a value removes exactly one unit
+   of occupancy, projected onto {0 ≤ δᵢ ≤ aliveᵢ, Σδ = 1} proportional to
+   full-information responsibilities. Without the cap, evidence outrunning a
+   copy's occupancy under-subtracts; the leaked mass walls off the slot axis
+   (3-deck crash, sum(alive) 6.0 vs truth 1.0).
+2. **The occupancy hedge.** Copy-class positions never carry a HARD
+   zero-survival wall (occupancy capped at 1−1e-9 inside survival factors):
+   under soft assignment "certainly alive" is itself an estimate, and a
+   stale certain copy poisons every legal slot. Distinct classes keep exact
+   walls — their identity is pinned — preserving the rung-1 reduction.
+3. **Chain defers to occupancy.** A new chain support is truncated where it
+   would strand > STRAND_TOL (0.5) of alive mass behind the frontier, and
+   `_repair_certain_dealt` then returns genuinely-stranded residue to its
+   value class (in-class only, keeping per-class totals exact). Rationale:
+   occupancy totals are exact, the chain is wholly a projection. Overshoot
+   is the non-self-correcting direction (observations pull an undershot
+   chain forward; nothing pulls an overshot one back). Last resort: if the
+   frontier strands ALL remaining mass, the chain is provably lost — reset
+   to uninformative and re-form (counted in `surprises`).
+4. **The contamination floor (MIX).** The output law is (1−MIX)·model +
+   MIX·occupancy-composition — robust-Bayes humility applied at the OUTPUT
+   only (internal state stays pure-model). Cure: rare shoes drift into
+   near-certain wrong claims late (measured: 6/40 3-deck shoes, one step of
+   p≈1e-72 on a 5% card = −234 bits, flipping whole-shoe log-loss negative);
+   the floor bounds any step at log2(MIX). MIX grows with copy count (0.02
+   calibrates at 2-3 decks; 8 decks needs ~0.25) — fitted per configuration
+   on probe seeds, certified on fresh ones (E29 part 2), passed via `mix`.
+
+**Measured fidelity (E29; CRN-paired against the PF on identical shoes):**
+at 2-3 decks the ADF realizes ~91-98% of the PF's units/shoe with the same
+calibration z and comparable bits, at 57-80× the speed (2 decks: 36 vs
+2,061 ms/shoe; 3 decks: 60-74 vs ~4,500). The 8-deck single-pass walk runs
+~0.5 s/shoe — the deck count the PF could not touch. Deterministic (no
+filter RNG): identical observations always give identical prices; `copy()`
+is O(positions), which is what the coup adapter's clone-heavy sampling
+leans on.
+
+**Not exact, by proof of contradiction:** tiny-lane brute-force cases where
+the true conditional is deterministic (a forced next card from the global
+pile order) get hedged/mixed answers — mean-field marginals cannot express
+hard global order constraints (worst one-step gap 0.52 on a 6-card 1-shelf
+deck; envelope pinned in tests so regressions surface). Real configurations
+(20+ lanes, 52-416 cards) sit nowhere near that regime; payoff-level honesty
+is carried by the E17 predicted-vs-realized gates and the `surprises`
+counter, reported with every experiment row.
+
+## Decision record: the baccarat coup adapter prices by coupled CV sampling (M12b rung 3b, 2026-07-19)
+
+**What:** `coup.py` — the first REAL-GAME payoff arm over the posterior
+core (the two-layer rule holds: posterior.py never imports a game; coup.py
+imports both sides and stays thin). It converts a filter's sequential
+next-value law into Player/Banker/Tie/Dragon7/Panda8 prices for the coup
+about to be dealt, from a known 8-deck stack through a shuffle model.
+
+**Why sampling, and why the control variate:** the exact joint over the
+next 4-6 cards through the tableau is ~1e5 tree nodes of O(slots) filter
+updates per coup — unaffordable. Sequential MC (clone the filter, sample a
+value path, resolve through the VALIDATED `play_baccarat_round` on a stub
+shoe — no duplicated tableau logic) is unbiased but too noisy at 40:1
+paytables. So every sampled path is COUPLED to a composition-model path
+driven by the same uniforms (inverse-CDF in fixed value order), and the
+estimator is p̂ = mean[1_filter − 1_composition] + p_exact, with p_exact
+from the M9-validated `fast_outcomes`. Variance scales with the
+filter-vs-composition DIFFERENCE — exactly the quantity being measured —
+and the estimate is EXACT with zero variance when the filter degenerates to
+a card counter (the load-bearing test gate). ExactOutcomes is reused with
+probabilities as float "counts" (total=1.0), so the M9 EV methods apply
+verbatim.
+
+**Selection honesty:** bets are selected on sample set A and predicted by
+an independent set B (drawn only when something fires) — selecting and
+predicting on one noisy estimate overstates edge by winner's curse; with
+the split, prediction is unbiased conditional on selection and the E17
+realized-vs-predicted gate stays meaningful. The perfect-counter comparator
+(exact composition EVs, same thresholds, same shoes) makes the filter's
+EXCESS the paradigm-2 deliverable: order structure in real bet units.
+
+**Scope honesty (E30):** observer premise is full knowledge of shoe k's
+order; the machine is the shelf model (the exactly-invertible one), not a
+literal hand shuffle — hand-procedure modeling (riffle posteriors, strip
+cuts) is later M12b work. Observation-degradation (partial view of shoe k)
+remains the queued knob.

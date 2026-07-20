@@ -2,6 +2,80 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E29 — M12b rung 3a: the O(slots) assumed-density posterior GATED; the copy tax isolated from the mixing debt; the 8-deck door opened
+
+**Date:** 2026-07-19 · **Question:** the PF's O(particles × slots) cost is
+the wall in front of any 8-deck number (E28), and the copy-vs-mixing
+confound was left tangled. Build a posterior whose cost is independent of
+particle count, measure its bias instead of assuming it, and run the clean
+same-n isolation.
+
+**Machinery (new; `posterior.AssumedDensityShelfPosterior`, decision record
+in DESIGN.md):** the exact filter's sufficient statistic with copy
+ambiguity softened — per-position fractional occupancy + ONE deferred
+chain over the last dealt slot. Distinct stacks reduce to the rung-1 exact
+posterior deterministically (gated 1e-9); copies bring four structural
+rules, each the cure for a measured failure on E28's probe shoes: capped
+water-fill subtraction (per-class occupancy is EXACT bookkeeping — without
+the cap, leaked mass walls off the slot axis), the 1e-9 occupancy hedge
+(no hard survival walls for copy classes), chain-defers-to-occupancy
+(strand truncation + in-class certain-dealt repair + last-resort chain
+reset, counted in `surprises`), and the ε-contamination output floor `MIX`
+(robust-Bayes humility: 6/40 3-deck shoes drifted to a p≈1e-72 claim on a
+5% card — one −234-bit step; the floor bounds any step at log2(MIX)).
+Deterministic — no filter RNG; O(positions) `copy()`. `mpe` gained
+`method="adf"`, `adf_mix`, and `observer="class"|"position"` (the
+isolation instrument) with CRN-identical rng consumption across arms.
+341 tests green (6 new incl. the bias-envelope pin: worst tiny-lane
+one-step gap 0.52 where the true law is deterministic — mean-field cannot
+express hard global order constraints; real configs sit nowhere near that
+regime).
+
+**Findings (`data/e29_adf.py`, seeds 23.1e9, banked `e29_adf.json`):**
+
+| part | row | u/shoe | bits/shoe | z | ms/shoe |
+|---|---|---|---|---|---|
+| 1 | d2 pf(120) / adf | +26.1 / +23.0 | 23.7 / 18.3 | +2.00 / +1.62 | 1849 / 29 |
+| 1 | d3 pf(120) / adf | +32.2 / +32.9 | 17.1 / 20.0 | +0.50 / +0.45 | 4196 / 55 |
+| 2b | d8 adf mix=.40 OOS | **+53.0** | +13.0 | **−1.70** | 373 |
+| 3 | d2 position / class | +28.6 / +19.2 | 35.3 / 17.3 | +0.75 / +0.25 | — |
+| 3 | d3 position / class | +42.2 / +26.6 | 64.1 / 20.3 | −0.87 / −1.37 | — |
+| 3 | d4 position / class | +70.3 / +44.6 | 92.3 / 12.4 | +1.08 / −0.61 | — |
+| 4 | d2 2-pass control | −0.4 | −11.0 | −2.37 | 582 |
+
+1. **The throughput wall is down**: 57–76× the PF at equal (d3: better)
+   fidelity, 1-deck rows bit-identical to the PF (both exact), and the
+   8-deck walk at 0.4 s/shoe.
+2. **The first calibrated 8-deck number**: MIX fitted on a fit block
+   (rule fixed in advance: smallest mix with bits>0 and |z|<2 → 0.40),
+   then OOS on fresh seeds: **+53.0 u/shoe realized at 83 bets/shoe,
+   z −1.70 — the gate passes**. E28's do-not-extrapolate flag is resolved
+   by measurement: the order channel SURVIVES 8 copies at one pass
+   (u/shoe by decks: 8.7 → 23.0 → 32.9 → 53.0). Honesty: realized ≈ 0.83×
+   predicted (within CI at 80 shoes, but the sign is consistent —
+   claims carry a visible haircut), MIX 0.40 means the output is 40%
+   composition, and `surprises` run 52/shoe at 8 decks: the tool is
+   CALIBRATED-BY-CONTAMINATION, not clean.
+3. **The copy tax and the mixing debt, finally separate** (same-n,
+   same-seed pairs): the position-resolution observer's bits GROW with n
+   (8.8 → 35.3 → 64.1 → 92.3 at n=52..208 — the fixed 10-shelf machine's
+   mixing debt in information units, the ~n^1.5 shortfall made visible),
+   while copy-indistinguishability at fixed n costs 51% / 68% / 87% of
+   those bits at 2/3/4 decks. Both of E28's "two fights" quantified; the
+   surviving units still grow with n (+19 → +27 → +45/shoe). d4-class
+   carries an instrument caveat (surprises 6.2/shoe; no PF referee ran
+   at d4).
+4. **The two-pass fix holds at the REALIZED level** (−0.37 u/shoe ≈ 0)
+   but the ADF's 2-pass CLAIMS are junk (6.7 bets/shoe fired, z −2.37,
+   bits −11): the filter's projection noise exceeds the ~zero residual.
+   Instrument limit on record: the ADF cannot hunt 2-pass machines; only
+   its realized-profit readout (or the exact rung-1 machinery) can
+   certify a fix.
+
+**Scope:** value-level composition-fair units, NOT game currency (E30 is
+the real-paytable conversion); observer premise remains full knowledge of
+shoe k. Artifacts: `data/e29_adf.py`, `data/e29_adf.json`.
+
 ## E28 — M12b rung 2: the order channel under copy ambiguity (multi-deck) — it survives, but the copy tax and a throughput wall are real
 
 **Date:** 2026-07-19 · **Question:** rung 1 found a huge order channel on a

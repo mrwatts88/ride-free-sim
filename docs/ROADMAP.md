@@ -106,6 +106,22 @@ more-known input yields more edge at the same machine quality.
   pattern) realizes the predicted edge within CI; poker-room legality gets
   its own pass before any play framing (does NOT inherit the blackjack answer).
 
+**RUNG 3a ✅ (E29, 2026-07-19): the O(slots) assumed-density posterior +
+the copy-isolation study.** `AssumedDensityShelfPosterior` (decision record
+in DESIGN.md): fractional occupancy + a deferred chain — reduces EXACTLY to
+rung 1 on distinct stacks; four structural rules cure measured failure
+modes; ε-contamination output floor MIX fitted per config and OOS-gated.
+57-76× the PF at equal fidelity; **first calibrated 8-deck number: +53
+u/shoe realized on the composition-fair prop, z −1.70 OOS** (E28's 8-deck
+unknown resolved: the channel survives 8 copies at one pass). Copy tax
+isolated from mixing debt by the position-vs-class observer instrument
+(same-n same-seed): mixing debt grows 8.8→92 bits at n=52→208; copies cost
+51-87% of it. Instrument limits on record: MIX 0.40 at 8 decks
+(calibrated-by-contamination), ADF claims at 2-pass are junk (realized
+readout only). **Rung 3b (E30): the baccarat coup adapter over M9 —
+real-paytable P/B/T/D7/P8 pricing via coupled-CV split-sample sampling
+(coup.py).**
+
 **RUNG 2 ✅ (E28, 2026-07-19): multi-deck copy ambiguity + the PyPy
 decision.** `MultiDeckShelfPosterior` — a particle filter over the latent
 copy-history (exact multi-deck filtering is permanent-hard), gated against
