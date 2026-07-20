@@ -1,25 +1,84 @@
 # STATUS — read this first in a new session
 
-Updated 2026-07-19 (late session — M12b rung 3/3c, E32 baccarat closure,
-and E33: the BLACKJACK INSURANCE adapter — Gate B PASSES). This is the
-resume-here document: current state, key numbers, and the precisely-specified
-next step. Doc map at the bottom.
+Updated 2026-07-20 (TRACK A / PARADIGM 2 shuffle forensics CLOSED — dead for a
+human, renewable edge, after E26–E34 characterized it fully; NEXT CHAPTER =
+SPORTS BETTING). This is the resume-here document: current state, key numbers,
+and the precisely-specified next step. Doc map at the bottom.
 
-> **▶ NEXT STEP (start here): the BLACKJACK PLAYING-DEVIATIONS arm — the
-> big Gate-B converter.** E33 (below) proved Gate B PASSES: order info
-> converts to real blackjack money at INSURANCE (observer captures ~7× a
-> perfect counter, z +4.45 OOS at 6-deck) — the first paradigm-2 order edge
-> to become game currency. But insurance is a small-dollar bet (~+$2.9/h,
-> one half-stake wager 1/13 rounds). The mechanism is DISCRIMINATION of the
-> next card, which every playing decision uses TOLL-FREE, every round — so
-> build the deviations adapter over the SAME `bj_order.py` layer: at each
-> decision, price hit/stand/double/split under the ordered next-card
-> posterior vs the composition-optimal play, measure the extra EV over a
-> perfect composition counter, E17-gate it. Two-layer rule holds. **Carry
-> E33's two caveats:** the numbers are the information-theoretic CEILING
-> (full knowledge of shoe k's 312-card order — not human-memorable at
-> 6-deck; single-deck's 52 is the edge of feasible), and assume perfect
-> hole/card observation (the degradation knob). Next unused seed: 23.6e9+.**
+> **▶ TRACK A (paradigm-2 shuffle forensics) IS CLOSED — basically DEAD for a
+> human, renewable edge (Matt's call, 2026-07-20).** The physics was real (E26
+> reproduced Diaconis; E27 VERIFIED the DFH conjecture; the order channel is
+> large — +53 u/shoe at 8 decks), but the money question hits a STRUCTURAL BIND,
+> not a tuning problem:
+> - **Input vs conversion never both hold in one game.** Paradigm 2 needs
+>   observable ORDER INPUT *and* a DECISION that converts it. **Baccarat** has
+>   the input (every card face-up, hand-shuffled — the convergence bet) but NO
+>   conversion (flat bet, no decisions — E30/E31 null). **Blackjack** has the
+>   conversion (insurance E33; hole-card play E34) but NOT the input (you cannot
+>   observe or memorize a 312-card order; holes/bust cards aren't even seen).
+> - **Everything measured is a CEILING assuming superhuman input.** E27–E34 all
+>   assume full knowledge of shoe k's order. We NEVER simplified that to a
+>   human-trackable heuristic (the paradigm-1 move — distill to a count). Matt's
+>   point: we've been polishing ceilings that assume an impossible input.
+> - **The paying shuffle regime is unreal.** Hole-card play only captures
+>   materially at 1–2 shelves (weaker than any machine and weaker than a
+>   competent hand shuffle); by 10 shelves it is ~0 (E34).
+> - **The one human-realizable version is known AP folklore.** Simplifying the
+>   input to "track a slug / the key-cards-before-aces" IS classic shuffle
+>   tracking / ace sequencing — published, narrow, and defeated by modern
+>   procedures. It fails paradigm 2's own premise (a *renewable, unpublished*
+>   edge), so re-deriving it is not a discovery.
+>
+> **What survives / to bank:** the DFH-conjecture-verification write-up (E27,
+> Matt-greenlit) — a genuine academic/WoO contribution independent of any edge.
+> Ship it standalone when convenient.
+>
+> **▶ NEXT CHAPTER (start here): SPORTS BETTING** (Matt's "paradigm 4" — see the
+> parked-threads block below and PARADIGM2.md). The MOST on-thesis successor: the
+> true price is unknowable (only estimable), so the edge IS estimate-superiority
+> over a MARKET line — renewable, compounds with data, and unlike the shuffle it
+> has NO order-memorization problem. Backtestable via closing-line value (CLV).
+> Target-selection criteria: modelable-from-stable-public-stats × soft/thin
+> market × high-volume-or-low-variance × a real data edge; the mainlines are
+> heavily sharpened, so edge lives in alternates/tails/less-followed markets.
+> **FIRST MOVE IS RECON, NOT CODE: pick ONE market (Matt's example: MLB pitcher
+> strikeouts — a rate-driven "count": E[K] ≈ park/opponent-adjusted K% × expected
+> batters faced, model the full distribution for P(K>line)), get historical
+> lines + outcomes, and measure whether a SIMPLE public model beats the close —
+> prove the edge EXISTS before building the machine.** New from-scratch machinery
+> (data pipeline + predictive model + historical-odds DB + CLV backtest); hard
+> structural ceiling (book limits/bans = the rake analog). Seeds are irrelevant
+> here (no shoe sims); the ride-free engine block is frozen. Next unused shoe-sim
+> seed, if ever needed: 23.7e9+.**
+
+**M12b GATE-B arm 2 (E34) DONE (2026-07-20, continuing the same push): HOLE-CARD
+PLAY is the big prize — +10%/round ceiling, +2–5%/round captured at weak
+shuffles, dead at a well-mixed machine.** Added `deviation_experiment` to
+`bj_order.py`: the play value of order info is knowing the dealer HOLE card (the
+SAME posterior E33 prices for insurance). The naive "swap the filter marginal
+into EVCalculator" UNDERPERFORMS composition (corrupts multi-card evals); the
+clean formulation uses that the player's EV is LINEAR in the dealer outcome
+distribution, so hole-posterior-optimal play is the argmax under ONE BLENDED
+dealer distribution `Σ_v P(hole=v)·dealer_dist(up,v)`. Three arms share every
+shoe, differing ONLY in the hole prior — composition / filter posterior /
+true-hole clairvoyant — isolating the hole channel; reality resolves with the
+true hole. **Ceiling validated vs WoO (Matt's flag):** clairvoyant knows both
+dealer cards (hole + visible up) = WoO's "both exposed" **+10.1%**; ours
++10.6–11.1% (~1 pt high from our more-liberal double-any-two/DAS/resplit/H17
+rules); off-the-top == shoe-averaged (not depletion); `_blended_dealer_dist`
+matches `dealer_distribution` to 1e-17. **The capture curve (order edge/round,
+fraction of the +10% ceiling, vs shelf count):** 1 shelf +4.2%/+5.0% (1d/6d,
+46%/43%), 2 shelf +2.1%/+1.6%, 4 shelf +0.9%/+0.8%, **10 shelf +0.4%(z2)/−0.55%
+(z−2.1, 6-deck play HURTS)**, two-pass ≈ 0 (dead). **The sharp lesson vs
+insurance:** insurance PAID at 10-shelf (a direct probability bet — a small edge
+converts, a bad read just isn't bet); hole-card play is a DECISION FLIP that
+needs a CONFIDENT posterior — a wrong flip costs money, so a mediocre signal
+loses. So Gate B's real money lives specifically in WEAK/HAND-SHUFFLED blackjack,
+and signal QUALITY is the threshold ("how weak must a shuffle be": shelves ≤ 4–6
+single-deck for a real edge). Caveats: 1–2 shelves is weaker than any real
+machine (recon: where do real hand shuffles land — the next step); hole-only
+(hit-card signal deferred); memorability ceiling still caps human play. 352 tests
+green (2 new). Seeds 23.61e9 (sd) / 23.62e9 (6d). Full entry: EXPERIMENTS E34.
 
 **M12b GATE-B (E33) DONE (2026-07-19, same session — the BLACKJACK INSURANCE
 adapter): Gate B PASSES — paradigm-2 order information converts to REAL
@@ -221,7 +280,10 @@ E30 consumed 23.2e9 (23_200_001_000..006_000); E31 consumed 23.3e9
 (mix-/shard-strided + mechanism 23_310_000_001–04); E32 consumed 23.4e9
 (mains search); E33 consumed 23.51e9 (single-deck insurance shards
 23_510_001_000..006_000) + 23.52e9 (six-deck shards 23_520_001_000..006_000)
-+ 23.5e9 test pins (23_500_000_101..501); **next unused block 23.6e9+**.
++ 23.5e9 test pins (23_500_000_101..501); E34 consumed 23.61e9 (single-deck
+hole-play sweep 23_610_00m000) + 23.62e9 (six-deck sweep 23_620_00m000)
++ 23.6e9 test/probe pins (23_600_000_1xx..8xx, 23_690_000_001);
+**next unused block 23.7e9+**.
 
 **PARADIGM 2 OPENED (2026-07-19) — read `docs/PARADIGM2.md` first.** After
 M11 closed, Matt asked whether there's "a different side we're not seeing" —

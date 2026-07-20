@@ -6,6 +6,52 @@ the way ROADMAP.md M0 was read in paradigm 1: it defines what we are attacking,
 why, what "winning" means, and the honesty rules that keep us from joining the
 long tradition of people who fooled themselves in exactly this territory.
 
+---
+
+> ## ⛔ TRACK A (shuffle forensics) CLOSED — 2026-07-20. Dead for a human, renewable edge.
+>
+> The physics was real and worth doing: E26 reproduced the Diaconis ten-shelf
+> result, **E27 VERIFIED the Diaconis–Fulman–Holmes conjecture** (a durable
+> academic result — the write-up is the surviving deliverable), and the order
+> channel is genuinely large (+53 u/shoe of recoverable order information at 8
+> decks). But the *money* question hit a **structural bind**, established across
+> E27–E34 and not fixable by tuning:
+>
+> 1. **Input and conversion never co-occur in one game.** Paradigm 2 needs an
+>    *observable order input* AND a *decision that converts it*. **Baccarat** has
+>    the input (every card face-up, hand-shuffled at the table — this doc's
+>    convergence bet) but no conversion (a flat no-decision bet — E30/E31 null).
+>    **Blackjack** has the conversion (insurance E33; hole-card play E34, up to a
+>    +10%/round ceiling) but not the input — a 312-card order is neither
+>    observable (holes/bust cards unseen) nor humanly memorable.
+> 2. **Every number is a CEILING assuming superhuman full-order input.** E27–E34
+>    all assume you know shoe k's entire order. We never did the actual job —
+>    *simplify* that to a human-trackable heuristic, the way paradigm 1 distilled
+>    composition-EV into a count. We polished ceilings that assume an impossible
+>    input.
+> 3. **The paying shuffle regime is unreal.** Hole-card play captures materially
+>    only at 1–2 shelves — weaker than any machine and weaker than a competent
+>    hand shuffle; ~0 by 10 shelves (E34).
+> 4. **The one human-realizable simplification is known AP folklore.** "Track a
+>    slug / the key-cards-before-aces" IS classic shuffle tracking / ace
+>    sequencing — published, narrow, defeated by modern procedures. It violates
+>    paradigm 2's own premise (a *renewable, unpublished* edge), so re-deriving it
+>    is not a discovery.
+>
+> **Honest one-liner:** paradigm 2 priced a large INFORMATION channel that
+> converts to no human-realizable edge in any reachable game — big bits, no
+> (human) money. **Track B (live-dealer QC) dies with it** — it was gated behind
+> Track A's model and shares the same input/conversion bind.
+>
+> **NEXT CHAPTER: SPORTS BETTING** (class 5 / "paradigm 4"). The most on-thesis
+> successor — the true price is unknowable (only estimable), so the edge is
+> estimate-superiority over a *market* line: renewable, compounding, and with NO
+> order-memorization problem. See the section at the bottom of this file and
+> STATUS.md. First move is RECON (historical lines + outcomes + a simple model,
+> measured by closing-line value), not code.
+
+---
+
 ## Why a second paradigm
 
 Everything the project has beaten — Ride Free wong-in, 21+3, Dragon 7/Panda 8,
@@ -429,6 +475,56 @@ contradicts them. Our moat is that we bring gates anyway:
    go in the verdict (the M10/M11 lesson).
 5. **Kill criteria stated in advance** — each milestone's gate says what
    result kills the track, and we honor it (the sit-out-card precedent).
+
+## The next chapter — SPORTS BETTING (class 5 / "paradigm 4"), chosen 2026-07-20
+
+With Track A closed (banner at the top), the project pivots to the successor
+that best fits paradigm 2's *actual* thesis — an edge that is the superiority of
+your estimate over a counterparty's, **renewable** (can't be published-and-burned
+like hi-lo) and **compounding** with data — but WITHOUT the fatal
+order-memorization/observability problem that sank the shuffle.
+
+**Why sports betting is the on-thesis successor:**
+
+- **The price is genuinely unknowable, only estimable.** Like the shuffle's true
+  next-card law, the true probability of an outcome isn't enumerable — but here
+  the counterparty (the market/book) also only *estimates* it, and the edge is
+  estimate-superiority. That is exactly the renewable, compounding asymmetry
+  paradigm 2 was chasing (taxonomy class 5, peer/market pools — the biggest
+  historical prizes: Benter, the syndicates).
+- **No input bottleneck.** The shuffle died on "you can't observe/memorize the
+  order." Sports inputs are stable, public, abundant box-score statistics — the
+  input is *free and complete*. The whole difficulty moves to modeling, which is
+  our wheelhouse (paradigm 1 was all rate-and-composition modeling).
+- **It is BACKTESTABLE before a dollar is risked.** The line is visible and
+  historical lines are archivable, so an edge is measurable via **closing-line
+  value (CLV)** — beating the closing line is the sport's analog of a positive
+  EV gate, and it validates a model on paper the way our synthetic gates did.
+
+**The honesty axes (target selection), on record so a future session doesn't
+chase a mirage:** modelable-from-stable-public-stats × **soft/thin market** ×
+high-volume-or-low-variance × a **real data edge**. The mainline markets
+(sides/totals on major leagues) are HEAVILY sharpened — efficient, so no edge;
+the opening is in **alternates, tails, props, and less-followed markets**. Hard
+structural ceiling: book **limits and account bans** are the rake/backoff analog
+— a real edge gets you cut off, so the ceiling is stake size, not per-bet EV.
+
+**Matt's worked example (a natural fit for our count-modeling DNA): MLB pitcher
+strikeout props.** A rate-driven "count": E[K] ≈ (park/opponent-adjusted pitcher
+K%) × (expected batters faced), then model the FULL distribution (not just the
+mean) for P(K > line) and compare to the prop's implied probability. The
+mainline K total is sharp; edge would live in the alternate/over-under ladders
+and against soft books.
+
+**FIRST MOVE IS RECON, NOT CODE (the paradigm-1 discipline).** Pick ONE market,
+obtain historical **lines + outcomes**, and measure whether a SIMPLE public
+model beats the CLOSE (CLV) — *prove the edge exists before building the
+machine*. New from-scratch machinery when/if it clears that gate: a data
+pipeline, a predictive model, a historical-odds DB, and a CLV backtest harness.
+Kill criterion (stated in advance, per the doctrine): if a simple public model
+shows no CLV on the chosen market, that market is efficient — kill it and either
+pick another axis or stop. This is a NEW machinery track and arguably its own
+paradigm; the ride-free simulator engine is frozen and not involved.
 
 ## Doc conventions for paradigm 2
 

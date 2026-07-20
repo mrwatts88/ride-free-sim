@@ -21,7 +21,11 @@ the real 6-deck numbers live in the data run (data/e33_*.py, PyPy). Test pins:
 
 import math
 
-from ridefree.bj_order import insurance_experiment, summarize_insurance
+from ridefree.bj_order import (
+    deviation_experiment,
+    insurance_experiment,
+    summarize_insurance,
+)
 from ridefree.rules import STANDARD_6D_H17
 
 
@@ -132,3 +136,38 @@ def test_smoke_multideck_mix_sweep():
         assert math.isfinite(d["excess_z"])
     # mix=1 still degenerates to the counter even with copies present
     assert summ["mixes"][1.0]["excess_realized"] == 0.0
+
+
+# --- hole-card play (deviations arm) ---------------------------------------
+
+def test_clairvoyant_hole_play_is_large_and_composition_is_sane():
+    # Perfect hole knowledge is worth ~+10%/round (the known large value of
+    # hole-card play); composition-optimal play is near even. These anchor the
+    # harness: the ceiling is real and the baseline plays correctly.
+    r = deviation_experiment(
+        STANDARD_6D_H17, shelves=10, shoes=1200, seed=23_600_000_701,
+        decks=1, min_tail=18,
+    )
+    assert r["clair_delta_per_round"] > 0.05, r  # huge, well above noise
+    assert r["clair_z"] > 6.0, r
+    assert -0.03 < r["comp_per_round"] < 0.04, r  # composition ~ even
+    # the order arm cannot beat perfect hole knowledge
+    assert r["order_delta_per_round"] <= r["clair_delta_per_round"] + 1e-9
+
+
+def test_hole_play_turns_on_at_weak_shuffles():
+    # The scientific claim: order-driven hole-card play is dead at the
+    # well-mixed 10-shelf machine but turns on as the shuffle weakens. One
+    # shelf leaves strong order structure -> a real, significant play edge.
+    weak = deviation_experiment(
+        STANDARD_6D_H17, shelves=1, shoes=1500, seed=23_600_000_801,
+        decks=1, min_tail=18,
+    )
+    strong = deviation_experiment(
+        STANDARD_6D_H17, shelves=10, shoes=1500, seed=23_600_000_801,
+        decks=1, min_tail=18,
+    )
+    assert weak["order_delta_per_round"] > strong["order_delta_per_round"], (
+        weak["order_delta_per_round"], strong["order_delta_per_round"])
+    assert weak["order_z"] > 2.5, weak  # a real edge at a weak shuffle
+    assert weak["order_delta_per_round"] > 0.01, weak  # and a big one

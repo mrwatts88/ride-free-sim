@@ -2,6 +2,110 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E34 — M12b Gate-B arm 2: HOLE-CARD PLAY — the order channel's BIG prize (+10%/round ceiling), but gated on shuffle weakness; dead at a well-mixed machine, huge (+2–5%/round) at weak shuffles
+
+**Date:** 2026-07-20 · **Question:** insurance (E33) proved order info converts
+to money but is small (one rare half-stake bet). Matt's point: a human loses
+almost all of insurance's info-ceiling in transfer — we need something HUGE so a
+degraded human system still captures real money, and PLAYING DEVIATIONS (toll-
+free, every round) could be it. Does the order channel pay through play?
+
+**The mechanism is HOLE-CARD PLAY, and the clean formulation matters.** The
+naive order player (swap the filter's next-card marginal into the EVCalculator)
+UNDERPERFORMS composition (measured: −0.003/round) — using a sharp immediate-card
+marginal as the i.i.d. law for the whole multi-card recursion corrupts every
+dealer/continuation evaluation. The real play value of order info is knowing the
+dealer's HOLE card (the SAME posterior E33 prices for insurance). The player
+never sees the hole, so its EV is LINEAR in the dealer outcome distribution ⇒ the
+hole-posterior-optimal action is the argmax under ONE BLENDED dealer distribution
+`Σ_v P(hole=v)·dealer_dist(up,v)`. Three players share every shoe and differ ONLY
+in the hole prior — composition (perfect counter) / filter posterior (order) /
+point-mass on the true hole (clairvoyant ceiling) — isolating the hole channel
+exactly. Reality resolves with the true hole, so realized profit rewards a better
+hole model honestly. Machinery: `deviation_experiment` in `bj_order.py` (paired
+replay, composition canonical; reuses the validated `_distribution([up,hole])`
+and `EVCalculator`). No `src/` change to the engine.
+
+**Ceiling validated against Wizard of Odds (Matt's flag — the value looked
+high).** The clairvoyant (knows the hole AND the always-visible upcard = both
+dealer cards) reads **+10.6–11.1%/round**; WoO's "both dealer cards exposed" is
+**+10.1%** (infinite deck, S17, "give or take depending on rules"). The ~0.5–1
+point excess is our MORE-LIBERAL ruleset (double-any-two + DAS + resplit-to-4 +
+H17, which exposed-card play exploits via aggressive doubles/splits). Off-the-top
+== shoe-averaged (+11.1% both), so it is not a depletion artifact. `comp` arm
+reproduces the validated `CompositionPlayer`; `_blended_dealer_dist` matches
+`dealer_distribution` to 1e-17 — the clairvoyant is composition-optimal play with
+the hole as a point mass, no extra machinery to be buggy.
+
+**Findings — the capture curve (`data/e34_*.json`, `e34_verdict.py`):** order
+hole-card-play edge over composition, as a fraction of the ~+10% ceiling, vs
+shelf count (single-deck exact filter | six-deck real game):
+
+| shuffle | order edge/round (1d) | z | capture | 6-deck edge | z |
+|---|---|---|---|---|---|
+| **1 shelf** | **+4.24%** | +10.2 | 46% | **+5.01%** | +10.2 |
+| 2 shelf | +2.13% | +6.4 | 21% | +1.59% | +3.7 |
+| 3 shelf | +1.31% | +4.2 | 12% | — | |
+| 4 shelf | +0.92% | +3.4 | 9% | +0.75% | +2.2 |
+| 6 shelf | +0.55% | +2.3 | 5% | — | |
+| 10 shelf (Diaconis) | +0.37% | +2.0 | 4% | **−0.55%** | −2.1 |
+| 10-shelf ×2 (≈200) | +0.0002% | — | 0.1% | — | |
+
+1. **The prize is HUGE but gated on shuffle weakness.** Perfect hole knowledge
+   is worth ~+10%/round (z +18); at weak shuffles the order posterior captures a
+   real fraction of it — **1 shelf → +4–5%/round (46% capture), 2 shelves →
+   +1.6–2.1%/round** — flat edges that dwarf both insurance (~+$3/h) and expert
+   counting (~+1%/round with a big spread).
+2. **Dead at a well-mixed machine.** At the 10-shelf Diaconis machine the order
+   posterior is too weak to flip plays correctly: single-deck +0.4%/round (z ~2,
+   marginal), and **6-deck goes NEGATIVE (−0.55%/round, z −2.1) — a noisy
+   posterior HURTS play.** This is the sharp contrast with insurance (E33), which
+   PAID at 10-shelf: insurance is a direct probability bet (a small edge converts
+   and a bad read just isn't bet), while hole-card play is a DECISION FLIP that
+   needs a confident posterior — a wrong flip costs money. Two passes (≈200
+   shelves) kill it to zero, as at value level (E27) and insurance (E33).
+3. **The paradigm-2 deliverable, in numbers:** "how weak must a shuffle be to be
+   beatable" for hole-card play ≈ **shelves ≤ 4–6** (single-deck) for a
+   significant edge; the very weak end (1–2 shelves) is where multi-%/round
+   lives. That is the WEAK/HAND-SHUFFLE regime — the recalibrated real targets.
+
+**Verdict:** the deviations channel is the big prize Matt wanted — a flat
++2–5%/round at weak shuffles, orders of magnitude past insurance — but it is
+GATED on the shuffle being weak, and unlike a bet, a mediocre order signal
+actively loses at play. So Gate B's real money lives specifically in
+weak/hand-shuffled blackjack, and signal QUALITY (not just presence) is the
+threshold. **Caveats on record:** 1–2 shelves is weaker than any real machine
+(even a sloppy hand shuffle mixes more) — where real hand shuffles / weak batch
+machines sit on this curve is the recon question, but the physics is fixed;
+the measurement isolates the HOLE (the hit-card order signal is additional,
+deferred); and the full-observation memorability ceiling (know shoe k's order)
+still caps human realizability — the human-transfer model (can a person read the
+hole at a weak shuffle? the classic hole-carding / sequence-tracking regime) is
+the next question. Artifacts: `src/ridefree/bj_order.py` (deviation_experiment),
+`data/e34_holeplay.py` / `e34_launch.py` / `e34_verdict.py`, `e34_{sd,6d}_m*.json`.
+Seeds: 23.61e9 (sd) / 23.62e9 (6d), shelf-strided; test pins 23.6e9. **Next
+unused block: 23.7e9+.**
+
+**TRACK A CLOSED here (Matt's call, 2026-07-20) — paradigm-2 shuffle forensics is
+basically DEAD for a human, renewable edge.** Not because the physics failed (E26
+reproduced Diaconis, E27 VERIFIED the DFH conjecture, the order channel is
+genuinely large) but a STRUCTURAL bind the E27–E34 arc made unavoidable: (1)
+**input vs conversion never co-occur** — baccarat is observable but unconvertible
+(E30/E31), blackjack is convertible (E33/E34) but its 312-card order is neither
+observable nor memorable; (2) **every number is a ceiling assuming superhuman
+full-order input** — we never simplified it to a human-trackable heuristic (the
+paradigm-1 count move), which was the actual job; (3) the paying shuffle regime
+(1–2 shelves) is weaker than any real machine or competent hand shuffle; (4) the
+one human-realizable simplification — track a slug / key-cards-before-aces — IS
+classic shuffle tracking / ace sequencing: published, narrow, defeated by modern
+procedures, so it violates paradigm 2's own "renewable, unpublished edge"
+premise. Survives to bank: the DFH-conjecture-verification write-up (a real
+academic result). Next chapter pivots to **SPORTS BETTING** (estimate-superiority
+over a market line — renewable, CLV-backtestable, no order-memorization problem;
+see STATUS and PARADIGM2.md). Honest one-liner: paradigm 2 priced a large
+INFORMATION channel that converts to no human-realizable edge in any reachable
+game — big bits, no (human) money.
+
 ## E33 — M12b Gate-B: does the shelf-shuffle order channel convert to real BLACKJACK money at INSURANCE? YES — the first paradigm-2 order edge to become game currency (baccarat couldn't); the observer captures ~7× the perfect counter's insurance, via hole-card DISCRIMINATION composition is blind to
 
 **Date:** 2026-07-19 · **Question:** the STATUS-specified next step. Baccarat

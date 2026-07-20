@@ -46,6 +46,8 @@ import random
 from ridefree.cards import ACE, RAW_RANKS, SUITS, TEN
 from ridefree.cards import value as bj_value
 from ridefree.engine import play_round
+from ridefree.dealer_odds import _distribution
+from ridefree.player_ev import EVCalculator, choose_with_calc
 from ridefree.posterior import AssumedDensityShelfPosterior
 from ridefree.rules import Rules
 from ridefree.shuffle import ShelfShuffle
@@ -261,3 +263,195 @@ def summarize_insurance(result: dict, mixes, pays: float | None = None) -> dict:
             "cal_realized_ten": cal_real,    # actual ten-rate there (E17 gate)
         }
     return out
+
+
+# ============================================================================
+# PLAYING DEVIATIONS via HOLE-CARD PLAY -- the toll-free, every-round converter
+# (M12b Gate-B, arm 2)
+# ============================================================================
+#
+# Insurance (above) proved order info converts to money, but it is one rare
+# half-stake bet. The bigger, human-relevant PLAY signal is HOLE-CARD PLAY:
+# knowing the dealer's hole card is worth ~+6.8% with perfect knowledge, and a
+# weak shuffle lets an order observer PREDICT it -- the SAME hole posterior E33
+# prices for insurance, now driving hit/stand/double/split instead of a side bet.
+#
+# The clean formulation (why it is NOT the naive "swap the filter marginal into
+# EVCalculator", which corrupts multi-card evaluations and underperforms): the
+# player does NOT see the hole, so it commits to ONE action per decision, and
+# its EV is LINEAR in the dealer's outcome distribution. Therefore the
+# hole-posterior-optimal action is the argmax under a single BLENDED dealer
+# distribution, sum_v P(hole=v) * dealer_dist(up, hole=v) -- one EVCalculator
+# with that blend injected for the up-card. Three players differ ONLY in the
+# hole prior, isolating the hole-card channel exactly:
+#   * composition  -- hole prior = remaining composition   (the perfect counter)
+#   * order        -- hole prior = the filter's posterior   (E33's, AUC ~0.59)
+#   * clairvoyant  -- hole prior = point mass on the true hole  (the ceiling)
+# Player draws (hits) use composition for all three, so the only moving part is
+# the dealer-hole model. Reality (the engine) always resolves with the TRUE
+# hole, so realized profit rewards a better hole model honestly.
+#
+# Observation premise (realistic, unlike insurance's full-info convention): the
+# observer has seen player1/up/player2 but NOT the hole when it plays -- the hole
+# posterior is filter.next_value_probs() at that point (the pos-3 law). The hole
+# is observed after the round. Still bounded by the memorability ceiling (E33).
+# Hit-card order signal (pos-4 onward) is deferred; this isolates the hole.
+
+
+def _value_law(class_law: dict) -> dict:
+    """Collapse a {(rank,suit): p} law to {blackjack value: p}."""
+    out = {v: 0.0 for v in range(1, 11)}
+    for cls, p in class_law.items():
+        out[bj_value(cls)] += p
+    return out
+
+
+def _blended_dealer_dist(rules: Rules, up: int, hole_law: dict, weights: dict) -> dict:
+    """Dealer outcome distribution with the hole marginalized over `hole_law`
+    (and, since a played round means the peek found no dealer natural, the
+    natural-completing hole excluded for A/T up-cards -- matching
+    dealer_distribution(exclude_natural=True))."""
+    tw = sum(weights.values())
+    memo: dict = {}
+    drop = TEN if up == ACE else (ACE if up == TEN else None)
+    kept = {v: p for v, p in hole_law.items() if v != drop and p > 0.0}
+    s = sum(kept.values())
+    if s <= 0.0:  # degenerate; fall back to the unconditioned law
+        kept = {v: p for v, p in hole_law.items() if p > 0.0}
+        s = sum(kept.values())
+    blend: dict = {}
+    for v, p in kept.items():
+        w = p / s
+        for o, pr in _distribution([up, v], rules, memo, weights, tw).items():
+            blend[o] = blend.get(o, 0.0) + w * pr
+    return blend
+
+
+class _HoleCardStrategy:
+    """Plays argmax-EV under a per-round EVCalculator whose up-card dealer
+    distribution has the hole marginalized over a supplied hole prior."""
+
+    def __init__(self) -> None:
+        self.calc = None
+
+    def choose(self, view, rules):
+        return choose_with_calc(self.calc, view)
+
+
+def deviation_experiment(
+    rules: Rules,
+    shelves: int,
+    shoes: int,
+    seed: int,
+    *,
+    passes: int = 1,
+    decks: int | None = None,
+    min_tail: int = 30,
+) -> dict:
+    """Paired hole-card-play value on shelf-shuffled known shoes: order and
+    clairvoyant hole priors vs the composition counter. The composition arm is
+    the canonical timeline; the order and clairvoyant arms replay each round
+    from the same start cards (rounds that don't flip a decision cancel to exact
+    zero -- the low-variance deviation estimand). Returns per-shoe paired deltas
+    (order-comp, clair-comp) and tallies.
+    """
+    decks = rules.decks if decks is None else decks
+    classes = [(rank, suit) for suit in SUITS for rank in RAW_RANKS]
+    model = ShelfShuffle(shelves=shelves, passes=passes)
+    eq_shelves = shelves
+    for _ in range(passes - 1):
+        eq_shelves = 2 * eq_shelves * shelves
+
+    rng = random.Random(seed)
+    stack_proto = [c for _ in range(decks) for c in classes]
+    n = len(stack_proto)
+    cutoff = int(rules.penetration * n)
+    strat = _HoleCardStrategy()
+
+    order_deltas, clair_deltas = [], []
+    totals = {"comp": 0.0, "order": 0.0, "clair": 0.0}
+    rounds_total = 0
+    changed = {"order": 0, "clair": 0}
+    surprises = 0
+    for _shoe in range(shoes):
+        stack = list(stack_proto)
+        rng.shuffle(stack)
+        dealt = [stack[p] for p in model.permute(list(range(n)), rng)]
+        filt = AssumedDensityShelfPosterior(eq_shelves, stack, mix=0.0)
+        comp = {v: 0 for v in range(1, 11)}
+        for c in stack:
+            comp[bj_value(c)] += 1
+
+        pos = 0
+        sd_order = sd_clair = 0.0
+        while pos < cutoff and (n - pos) >= min_tail:
+            up = bj_value(dealt[pos + 1])
+            # the observer sees player1, up, player2 -- NOT the hole yet
+            for c in dealt[pos:pos + 3]:
+                filt.observe(c)
+                comp[bj_value(c)] -= 1
+
+            csum = sum(comp.values())
+            hole_priors = {
+                "comp": {v: comp[v] / csum for v in range(1, 11) if comp[v] > 0},
+                "order": _value_law(filt.next_value_probs()),
+                "clair": {bj_value(dealt[pos + 3]): 1.0},
+            }
+            weights = dict(comp)  # composition for player draws (all three arms)
+
+            profits = {}
+            used = None
+            for name in ("comp", "order", "clair"):
+                calc = EVCalculator(rules, weights)
+                calc._dealer[up] = _blended_dealer_dist(
+                    rules, up, hole_priors[name], weights)
+                strat.calc = calc
+                shoe = _ValueShoe(dealt, pos)
+                profits[name] = play_round(rules, shoe, strat, bet=1.0).profit
+                if name == "comp":
+                    used = shoe.count
+
+            totals["comp"] += profits["comp"]
+            totals["order"] += profits["order"]
+            totals["clair"] += profits["clair"]
+            do = profits["order"] - profits["comp"]
+            dc = profits["clair"] - profits["comp"]
+            sd_order += do
+            sd_clair += dc
+            if do != 0.0:
+                changed["order"] += 1
+            if dc != 0.0:
+                changed["clair"] += 1
+            rounds_total += 1
+
+            # advance the canonical (composition) timeline: hole + draws
+            for c in dealt[pos + 3:pos + used]:
+                filt.observe(c)
+                comp[bj_value(c)] -= 1
+            pos += used
+        order_deltas.append(sd_order)
+        clair_deltas.append(sd_clair)
+        surprises += filt.surprises
+
+    rt = rounds_total or 1
+    return {
+        "shoes": shoes,
+        "rounds": rounds_total,
+        "n": n,
+        "decks": decks,
+        "shelves": shelves,
+        "passes": passes,
+        "penetration": rules.penetration,
+        "surprises": surprises,
+        "comp_per_round": totals["comp"] / rt,
+        "order_delta_per_round": (totals["order"] - totals["comp"]) / rt,
+        "clair_delta_per_round": (totals["clair"] - totals["comp"]) / rt,
+        "order_delta_per_shoe": sum(order_deltas) / len(order_deltas),
+        "clair_delta_per_shoe": sum(clair_deltas) / len(clair_deltas),
+        "order_z": _z_of(order_deltas),
+        "clair_z": _z_of(clair_deltas),
+        "order_changed_rate": changed["order"] / rt,
+        "clair_changed_rate": changed["clair"] / rt,
+        "order_deltas": order_deltas,
+        "clair_deltas": clair_deltas,
+    }
