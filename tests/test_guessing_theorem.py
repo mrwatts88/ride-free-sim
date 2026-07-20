@@ -472,3 +472,82 @@ def test_rational_dp_recovers_b2_closed_form_and_spectrum():
     deltas = [exact_e_dp_rational(n, 2)[0] - c * n for n in range(6, 19)]
     b = _b_and_spectrum_check(2, deltas)
     assert b == Fraction(-7, 144), b
+    assert b == _bm_closed_form(2)  # end-to-end: the DP's b matches the E40 form
+
+
+# --- E40: the closed form for the intercept b(m) + the m=5 spectrum ------------
+# Phase 1 of the proof road. The eigenvalue law is CONFIRMED at m=5 (the critical
+# checkpoint) and m=6 (extending E39's m=2,3 rigorous / m=4 OOS), and the intercept
+# has a CLOSED FORM (E39's OPEN item, resolved):
+#     b(m) = 3/2 - 1/(4m) - H_{2m}^{(2)},   H_{2m}^{(2)} = sum_{k=1}^{2m} 1/k^2
+# reproducing b(1..6) exactly, limit 3/2 - pi^2/6. So the full value law is
+#     E_opt(n,m) = (H_2m/2m)*n + [3/2 - 1/(4m) - H_2m^(2)] + O((1-1/m)^n).
+# See docs/GUESSING_THEOREM.md §2-3, EXPERIMENTS E40. Exact/deterministic.
+
+
+def _H2(k):
+    return sum((Fraction(1, i * i) for i in range(1, k + 1)), Fraction(0))
+
+
+def _bm_closed_form(m):
+    """The E40 closed form for the value-law intercept b(m) = lim_n E_opt - c(m)*n."""
+    return Fraction(3, 2) - Fraction(1, 4 * m) - _H2(2 * m)
+
+
+# The exact intercepts, pinned. b(2),(3) are rigorous over Q (E39 independent
+# Berlekamp-Massey); b(4),(5),(6) are the GF limit of the eigenvalue-law recurrence
+# validated out-of-sample. Regenerable via data/gt_rational_dp.py.
+_BM_EXACT = {
+    1: Fraction(0),
+    2: Fraction(-7, 144),
+    3: Fraction(-269, 3600),
+    4: Fraction(-63449, 705600),
+    5: Fraction(-126713, 1270080),
+    6: Fraction(-16388909, 153679680),
+}
+
+
+def test_bm_closed_form_reproduces_exact_intercepts():
+    """b(m) = 3/2 - 1/(4m) - H_{2m}^{(2)} equals every known exact intercept
+    (m=1..6) — a 3-parameter form matching six exact rationals (the unique <=3
+    feature fit). At m=1 it is 0, so the value law is exactly 3n/4 (Clay Thm 1.5)
+    with no correction; the m->inf limit is finite, 3/2 - pi^2/6."""
+    for m, exact in _BM_EXACT.items():
+        assert _bm_closed_form(m) == exact, (m, _bm_closed_form(m), exact)
+    assert abs(float(_bm_closed_form(50)) - (1.5 - 1.6449340668482264)) < 1e-2
+
+
+def test_bm_closed_form_matches_spectrum_recurrence_from_pinned_deltas():
+    """The m=5 CRITICAL-CHECKPOINT result, pinned from the exact delta(n,5) sequence
+    (values from data/gt_rational_dp.py, so no expensive DP recompute here): the
+    conjectured order-17 eigenvalue-law recurrence — char poly
+    (x-1)*prod(x-i/5)^3*prod(x-(2i-1)/10) — holds EXACTLY out-of-sample on the real
+    m=5 data (a closure/spectrum error would break it), and its generating-function
+    limit is b(5) = -126713/1270080 = the E40 closed form. Confirms the eigenvalue
+    law is not a small-m accident and links it to the closed form. The delta values
+    are regenerable via exact_e_dp_rational(n, 5) (PyPy)."""
+    # exact delta(n,5) = E_opt(n,5) - c(5)*n as Fractions, n=6..24, regenerable via
+    # exact_e_dp_rational(n, 5) (reported by data/gt_rational_dp.py, PyPy).
+    delta5 = {
+        6: Fraction(428557, 525000), 7: Fraction(8240371, 11250000),
+        8: Fraction(50905181, 78750000), 9: Fraction(24589429, 43750000),
+        10: Fraction(3794319097, 7875000000),
+        11: Fraction(10021245751, 24609375000),
+        12: Fraction(88994101759, 262500000000),
+        13: Fraction(2732413087889, 9843750000000),
+        14: Fraction(12535922131387, 56250000000000),
+        15: Fraction(716261399201, 4101562500000),
+        16: Fraction(1043427117922069, 7875000000000000),
+        17: Fraction(9448107053718463, 98437500000000000),
+        18: Fraction(28240508386963373, 437500000000000000),
+        19: Fraction(185382252440452531, 4921875000000000000),
+        20: Fraction(1165240950922632173, 78750000000000000000),
+        21: Fraction(-213655476760719823, 46875000000000000000),
+        22: Fraction(-821570714658063217651, 39375000000000000000000),
+        23: Fraction(-170046750938669693653, 4921875000000000000000),
+        24: Fraction(-96577741626494762717, 2100000000000000000000),
+    }
+    deltas = [delta5[n] for n in range(6, 25)]  # 19 terms, n=6..24
+    b = _b_and_spectrum_check(5, deltas)  # order-17 recurrence must hold OOS
+    assert b == Fraction(-126713, 1270080), b
+    assert b == _bm_closed_form(5)

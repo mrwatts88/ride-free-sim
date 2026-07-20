@@ -2,6 +2,100 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E40 — The proof road, Phase 1: the eigenvalue law CONFIRMED at m=5 (the critical checkpoint) and m=6, and a CLOSED FORM for the intercept — b(m) = 3/2 − 1/(4m) − H₂ₘ⁽²⁾, limit 3/2 − π²/6. The full value law E_opt(n,m) = (H₂ₘ/2m)·n + b(m) + O((1−1/m)ⁿ) is now fully explicit
+
+**Date:** 2026-07-20 · **Question (Phase 1 of the proof road toward Clay 2025
+Conjecture 3 — a math result, not a gambling edge):** E39 read the m-shelf FEEDBACK
+operator's subdominant spectrum {i/m}(×3) ∪ {(2i−1)/2m}(×1) off the exact value
+sequence — rigorous over ℚ at m=2,3, validated out-of-sample at m=4 — and pinned
+b(2),b(3),b(4) as exact fractions but found NO closed form (the numerators −7, −269,
+−63449 opaque). Phase 1 (endorsed 2026-07-20): **(1a)** confirm the eigenvalue law at
+m=5 — the CRITICAL CHECKPOINT, because the whole Phase-2 proof rests on the spectrum
+being universal (two solid m's is not a law; if m=5 breaks the pattern, STOP and
+rethink) — and ideally m=6; **(1b)** extract b(5),b(6) and hunt the closed form.
+
+**Method (`guessing_theorem.exact_e_dp_rational`, probes `data/gt_rational_dp.py` +
+`data/gt_bm_closed_form.py`; exact, seedless).** Extend E39's exact-rational
+run-composition DP to m=5,6. The reachable-state count is Θ(n^{2m}) but with a TINY
+leading constant, and the m→m+1 growth at fixed n is only ~1.4×, so moderate n is
+feasible under PyPy (m=5: 7.4e6 states at n=24 in ~5 min; m=6: 1.4e6 at n=20). For
+each m compute the exact δ(n,m)=E_opt−c(m)·n for n up to 24 (the C-finite recurrence
+holds from n=2 — no transient), then: assume the conjectured order-(4m−3) recurrence
+from the E39 spectrum and check it PREDICTS every δ out-of-sample across all fit
+windows; extract b(m) as the exact generating-function limit; and hunt a closed form
+by exact-rational subset-fitting over a 17-feature harmonic/rational library of m (a
+fit reproducing points it was not solved on is a real hit, not curve-fitting).
+
+**RESULTS:**
+
+1. **CRITICAL CHECKPOINT PASSED — the eigenvalue law HOLDS at m=5.** The conjectured
+   order-17 recurrence, char poly `(x−1)·∏₁⁴(x−i/5)³·∏₁⁴(x−(2i−1)/10)`, predicts ALL
+   21 out-of-sample exact rationals across every fit window with ZERO mismatches (each
+   a ~24-digit-denominator rational coincidence). Subdominant spectrum
+   **{1/5,2/5,3/5,4/5}(×3) ∪ {1/10,3/10,1/2,7/10}(×1)**, spectral gap 1/5. The law is
+   now confirmed at **m=2,3 (rigorous over ℚ), m=4,5,6 (OOS-validated)** — five m's
+   with the clean pattern, well past "two points." (Berlekamp–Massey from 23 terms
+   returns order 12, EXPECTED: rigorous certification of order 17 needs ≥34 terms →
+   n≈36, infeasible; m≥4 stay OOS-validated, the same tier.)
+
+2. **b(5) = −126713/1270080** (= −0.0997677), the exact GF limit of the OOS-validated
+   order-17 recurrence.
+
+3. **THE CLOSED FORM — resolves E39's OPEN item.** The exact intercept is
+   ```
+   b(m) = 3/2 − 1/(4m) − H_{2m}^{(2)},        H_{2m}^{(2)} = Σ_{k=1}^{2m} 1/k²
+   ```
+   The UNIQUE ≤3-feature fit (constant 3/2, −1/4 on 1/m, −1 on H_{2m}^{(2)}) over a
+   17-feature library that reproduces **all six** exact intercepts:
+   ```
+   m      1     2       3         4            5              6
+   b(m)   0   −7/144  −269/3600  −63449/705600  −126713/1270080  −16388909/153679680
+   ```
+   Fitting 3 coefficients to 6 exact rationals = 3 genuine coincidences, every
+   building block natural. Equivalently b(m) = (m−1)/(4m) − Σ_{k=3}^{2m} 1/k² (makes
+   b(1)=0 manifest). E39's earlier "denominator odd part = ((2m−1)!!)²" reading was a
+   small-m coincidence (it breaks at m=5: reduced odd part 19845 ≠ (9!!)²=893025); the
+   closed form supersedes it. **Limit b(∞) = 3/2 − π²/6 ≈ −0.14493** (finite — b(m) is
+   a bounded, decreasing sequence, not divergent).
+
+4. **b(6) confirms the closed form INDEPENDENTLY, extending the spectrum to a fifth m.**
+   The exact m=6 DP (n=2..24) gives b(6) = −16388909/153679680 via the assumed order-21
+   recurrence, EXACTLY the closed-form prediction; and that recurrence itself
+   OOS-predicts δ(n,6) (PATTERN HOLDS). So the spectrum {i/6}(×3)∪{(2i−1)/12}(×1),
+   gap 1/6, holds, and the closed form is validated at six points (m=1..6).
+
+5. **The full asymptotic value law is now fully explicit — sharper than Clay stated.**
+   ```
+   E_opt(n,m) = (H_{2m}/2m)·n  +  [ 3/2 − 1/(4m) − H_{2m}^{(2)} ]  +  O((1−1/m)^n)
+                └─ slope c(m) ─┘     └────────── b(m) ──────────┘     └ gap 1/m ┘
+   ```
+   Clay's Conjecture 3 gave only the leading term (n/2m)H_{2m}; we now have the exact
+   INTERCEPT in closed form and the exact fade rate. **Structural signature for the
+   Phase-2 proof:** the slope is the average of 1/k over the 2m slots (H_{2m}/2m); the
+   intercept is built from Σ 1/k² over the same 2m slots — first- vs second-order
+   harmonic from ONE slot geometry, strongly suggesting a clean unit eigenvector of a
+   form Phase-2 guess-and-verify can find. At m=1 the law is EXACTLY 3n/4 (c(1)=3/4,
+   b(1)=0, tail (1−1)^n=0) — Clay's proven Thm 1.5, recovered with zero correction.
+
+**VERDICT.** Phase 1 delivered: the critical checkpoint is passed (the eigenvalue law
+is not a two-point accident — it holds at m=5 AND m=6), and the open intercept now has
+a clean closed form b(m)=3/2−1/(4m)−H_{2m}^{(2)} confirmed at m=1..6, giving the
+COMPLETE asymptotic value law for Clay's open multi-shelf complete-feedback problem
+(slope + exact intercept + fade rate), a genuine sharpening of Conjecture 3's
+leading-term statement. Honest scope: this is a fully explicit CONJECTURE with exact
+confirmation at m≤6 (rigorous ℚ at m≤3, OOS at m=4,5,6), NOT a proof — the general-m
+spectrum theorem and its eigenvectors (Phase 2) remain the hard math; but the
+closed-form b(m) and the H_{2m}/H_{2m}^{(2)} parallel are exactly the concrete targets
+Phase 2 needs (find the unit eigenvector whose projection is b(m)).
+
+**Banked:** closed form + subset search promoted to `data/gt_bm_closed_form.py`
+(self-validating, asserts uniqueness); `data/gt_rational_dp.py` extended with
+`bm_closed_form(m)` + a per-m MATCH check, m=5,6 enabled (defaults, guard relaxed to
+order+2, n_lo=2 for m≥4); test pins in `tests/test_guessing_theorem.py` (the closed
+form reproduces b(1..6) [fast]; the m=5 order-17 spectrum + b(5) from the pinned exact
+δ sequence [fast]; the b(2) end-to-end DP test now cross-checks the closed form [slow]).
+Seedless (exact arithmetic). PyPy at `~/.local/bin/pypy3.11` reaches m=5,6 to n=24.
+
 ## E39 — The proof road, step 1: run E37's DP in EXACT RATIONALS → b(m) as exact fractions AND the m-shelf FEEDBACK operator's SPECTRUM. The subdominant eigenvalues are {i/m}(×3) ∪ {(2i−1)/2m}(×1); spectral gap 1/m; b(2)=−7/144, b(3)=−269/3600, b(4)=−63449/705600
 
 **Date:** 2026-07-20 · **Question (the PROOF ROAD toward Clay 2025 Conjecture 3 —

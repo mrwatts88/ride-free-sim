@@ -6,9 +6,10 @@ SPORTS BETTING). This is the resume-here document: current state, key numbers,
 and the precisely-specified next step. Doc map at the bottom.
 
 > **▶ ACTIVE SIDE-THREAD (2026-07-20) — the shelf-guessing theorem, banked as
-> experiments E35–E39 (E39 = the PROOF ROAD, step 1: the m-shelf feedback
-> operator's SPECTRUM — see the E39 block just below): `docs/GUESSING_THEOREM.md`
-> (resume doc), `docs/EXPERIMENTS.md` E35–E39, `tests/test_guessing_theorem.py`.** A
+> experiments E35–E40 (E40 = the PROOF ROAD, Phase 1 DONE: the eigenvalue law
+> confirmed at m=5/6 + a CLOSED FORM for the intercept b(m)=3/2−1/(4m)−H₂ₘ⁽²⁾ — see
+> the E40 block just below): `docs/GUESSING_THEOREM.md` (resume doc),
+> `docs/EXPERIMENTS.md` E35–E40, `tests/test_guessing_theorem.py`.** A
 > paradigm-2 Track-A *academic* spin-off (a math result, NOT a gambling edge —
 > it does NOT reopen Track A for money; it's the greenlit DFH-verification
 > write-up, upgraded). Opened when Matt asked for breakthrough ideas beyond
@@ -85,30 +86,48 @@ and the precisely-specified next step. Doc map at the bottom.
 > object from Clay's / our complete-feedback operator (value 3n/4). Do not chase it
 > for Conjecture 3.** Probe `data/gt_rational_dp.py`; 3 pins; write-up EXPERIMENTS
 > E39; 336 tests green.
-> **▶ NEXT — the recommended plan (full version + framing in GUESSING_THEOREM.md's
-> top NEXT-SESSION block + §2; Matt endorsed it 2026-07-20).** WHY the spectrum is
-> the goal: proving `{1}∪{i/m}(×3)∪{(2i−1)/2m}` for ALL m PROVES Conjecture 3's
-> VALUE half (the hard part Clay flagged open) — sharper than he stated (exact slope
-> c(m)=H₂ₘ/2m + exact intercept b(m) + fade rate). The STRATEGY half (G optimal) is
-> separate and already in hand (our DP computes optimal play directly; G==optimal to
-> m=40). **PHASE 1 (cheap, do first): (1a)** confirm the eigenvalue law at m=5,6 —
-> it's exact only at m≤3, OOS at m=4; **CRITICAL CHECKPOINT — if m=5 breaks the
-> pattern, stop and rethink.** **(1b)** closed-form b(m): b(2,3,4) exact but 3 points
-> thin (odd denom part ((2m−1)!!)²; numerators −7/−269/−63449 opaque) — get b(5),b(6)
-> (cheap once the spectrum is assumed) + hunt a harmonic form. **PHASE 2 (the proof,
-> hard math):** find the operator's EIGENVECTORS (eigenvalues known, eigenvectors the
-> missing key), guess-and-verify for general m ⟹ the value half. Adjacent: standalone
-> write-up (greenlit, now with a spectral result); Clay/USC hook (concrete artifact). PyPy at `/Users/mattwatts/.local/bin/pypy3.11`
-> (`PYTHONPATH=src`); memory `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9
-> value-test + 24.2e9 (A) + 24.1e9 (B) + 24.06e9 (E37) + 24.07e9 (E38) consumed; the
-> DPs are seedless (E39 added no seeds).
-> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE, RAISED by E39 —
-> the first genuine step ONTO the proof road: attack (i) "the operator's
-> eigenstructure per fixed m" is DONE for m≤4 as an exact eigenvalue conjecture with
-> a clean m-pattern, so we now know WHAT to prove. Still not a proof (the all-m
-> spectrum theorem + closed-form b(m) remain), but a concrete spectral artifact now
-> exists; Clay/USC the realistic route (HOPE VERDICT atop GUESSING_THEOREM.md; update
-> one every session, Matt's ask).**
+> **▶ E40 DONE (2026-07-20) — the PROOF ROAD, Phase 1 COMPLETE: eigenvalue law
+> confirmed at m=5/6 + a CLOSED FORM for the intercept.** **(1a) The critical
+> checkpoint PASSED:** the E39 eigenvalue law `{i/m}(×3)∪{(2i−1)/2m}(×1)`, gap 1/m,
+> order-(4m−3) recurrence, is CONFIRMED at m=5 (order-17 recurrence OOS-predicts all
+> 21 exact rationals across every window, ZERO mismatches) and m=6 — so it holds at
+> m=2,3 (rigorous ℚ) + m=4,5,6 (OOS). It did NOT break. **(1b) The CLOSED FORM
+> (resolves E39's OPEN item):** **b(m) = 3/2 − 1/(4m) − H₂ₘ⁽²⁾** (H₂ₘ⁽²⁾=Σ_{k≤2m}1/k²),
+> the UNIQUE ≤3-feature exact fit of all six exact intercepts b(1..6) = 0, −7/144,
+> −269/3600, −63449/705600, −126713/1270080, −16388909/153679680; finite limit
+> **3/2 − π²/6 ≈ −0.14493**. So the **full value law is now explicit:**
+> **E_opt(n,m) = (H₂ₘ/2m)·n + [3/2 − 1/(4m) − H₂ₘ⁽²⁾] + O((1−1/m)ⁿ)** — Clay's leading
+> term PLUS the exact intercept + fade rate. Structural key: slope = avg of 1/k over
+> the 2m slots, intercept from Σ1/k² over the SAME slots (first vs second harmonic) —
+> the Phase-2 eigenvector's signature. Probes `data/gt_bm_closed_form.py` +
+> `data/gt_rational_dp.py` (m=5,6 enabled); write-up EXPERIMENTS E40; 2 fast pins
+> +1 slow; **338 tests green**. (E39's "denom odd part = ((2m−1)!!)²" was a small-m
+> coincidence — breaks at m=5; the closed form supersedes it.)
+> **▶ NEXT — PHASE 2, now the active step (the actual proof; hard math, not a script;
+> full framing in GUESSING_THEOREM.md's top NEXT-SESSION block + §2).** Prove the
+> eigenvalue formula `{1}∪{i/m}(×3)∪{(2i−1)/2m}` for ALL m ⟹ Conjecture 3's VALUE half
+> (the hard part Clay flagged open). Route: find the operator's unit EIGENVECTOR
+> (eigenvalues known; the closed-form b(m) IS its projection, so look for entries built
+> from harmonic partial sums of the slot geometry), guess-and-verify against E37's
+> explicit small-m operator. The STRATEGY half (G optimal) is separate and already in
+> hand (G==optimal to m=40). Optional cheap de-risk: push the eigenvalue-law
+> confirmation to m=7 (confidence, not a gate — m=5,6 already passed). Adjacent:
+> standalone write-up (greenlit, now with the spectrum + closed-form value law);
+> Clay/USC hook (ajclay@usc.edu — a strong concrete artifact). PyPy at
+> `/Users/mattwatts/.local/bin/pypy3.11` (`PYTHONPATH=src`); memory
+> `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9 value-test + 24.2e9 (A) + 24.1e9
+> (B) + 24.06e9 (E37) + 24.07e9 (E38) consumed; the DPs are seedless (E39, E40 added
+> no seeds).
+> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE, RAISED AGAIN by E40 —
+> Phase 1 closed bigger than expected.** The eigenvalue law is no two-point accident
+> (holds at m≤6), AND the intercept has a clean closed form — so the target is now
+> maximally concrete: a clean eigenvalue formula AND a clean eigenvector-projection
+> formula (the slope/intercept = first/second harmonic parallel), both verified at
+> m≤6, turning Phase 2 into guess-and-verify a harmonic eigenvector ansatz. Still not a
+> proof (the all-m spectrum theorem + its eigenvectors remain hard math), but the
+> Clay/USC route now carries a genuinely strong artifact — the explicit operator + its
+> spectrum + a closed-form value law that sharpens the conjecture itself (HOPE VERDICT
+> atop GUESSING_THEOREM.md; update one every session, Matt's ask).**
 
 > **▶ TRACK A (paradigm-2 shuffle forensics) IS CLOSED — basically DEAD for a
 > human, renewable edge (Matt's call, 2026-07-20).** The physics was real (E26

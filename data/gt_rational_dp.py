@@ -12,9 +12,11 @@ delta(n,m) = E_opt(n,m) - c(m)*n. Two results the float DP could not reach:
      fixed linear recurrence over Q — found here by Berlekamp-Massey and VERIFIED
      on held-out terms), so its limit b(m) = lim delta(n) is extracted exactly via
      the generating function. Results: b(2) = -7/144, b(3) = -269/3600,
-     b(4) = -63449/705600. The o(1) is genuinely NON-ZERO at every finite n (for
-     m=2 it even overshoots and returns), so the law is affine + a decaying
-     correction, not "exactly affine" — a correction to E37's language.
+     b(4) = -63449/705600, b(5) = -126713/1270080, b(6) = -16388909/153679680, all
+     matching the E40 CLOSED FORM b(m) = 3/2 - 1/(4m) - H_{2m}^{(2)} (limit
+     3/2 - pi^2/6). The o(1) is genuinely NON-ZERO at every finite n (for m=2 it
+     even overshoots and returns), so the law is affine + a decaying correction,
+     not "exactly affine" — a correction to E37's language.
 
   2. The OPERATOR SPECTRUM. The recurrence's characteristic polynomial factors
      EXACTLY over Q as
@@ -46,6 +48,17 @@ from ridefree.guessing_theorem import exact_e, exact_e_dp_rational
 def clay_slope(m: int) -> Fraction:
     """Clay's asymptotic per-card rate c(m) = H_{2m} / (2m) (exact at m=1: 3/4)."""
     return sum(Fraction(1, k) for k in range(1, 2 * m + 1)) / (2 * m)
+
+
+def bm_closed_form(m: int) -> Fraction:
+    """The value-law intercept in CLOSED FORM (E40): b(m) = 3/2 - 1/(4m) - H_{2m}^{(2)},
+    where H_{2m}^{(2)} = sum_{k=1}^{2m} 1/k^2. Reproduces the exact b(1..6) the DP
+    extracts below (b(1)=0, b(2)=-7/144, ..., b(6)=-16388909/153679680) and has the
+    finite limit 3/2 - pi^2/6 ~ -0.14493. The slope c(m) is the average of 1/k over
+    the 2m slots (first-order harmonic); b(m) is built from sum 1/k^2 over the same
+    slots (second-order) — the parallel that points at the Phase-2 eigenvector."""
+    h2 = sum(Fraction(1, k * k) for k in range(1, 2 * m + 1))
+    return Fraction(3, 2) - Fraction(1, 4 * m) - h2
 
 
 # --- exact C-finite machinery over Q (the analysis layer) --------------------
@@ -189,13 +202,15 @@ def analyze(m: int, n_lo: int, n_hi: int, independent: bool) -> None:
 
     hyp = charpoly_hypothesis(m)
     order = len(hyp) - 1
-    if len(deltas) < order + 3:
-        # Guard: the order-(4m-3) recurrence needs > order seed values PLUS a few
-        # to validate out-of-sample; too few silently gives a vacuous "predicts 0
-        # OOS: True" and a wrong b(m). Raise n_hi (PyPy) — e.g. m=5 wants n>=24.
+    if len(deltas) < order + 2:
+        # Guard: the order-(4m-3) recurrence needs order seed values for gf_limit
+        # PLUS >=2 more to validate out-of-sample; too few silently gives a vacuous
+        # "predicts 0 OOS: True" and a wrong b(m). The recurrence holds from n=2 (no
+        # transient — verified at m=4,5), so n_lo=2 minimizes the max n. Raise n_hi
+        # (PyPy) — e.g. m=5 wants n_hi>=20 (n_lo=2), m=6 wants n_hi>=24.
         print(f"   ⚠ INSUFFICIENT n: the order-{order} (=4m-3) recurrence needs "
-              f"> {order+2} exact δ values to validate + extract b (have "
-              f"{len(deltas)}). Raise n_hi under PyPy. Skipping.")
+              f">= {order+2} exact δ values to validate + extract b (have "
+              f"{len(deltas)}). Raise n_hi / lower n_lo under PyPy. Skipping.")
         return
     if independent:
         # Recover the recurrence from the data alone (hold out the last 4).
@@ -215,7 +230,10 @@ def analyze(m: int, n_lo: int, n_hi: int, independent: bool) -> None:
               f"{len(deltas)-order} out-of-sample delta(n) exactly: {ok}")
 
     b = gf_limit(deltas, rec)
+    bcf = bm_closed_form(m)
     print(f"   >>> b({m}) = {b} = {float(b):.15f}")
+    print(f"       closed form 3/2 - 1/(4m) - H_2m^(2) = {bcf}  "
+          f"MATCH = {b == bcf}")
     eig = spectrum(m)
     gap = 1 - max(r for r, _ in eig)
     print(f"   subdominant spectrum: "
@@ -232,10 +250,11 @@ def main():
     print(f"m_list={m_list}\n")
     gate_exact()
     # m=2 recovers the spectrum from data (independent); m>=3 validates it OOS
-    # (independent BM would need ~2(4m-3) points -> heavier n; PyPy to push).
-    # n_hi must exceed the order 4m-3 for the recurrence check (see the guard in
-    # analyze); m=5,6 are heavy (~n^{10}, n^{12} states) — PyPy, and expect minutes.
-    defaults = {2: (6, 22), 3: (6, 18), 4: (6, 20), 5: (6, 24), 6: (6, 28)}
+    # (independent BM would need ~2(4m-3) points -> heavier n; PyPy to push). The
+    # recurrence holds from n=2, so n_lo=2 for m>=4 keeps the max n (hence cost)
+    # down. m=5,6 are heavy (~n^{10}, n^{12} states, tiny leading constant) — PyPy,
+    # and expect several minutes (m=6 to n=24 ~ 30 min, ~13e6 states, ~10 GB).
+    defaults = {2: (6, 22), 3: (6, 18), 4: (2, 22), 5: (2, 24), 6: (2, 24)}
     for m in m_list:
         if m == 1:
             continue
@@ -243,10 +262,14 @@ def main():
         hi = n_hi if n_hi is not None else hi_def
         analyze(m, lo, hi, independent=(m == 2))
     print("\n== SUMMARY ==")
-    print("   E_opt(n,m) = c(m)*n + b(m) + o(1),  o(1) = O((1-1/m)^n)  (NON-zero)")
-    print("   b(2)=-7/144  b(3)=-269/3600  b(4)=-63449/705600   (exact)")
+    print("   E_opt(n,m) = c(m)*n + b(m) + O((1-1/m)^n)   (the o(1) is NON-zero)")
+    print("   c(m) = H_2m/2m  (avg of 1/k over the 2m slots)")
+    print("   b(m) = 3/2 - 1/(4m) - H_2m^(2)   (E40 CLOSED FORM; H_2m^(2)=sum 1/k^2)")
+    print("          exact at m=1..6:  0, -7/144, -269/3600, -63449/705600,")
+    print("          -126713/1270080, -16388909/153679680;  limit 3/2 - pi^2/6")
     print("   feedback operator spectrum: 1;  {i/m}_1^{m-1} (mult 3);  "
           "{(2i-1)/2m}_1^{m-1} (mult 1);  gap 1/m")
+    print("   confirmed: spectrum + b(m) exact at m=2,3 (rigorous Q), OOS at m=4,5,6")
 
 
 if __name__ == "__main__":
