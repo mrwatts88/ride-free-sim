@@ -2,6 +2,86 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E33 — M12b Gate-B: does the shelf-shuffle order channel convert to real BLACKJACK money at INSURANCE? YES — the first paradigm-2 order edge to become game currency (baccarat couldn't); the observer captures ~7× the perfect counter's insurance, via hole-card DISCRIMINATION composition is blind to
+
+**Date:** 2026-07-19 · **Question:** the STATUS-specified next step. Baccarat
+PASSED Gate A (order survives the weak shelf shuffle — big value channel, E27:
++5.47 u/deck) but FAILED Gate B (a flat no-decision bet doesn't monetize it —
+E30/E31). Blackjack is the opposite on Gate B: **insurance is a direct bet on
+ONE card** (the dealer's hole), the cleanest possible conversion of a
+next-card posterior. Point the E27–E29 posterior core at it and measure the
+order-observer's insurance edge over a PERFECT composition counter.
+
+**Machinery (two-layer rule intact — the posterior core never imports a game):**
+new thin adapter `src/ridefree/bj_order.py` over (`AssumedDensityShelfPosterior`,
+the validated `engine.play_round`). Far thinner than the coup adapter: insurance
+is a single MARGINAL card, so the observer's price is one `next_value_probs()`
+query summed over the value-10 classes — **no Monte Carlo, no winner's-curse
+split**. Rounds resolve through the real engine (heads-up basic strategy) to
+advance the shoe by exactly the cards consumed; at every ace-up round the hole
+card is priced BEFORE its reveal. The perfect counter reproduces the validated
+`CompositionPlayer` rule (`tens·(1+pays) > cards_left`, = P(ten) > 1/3). Because
+the `mix` floor blends the OUTPUT linearly toward composition,
+`P_obs(ten|mix) = (1−mix)·P_model + mix·P_counter`, so the full contamination
+sweep and a calibration-based fit/certify split are FREE post-hoc arithmetic
+over two recorded probabilities per spot (the E31 bank-raw pattern). 350 tests
+green (6 new: single-deck exactness `surprises==0`, two-pass channel-closure,
+one-pass open-and-calibrated, mix=1→counter, exact pricing, multi-deck smoke).
+
+**Findings (`data/e33_{sd,6d}_s*.json`, pooled by `e33_verdict.py`):**
+
+| config | spots | observer real | counter real | excess/shoe (u) | z (OOS) | AUC obs/ctr |
+|---|---|---|---|---|---|---|
+| **single-deck EXACT** (18k shoes) | 9,480 | **+732** | +271 | +0.026 | **+3.79** | — |
+| **6-deck real game** (3k shoes) | 9,793 | **+561** | +72 | **+0.160** | **+4.45** | **0.592 / 0.527** |
+
+1. **GATE B PASSES — order information converts to real insurance money.** The
+   order-observer earns **2.7× (single-deck) to 7.8× (6-deck)** the perfect
+   composition counter's insurance profit. Pooled excess z **+6.15 (sd) / +5.83
+   (6d)**; the honest fit-mix-then-certify-on-fresh-shards split (E29 pattern)
+   holds it at z **+3.79 / +4.45** out-of-sample. This is the FIRST paradigm-2
+   order channel to become game currency — exactly where baccarat's flat bet
+   came up empty.
+2. **The mechanism is DISCRIMINATION, not composition richness.** The hole
+   card's identity is an ORDER property: composition only knows the average
+   ten-density, so a perfect counter barely ranks the specific hole above chance
+   (AUC **0.527**, model_p gap on ten-vs-non-ten holes +0.003). The order model
+   ranks it well (AUC **0.592**, gap +0.029) — so it takes 3.6× more insurance
+   spots than the counter AND its take-set is ten-richer (realized 0.385 vs the
+   counter's 0.357, base 0.311), both above the 1/3 breakeven. It captures
+   essentially ALL the insurance value the counter leaves on the table.
+3. **Money ≠ calibration — the honest 6-deck nuance.** At 6 copies the
+   assumed-density filter's probability MAGNITUDES are overconfident (bits/spot
+   **−0.108**: worse log-loss than composition; predicted 0.404 vs realized
+   0.385 at mix 0), the known copy-ambiguity cost (E28/E29). But insurance is a
+   THRESHOLD decision, robust to magnitude — good DISCRIMINATION earns the money
+   regardless. The `mix` floor restores magnitude calibration (mix 0.4: pred
+   0.376 vs real 0.388) at a small cost to volume, and the certified OOS edge
+   survives. The single-deck EXACT filter (no approximation) confirms the
+   channel with POSITIVE bits (+0.016) and clean calibration (pred 0.394 vs real
+   0.390) — the discrimination is real, not an artifact of the approximation.
+4. **Per-spot the edge is ~constant across deck count** (sd +0.048, 6d +0.049
+   stake-u/insurance-spot): copy dilution (E28) is offset by the fixed 10-shelf
+   mixing a bigger stack worse (E29's n^1.5); 6-deck just has ~6× more spots per
+   shoe. Two 10-shelf passes close it to zero (gated), as at value level (E27).
+
+**Dollar honesty (the Gate-B verdict, measured not remembered):** at 6-deck,
+$15 main / $7.50 insurance, ~2.3 shoes/h (100 r/h), the order-observer's
+insurance is **≈ +$2.9/h vs a perfect counter's ≈ +$0.4/h — ~+$2.5/h of pure
+order edge.** Real but SMALL, because insurance is one half-stake bet offered
+~1/13 rounds. **Two premises cap it, on record:** (i) full knowledge of shoe
+k's ORDER — literally true only for a fully-observable game or a superhuman
+memory (312 cards for 6-deck is not human-memorable; single-deck's 52 is the
+edge of feasible) — so E33 is the information-theoretic conversion CEILING, not
+yet a human-playable edge (the E27 caveat carries); (ii) perfect hole-card
+observation (unrevealed on bust rounds live) — the degradation knob for later.
+**Direction this sets:** the mechanism is proven, so the next converter is
+playing DEVIATIONS — TOLL-FREE order-informed play decisions, offered every
+round, not 1/13 — which should convert far more of the +53 u/shoe channel than
+a single rare side bet can. Artifacts: `src/ridefree/bj_order.py`,
+`data/e33_insurance.py` / `e33_launch.py` / `e33_verdict.py`. Seeds: 23.51e9
+(single-deck), 23.52e9 (six-deck), shard-strided. **Next unused block: 23.6e9+.**
+
 ## E32 — are the baccarat MAIN bets countable? YES at deep penetration (I was wrong), EZ banker most of all (Matt's push inkling confirmed) — but the captured edge is ~160× below the side bets, so practically nil
 
 **Date:** 2026-07-19 · **Question:** Matt's counter to "the mains are dead

@@ -1,19 +1,55 @@
 # STATUS — read this first in a new session
 
-Updated 2026-07-19 (late session — M12b rung 3, incl. rung 3c + E32
-baccarat closure). This is the resume-here document: current state, key
-numbers, and the precisely-specified next step. Doc map at the bottom.
+Updated 2026-07-19 (late session — M12b rung 3/3c, E32 baccarat closure,
+and E33: the BLACKJACK INSURANCE adapter — Gate B PASSES). This is the
+resume-here document: current state, key numbers, and the precisely-specified
+next step. Doc map at the bottom.
 
-> **▶ NEXT STEP (start here): the BLACKJACK SHUFFLE ATTACK — the Gate-B
-> adapter.** Point the existing shelf-shuffle posterior core (E27–E29) at
-> blackjack, the best converter of order information we have (insurance =
-> a direct single-card bet; playing deviations = toll-free). START WITH
-> INSURANCE: measure the order-observer's insurance edge vs a perfect
-> composition counter at the shelf-shuffle strength we already have; gate
-> it; then decisions. Two-layer rule holds (thin adapter over the posterior
-> core, which NEVER imports a game). Rationale + the two-gate (survival /
-> conversion) frame are in the "DIRECTION CHOSEN" block below. Next unused
-> seed block: 23.5e9+.
+> **▶ NEXT STEP (start here): the BLACKJACK PLAYING-DEVIATIONS arm — the
+> big Gate-B converter.** E33 (below) proved Gate B PASSES: order info
+> converts to real blackjack money at INSURANCE (observer captures ~7× a
+> perfect counter, z +4.45 OOS at 6-deck) — the first paradigm-2 order edge
+> to become game currency. But insurance is a small-dollar bet (~+$2.9/h,
+> one half-stake wager 1/13 rounds). The mechanism is DISCRIMINATION of the
+> next card, which every playing decision uses TOLL-FREE, every round — so
+> build the deviations adapter over the SAME `bj_order.py` layer: at each
+> decision, price hit/stand/double/split under the ordered next-card
+> posterior vs the composition-optimal play, measure the extra EV over a
+> perfect composition counter, E17-gate it. Two-layer rule holds. **Carry
+> E33's two caveats:** the numbers are the information-theoretic CEILING
+> (full knowledge of shoe k's 312-card order — not human-memorable at
+> 6-deck; single-deck's 52 is the edge of feasible), and assume perfect
+> hole/card observation (the degradation knob). Next unused seed: 23.6e9+.**
+
+**M12b GATE-B (E33) DONE (2026-07-19, same session — the BLACKJACK INSURANCE
+adapter): Gate B PASSES — paradigm-2 order information converts to REAL
+blackjack money, the thing baccarat's flat bet could not do (E30/E31).** New
+thin adapter `src/ridefree/bj_order.py` over (`AssumedDensityShelfPosterior`,
+validated `engine.play_round`) — far thinner than the coup adapter because
+insurance is a single MARGINAL card: the observer's price is one
+`next_value_probs()` query summed over the value-10 classes, **no Monte Carlo**.
+The `mix` floor blends the output linearly toward composition, so
+`P_obs(ten|mix) = (1−mix)·P_model + mix·P_counter` and the whole contamination
+sweep + fit/certify split is free post-hoc arithmetic (E31 bank-raw pattern).
+Results: **the order-observer earns 2.7× (single-deck) to 7.8× (6-deck real
+game) a PERFECT composition counter's insurance profit** (observer +732/+561 vs
+counter +271/+72 over 18k/3k shoes); pooled excess z **+6.15 / +5.83**, honest
+fit-mix-then-certify-on-fresh-shards **z +3.79 / +4.45 OOS**. **The mechanism is
+DISCRIMINATION, not composition richness:** the hole card's identity is an ORDER
+property — a perfect counter barely ranks it above chance (AUC **0.527**) while
+the order model ranks it well (AUC **0.592**), so it takes 3.6× more +EV spots
+and its take-set is ten-richer (0.385 vs the counter's 0.357, base 0.311, all
+above the 1/3 breakeven). **Honest 6-deck nuance (money ≠ calibration):** at 6
+copies the filter's probability MAGNITUDES are overconfident (bits/spot −0.108,
+worse log-loss than composition) — the E28/E29 copy cost — but insurance is a
+THRESHOLD decision robust to magnitude, so discrimination earns the money and
+`mix`=0.4 restores calibration (pred 0.376 vs real 0.388); the single-deck EXACT
+filter confirms the channel with POSITIVE bits (+0.016) and clean calibration.
+**Dollar verdict: ≈ +$2.9/h insurance from order vs a counter's +$0.4/h
+(~+$2.5/h pure order edge) at 6-deck $15/100 r/h — real but small, hence the
+deviations arm next.** Both premises capping it are on record (memorability
+ceiling; hole observation). 350 tests green (6 new). Seeds 23.51e9 (sd) / 23.52e9
+(6d). Full entry: EXPERIMENTS E33.
 
 **M12b RUNG 3c DONE (2026-07-19, same session — E31): the D7/P8 lead is
 REFUTED by the cheapest possible experiment; the over-shrink is real but
@@ -183,7 +219,9 @@ shuffle article written after the blackjack adapter answers the money question.
 Seeds: E29 consumed 23.0e9 (test pins 23000000001-07) + 23.1e9 (battery);
 E30 consumed 23.2e9 (23_200_001_000..006_000); E31 consumed 23.3e9
 (mix-/shard-strided + mechanism 23_310_000_001–04); E32 consumed 23.4e9
-(mains search); **next unused block 23.5e9+**.
+(mains search); E33 consumed 23.51e9 (single-deck insurance shards
+23_510_001_000..006_000) + 23.52e9 (six-deck shards 23_520_001_000..006_000)
++ 23.5e9 test pins (23_500_000_101..501); **next unused block 23.6e9+**.
 
 **PARADIGM 2 OPENED (2026-07-19) — read `docs/PARADIGM2.md` first.** After
 M11 closed, Matt asked whether there's "a different side we're not seeing" —
