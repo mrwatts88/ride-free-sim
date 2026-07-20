@@ -40,6 +40,7 @@ SLOW_TESTS = {
     "test_multideck_matches_brute_force_within_mc",      # test_posterior.py
     "test_proposition_realizes_predicted_edge",          # test_posterior.py
     "test_adf_proposition_realizes_predicted_edge",      # test_posterior.py
+    "test_exact_e_dp_deck_scale_m2_matches_mc",          # test_guessing_theorem.py (E37)
     "test_coup_experiment_smoke_and_gate",               # test_coup.py
     "test_shelf_guessing_reproduces_dfh_table2",         # test_shuffle.py
     "test_two_pass_guessing_near_chance",                # test_shuffle.py

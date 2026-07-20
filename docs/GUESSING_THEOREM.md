@@ -2,6 +2,45 @@
 
 > ## ▶ NEXT SESSION — START HERE (updated 2026-07-20)
 >
+> **CURRENT: E35 + follow-ups A/B + E36 + E37 all DONE; 331 tests green** (routine
+> run; the heavy MC/DP gates are `slow`-marked and skipped by default). **E37
+> delivered E36's build (a):** `guessing_theorem.exact_e_dp` — Clay's m-shelf
+> transition operator made explicit and runnable, computing EXACT E_opt(n,m) past
+> the n! wall (first exact deck-scale values: E_opt(52,1)=39 exactly,
+> E_opt(52,2)=27.0347). It also SHARPENED E36's cost claim: the operator is
+> **Θ(n^{2m})** — polynomial in n for each fixed m (m=1 exactly n²−n+1), exponential
+> only in m — because the DFH law caps valleys at m−1; and it PINNED the value
+> correction **b(m) = 0, −0.0486, −0.0747 at m=1,2,3** (Follow-up A had only MC
+> bounds). **▶ DECIDED (Matt, 2026-07-20): do lead (1) — build (b) — FIRST; lead
+> (2) — the proof road — is the deeper parallel thread. BOTH fully specified in §1.**
+> **(1) THE NEXT BUILD — build (b), the O(n³) approximate DP** over σ̃ = (t, dir,
+> rank, #descents): the LARGE-m complement to E37's exact DP (exact is Θ(n^{2m}),
+> dead for m≥5, yet m=5,10 is the real-machine regime). Assumed-density/moment
+> closure (E29 doctrine) that collapses the run *composition* to its *count*;
+> deliverable = fast E_opt(52, m=5,10) with a MEASURED error bar, gated against
+> E37's exact grid + E35 MC. New `guessing_theorem.approx_e_dp` + `data/gt_approx_dp.py`,
+> bank as **E38** (§1 has the full plan: state, method, gates, files, seed 24.07e9).
+> **(2) THE PROOF ROAD (parallel, hard math not a script)** toward Clay Conjecture 3
+> (general m): the operator is now explicit and small for small m, so (i) build it
+> as a matrix and compute its SPECTRUM (`data/gt_spectrum.py`; the Tripathi m=1→
+> general route, arXiv:2602.07920), and/or (ii) prove the exactly-affine value law
+> E37 found (E=c(m)·n+b(m), o(1)<1e-5 by n≈20) — which needs the exact-RATIONAL DP
+> (a rational `ShelfPosterior`), also yielding b(m) as exact fractions. §1 item 2.
+>
+> **▶ HOPE VERDICT — end EVERY session with an updated one (Matt's standing ask,
+> 2026-07-20): is hope ALIVE for the big proof** (proving Clay's Conjecture 3 for
+> general m ≥ 2)? **ALIVE — and E37 genuinely advanced the equipment** (E36 only
+> clarified; E37 *built*). We now hold Clay's open object not just runnable but
+> **explicit, sized (Θ(n^{2m}), with the v≤m−1 reason), and PROVEN-exact**, and —
+> the new leverage — its OUTPUT is **exactly affine to <1e-5** past a short
+> transient, E_opt(n,m) = c(m)·n + b(m) + (vanishing), with b(m) now pinned for
+> small m. That converts the proof target from an abstract matrix into two concrete
+> hard-math questions you can now stare at directly: (i) find the operator's
+> eigenstructure for each fixed m (computable now, the m=1→general-m road Tripathi
+> walked), or (ii) prove the affine law + a closed form for b(m). Still hard-math
+> hope, not one-more-script — but materially better-founded than before E37, and
+> the natural Clay/USC collaboration hook is now a concrete artifact, not a plan.
+>
 > **TASK 1 IS DONE — the result is now FORMALIZED and banked as experiment E35.**
 > The exact grid-wide DFH-`G` optimality (n≤9, m≤10) + the deck-scale value-test
 > are written up in `docs/EXPERIMENTS.md` (E35); the helpers are lifted to a
@@ -20,21 +59,45 @@
 > to m=40 at deck scale (the strategy half holds beyond Clay's hedge). Both banked
 > in EXPERIMENTS E35.
 >
-> **▶ THE NEXT CHAPTER (start here) — break the n! wall: a polynomial exact
-> algorithm / the m-shelf transition matrix (Clay's open object).** The exact
-> method is O(n·n!) so exact values die at n≈9; the prize is exact E_opt(n,m) at
-> deck scale in polynomial time — which is the SAME object (Clay's open m-shelf
-> transition matrix) that would PROVE Conjecture 3 for general m, not just evidence
-> it. Full framing + the cheap first probe are in "Open questions / next steps" §1
-> below. Also open: the standalone write-up (greenlit); the Clay (USC)
-> collaboration hook.
+> **▶ E36 DONE (2026-07-20) — the n!-wall scoping probe answered: NO polynomial
+> exact algorithm exists via the guessing-state route for m≥2, and we know exactly
+> why.** The optimal per-step hit h(prefix) is EXACTLY a function of
+> (direction, rank-of-last, ascending-**run-length composition** of the prefix) —
+> verified Δhit=0 across n≤8, m∈{2,3,5} — but of NO polynomial coarsening: even the
+> exponential ceiling (remaining SET, last, direction) leaves a 0.5 hit gap,
+> because a descent in the prefix can only cross a shelf-lane boundary, so the run
+> composition (which set+last discards) is load-bearing. The run composition is
+> ~2ⁿ states, so this IS why Clay's m-shelf transition matrix is open: its
+> transition operator lives on run-compositions, an exponential state space. At
+> m=1 the composition collapses and (dir, rank) [O(n²)] is sufficient —
+> reproducing Clay's tractable 3n/4. Order-dependence is a weak-mixing effect (the
+> set-level gap falls 0.61→0.33→0.04 at m=2/3/5, n=7). Banked: EXPERIMENTS E36,
+> shared core `guessing_theorem.walk_prefixes`/`run_lengths`, probe
+> `data/gt_sufficiency.py`, 6 pins (328 green).
+>
+> **▶ THE NEXT CHAPTER — build (a) is DONE (E37); (b) + the proof road remain**
+> (framing + specs in "Open questions / next steps" §1 below):
+> **(a) the EXACT run-composition DP — DONE, E37** (`guessing_theorem.exact_e_dp`,
+> probe `data/gt_exact_dp.py`): Clay's m-shelf operator explicit and runnable,
+> exact E_opt to deck scale for small m, cost measured Θ(n^{2m}) (NOT 2ⁿ — poly in
+> n per fixed m), b(m) pinned. **(b) the O(n³) APPROXIMATE DP** over
+> (dir, rank, #descents) — STILL OPEN, and now the natural next build: it gives fast
+> deck-scale values for the LARGE m where (a)'s Θ(n^{2m}) is infeasible (m≥5),
+> nearly exact (per-step R²≥0.995, →1 as m grows), bias measurable vs the exact DP
+> grid; exact in the strong-mixing limit. **The proof road** (Matt's big-proof
+> interest): the operator is now explicit and small for small m — compute its
+> spectrum (Tripathi's m=1 route) and/or prove the exactly-affine value law E37
+> found. Adjacent, still queued: the polynomial NO-feedback exact number
+> (position-matrix column-maxima, RESEARCH_IDEAS 1C); a rational posterior →
+> closed-form b(m); the standalone write-up (greenlit); the Clay (USC) hook (now a
+> concrete artifact).
 >
 > **Pre-flight.** PyPy is the accelerator (~4×), NOT on the default PATH; the
 > pure-stdlib engine imports fine. Template:
 > `PYTHONPATH=/Users/mattwatts/code/ride-free-sim/src /Users/mattwatts/.local/bin/pypy3.11 -u data/<script>.py <args>`
 > Exact probes run under `uv run python data/<script>.py`. Seeds: 24.0e9
 > (value-test, done); 24.1e9 (Follow-up B); 24.2e9 (Follow-up A); 24.035e9 (E35
-> test pins).
+> test pins); 24.06e9 (E37 MC cross-check).
 >
 > (Optional, a larger prose job: fold E35 into the greenlit DFH-verification
 > write-up as "exact verification of Conjecture 3's strategy half + the value
@@ -235,64 +298,123 @@ A proof still needs the `m`-shelf transition matrix (open).
   **exact verification** of it across a grid (and beyond the hedge), the
   **strategy/value regime split**, and **exact ground truth** for the value
   correction.
-- `n ≤ 9` exact is strong *evidence*, not a proof. A proof of the general-`m`
-  strategy/value needs the **`m`-shelf transition matrix**, which Clay states is
-  open — that is real math, not a computation.
+- Exact values are strong *evidence*, not a proof — even now that E37's DP pushes
+  them to deck scale for small `m` (n=52 at m=1,2; n≈36 at m=3) and pins b(m). A
+  proof of the general-`m` (`m → ∞`) strategy/value still needs the **`m`-shelf
+  transition matrix's structure** — E37 makes that matrix explicit and shows it is
+  Θ(n^{2m}) with an exactly-affine value law, but *analyzing* it (its spectrum, or
+  a proof of the affine law + closed-form b(m)) is real math, not a computation.
 
 ## Open questions / next steps
 
-**1. ▶ THE MAIN NEXT CHAPTER — break the n! wall: a polynomial exact algorithm /
-the m-shelf transition matrix (Clay's open object).** The exact method is O(n·n!)
-(enumerate every permutation), so exact `E_opt(n,m)` dies at n≈9; everything at
-deck scale (n=52) is Monte-Carlo. The prize: exact `E_opt(n,m)` in polynomial time.
-- *Why it's plausible.* Because the gap is 0 (E35 grid + Follow-up B, now confirmed
-  to m=40 at deck scale), `E_opt = E_G`, and by linearity of expectation
-  `E_G(n,m) = Σ_{t=1}^{n} P(G's guess at step t is correct)`. So you do NOT need
-  permutations — only the per-step hit probability of a SIMPLE deterministic rule
-  (G) under the m-shelf output law.
-- *What it really is.* That per-step probability needs the distribution of G's
-  relevant state (last-shown value, current direction, remaining-card structure)
-  as cards are revealed, evolved by the shuffle's transition operator — which IS
-  **Clay's stated open problem, "the transition matrix for an arbitrary number of
-  shelves."** m=1 is solved (Clay's 3n/4 proof; Tripathi's eigenvalues,
-  arXiv:2602.07920); m≥2 is unclaimed. So this is NOT just a coding speedup:
-  cracking it is the same object that would PROVE Conjecture 3's value formula for
-  general m, not merely evidence it.
-- *Cheap first probe (scope before building).* Find the minimal sufficient
-  statistic for `P(G correct at step t | prefix)` under the m-shelf law — candidate
-  `(rank of last-shown card among the remaining, direction, a coarse summary of the
-  gap structure)`. Test EMPIRICALLY at small n (n≤9, where we already have every
-  exact prefix): do prefixes sharing the candidate statistic have identical
-  next-card hit probabilities? If YES → the state is polynomial → build the DP →
-  exact deck-scale values (and likely the proof). If NO → the factorial wall is
-  fundamental for exact values (only bounds/asymptotics remain) — itself a
-  reportable finding that explains WHY general-m is hard.
-- *Adjacent stepping stone, computable NOW.* The NO-feedback multi-shelf reward =
-  Σ of column-maxima of the m-shelf position matrix (RESEARCH_IDEAS.md 1C; Tripathi
-  did m=1). We can produce the exact `m=10, n=52` no-feedback number today — a
-  warm-up that exercises the position matrix without the feedback complication.
-- *Also note.* Our `ShelfPosterior` already computes the general-m output law in
-  polynomial time PER prefix; the ONLY missing piece is aggregating over prefixes
-  without enumerating them — exactly the transition-matrix aggregation.
+**1. Break the n! wall — build (a) DONE (E37); build (b) + the proof road remain.**
+The exact enumeration is O(n·n!) and dies at n≈9. Because the gap is 0 (E35),
+`E_opt = E_G = Σ over prefixes of P·h`, aggregable iff the per-step hit
+`h(prefix) = max_c P(next=c|prefix)` is a function of a small Markov statistic
+`σ(prefix)`. E36 found the minimal sufficient σ = (direction, rank-of-last,
+ascending-run-length composition) and PROVED its transition closed (the whole
+posterior, not just its max, is a function of σ; max Δposterior/state = 0).
 
-**2. Pin `b(m)` precisely (deprioritized, Matt's call).** Follow-up A bounded it
-(small, negative, deepens with m) but did not pin the values; n≥208 at high trials
-would, but it is an expensive (hours) incremental refinement — only worth it for a
-publication-grade closed-form `b(m)`.
+- *(a) The EXACT run-composition DP — DONE (E37), `guessing_theorem.exact_e_dp`.*
+  Memoized DFS over σ (representative posterior per state, deduped) + a forward
+  mass pass: `E_opt(n,m) = Σ_σ P(σ)·h(σ)`, EXACT. **Gates pass** — reproduces the
+  E35 rationals on the whole n≤7×m≤10 grid (worst |Δ| 2e-15) and the deck-scale MC
+  within se. **Reshaped E36's cost claim:** the reachable-state count is measured
+  **Θ(n^{2m})** — polynomial in n for each fixed m (m=1 EXACTLY n²−n+1, m=2 quartic,
+  m=3 sextic; log-log degrees 2.08/4.13/6.09), NOT the flat ~2ⁿ E36 hedged from
+  n≤8. Reason: the DFH law caps output valleys at m−1 (`shelf_class_prob` vanishes
+  for v>m−1). So E36's "~2ⁿ" was the worst case over all m; the operator is
+  tractable in n per fixed m, exponential only in m — the same strategy/value-style
+  split, now at complexity. **Wall broken:** exact E_opt(52,1)=39=3·52/4 and
+  E_opt(52,2)=27.0347 (first exact m≥2 deck-scale values; m=3 exact to n≈36); and
+  the value law is exactly affine past a short transient, pinning **b(m) = 0,
+  −0.0486, −0.0747 at m=1,2,3**. (Full result: EXPERIMENTS E37.) *Still open on this
+  build:* a rational posterior would make the DP exact-rational → a closed-form
+  b(m); and run-composition pruning (drop rare many-descent σ, controlled
+  truncation) would push exact-ish values to deck scale for larger m — but build (b)
+  does the large-m job more principledly.
+- *(b) ▶ **THE NEXT BUILD (DECIDED, Matt 2026-07-20) — do this first.** The O(n³)
+  APPROXIMATE DP (assumed-density closure, the E29 doctrine): the large-m complement
+  to (a), because exact is Θ(n^{2m}) and dies for m≥5, yet m=5,10 are the DFH-real
+  machine regime.* Concrete plan:
+  - **State** σ̃ = (t, direction, rank-of-last, #descents) — the E37 exact state with
+    the run *composition* collapsed to its *count* (E36 showed #descents alone leaks
+    the placement; that leak IS the controlled approximation here). O(n·2·n·n) = O(n⁴)
+    cells, but only O(n³) alive per step → a genuine polynomial DP.
+  - **Method** — propagate the σ̃ *distribution* forward under an assumed-density
+    (moment-closure) transition: at each (t→t+1) the exact posterior would need the
+    full run composition, so approximate the per-σ̃ next-card law by the mass-weighted
+    average over the compositions folded into σ̃ (project onto the σ̃ family, exactly
+    the `AssumedDensityShelfPosterior` pattern). Then Ẽ_opt(n,m) = Σ_σ̃ P(σ̃)·h(σ̃).
+  - **Gates (the honest error bar is the whole point)** — E36 measured the per-step
+    fit already: (dir, rank, #descents) is R² ≥ 0.995, → 1 as m grows, exact ≤ n=5.
+    Gate the AGGREGATE bias against **E37's exact grid** (m=1,2 to n=52; m=3 to n≈36)
+    and the E35 MC. Report Ẽ_opt − E_opt as a table; it must → 0 as m grows (the
+    strong-mixing limit) and stay small where measurable.
+  - **Deliverable** — fast exact-ish E_opt(52, m=5,10) with a MEASURED error bar,
+    the values E35 had only as MC and E37 can't reach. Also feeds the b(m) closed
+    form (item 3) at larger m.
+  - **Files** — `guessing_theorem.approx_e_dp(n, m)` (shared core, two-layer rule)
+    + probe `data/gt_approx_dp.py` (bias table vs the E37 exact grid + E35 MC);
+    regression pins mirroring E37's. Bank as **E38**. Seeds: next free 24.07e9 (MC
+    cross-check only; the DP is seedless).
+- *Adjacent stepping stone, still computable NOW.* The NO-feedback multi-shelf
+  reward = Σ of column-maxima of the m-shelf position matrix (RESEARCH_IDEAS 1C;
+  Tripathi did m=1) — a Poisson-binomial over the slot geometry, genuinely
+  polynomial and exact. Produces the exact `m=10, n=52` no-feedback number and
+  exercises the position matrix without the feedback complication.
 
-**3. The standalone write-up (greenlit).** Fold E35 + Follow-ups A/B into "exact
-verification of Conjecture 3's strategy half (optimal even beyond the hedge, to
-m=40 at deck scale) + the value leading-term + the small negative `b(m)`
-correction + the strategy/value regime split." A self-contained prose job.
+**2. ▶ THE PROOF ROAD — the deeper parallel thread (lead 2) toward Clay's
+Conjecture 3 for general m.** This is the big-proof direction (Matt's standing
+interest); it is hard research math, NOT a script, but E37 turned the target from
+an abstract open matrix into a concrete, explicit, small-for-small-m operator you
+can now stare at. Two attacks, pursue in parallel with build (b):
+- *(i) The spectrum.* E37's DP transition operator is Clay's m-shelf matrix in
+  explicit form. For each fixed m it is Θ(n^{2m}) but small at small n — build it as
+  an actual matrix (states × states) and compute its eigenvalues/eigenvectors.
+  Tripathi (arXiv:2602.07920) confirmed Clay's *single-shelf* eigenvalue conjectures;
+  the road to general m is to find the analogous eigenstructure here. Look for a
+  pattern in the spectrum across m (the eigenvalues that govern the n→∞ slope c(m)
+  and the correction b(m)). A `data/gt_spectrum.py` that assembles the operator and
+  reports its spectrum for m=1,2,3 is the concrete first step.
+- *(ii) Prove the affine value law.* E37 found E_opt(n,m) = c(m)·n + b(m) + o(1)
+  with the o(1) MEASURED below 1e-5 by n≈20 (m=2), the slope EXACTLY c(m) between
+  n=26 and 52. If this is *exactly* affine past some N(m) — not just numerically —
+  that is a clean theorem (a fixed intercept b(m) once the transient clears), and
+  its proof would come straight from the operator's dominant eigenvalue being
+  exactly 1 with a specific eigenvector. Testing exactness needs the exact-RATIONAL
+  DP (a rational `ShelfPosterior` — the per-state hit is a ratio of exact shelf-law
+  quantities); it also yields b(m) as exact fractions to pattern-match (item 3).
+- *The write-up + Clay hook (items 4–5) are the natural outputs of this thread.*
+  Clay (USC, ajclay@usc.edu) explicitly flagged general-m as future work; the
+  explicit operator + the affine law + pinned b(m) is now a concrete artifact to
+  open a collaboration on — much stronger than a cold email.
 
-**4. Collaboration hook.** Clay (USC, ajclay@usc.edu) explicitly flagged the
-general-m case as future work — a natural outreach once §1 or the write-up
-produces something.
+**3. Pin `b(m)` — largely DONE via E37 for small m.** The exact DP pins b(1,2,3) =
+0, −0.0486, −0.0747 (δ flat to <1e-5 past n≈20–36), superseding Follow-up A's MC
+bounds. What remains: a CLOSED FORM b(m) = f(m) — needs either the exact-rational
+DP (rational posterior, above) for exact b(m) fractions to hunt a pattern, or
+larger-m exact points (m≥5 wants build (b) / pruning, since exact is Θ(n^{2m})).
+
+**4. The standalone write-up (greenlit).** Fold E35 + Follow-ups A/B **+ E37** into
+"exact verification of Conjecture 3's strategy half (optimal even beyond the hedge,
+to m=40 at deck scale) + the value leading-term + the pinned `b(m)` correction +
+the strategy/value regime split + the Θ(n^{2m}) complexity of the explicit m-shelf
+operator." A self-contained prose job.
+
+**5. Collaboration hook.** Clay (USC, ajclay@usc.edu) explicitly flagged the
+general-m case as future work — a natural outreach once build (b) / the proof road
+produces something (now a concrete artifact, per item 2).
 
 **DONE this thread:** E35 (banked — `docs/EXPERIMENTS.md`, shared core
 `src/ridefree/guessing_theorem.py`, anchors `tests/test_guessing_theorem.py`);
 Follow-up A (b(m) small-negative); Follow-up B (G-optimality confirmed to m=40,
-the (52,40) lead refuted).
+the (52,40) lead refuted); **E36** (the n!-wall scoping probe — minimal sufficient
+statistic = run-length composition; no poly-exact route uniformly for m≥2; two
+constructive builds specified in §1); **E37** (build (a) — the exact
+run-composition DP `exact_e_dp`: Clay's m-shelf operator explicit and runnable,
+exact E_opt to deck scale for small m, cost measured Θ(n^{2m}) not 2ⁿ, b(1,2,3)
+pinned; probe `data/gt_exact_dp.py`, 4 pins, 331 green).
 
 ## File map (how to reproduce)
 
@@ -303,10 +425,19 @@ Machinery (existing `src/ridefree/`, gated in `tests/`):
   `guessing_experiment`.
 - `posterior.py` — `ShelfPosterior` (exact next-card law), `PosteriorGuesser`
   (`predicted` = the low-variance value estimator).
+- `guessing_theorem.py` — shared core: `total_prob`, `exact_e`/`exact_e_from_perms`
+  (O(n·n!) enumeration), `run_lengths`, `walk_prefixes` (E36), **`exact_e_dp` (E37 —
+  the run-composition DP, Clay's m-shelf operator explicit; Θ(n^{2m}), deck-scale
+  exact for small m)**, `mc_e`.
 
 Probes (`data/`, run `uv run python data/<f>.py [args]`):
 - `gt_exact.py [n_max]` — exact `E_opt(n,m)` grid + the exact DFH-optimality gap
   (currently 0 everywhere) + first-difference slopes + `m`-column fractions.
+- `gt_exact_dp.py [n_deck] [m1,..] [cap_M]` — E37, the run-composition DP: gates
+  (vs enumeration + MC), the Θ(n^{2m}) state-growth law, exact E_opt past the n!
+  wall (deck-scale for small m), and the pinned correction δ(n,m)→b(m). **Run
+  under PyPy** for the heavy columns (m=3 at deck scale is ~n⁶ states):
+  `PYTHONPATH=…/src /Users/mattwatts/.local/bin/pypy3.11 -u data/gt_exact_dp.py 52 1,2,3`
 - `gt_robustness.py` — strict-inequality check (suboptimal strategies `<` opt).
 - `gt_clay_conjecture.py` — exact `E_opt` vs Clay's `(n/2m)H_{2m}`; confirms
   `c(m)=H_{2m}/(2m)`, `m=1` exact, the regime split.
@@ -314,6 +445,11 @@ Probes (`data/`, run `uv run python data/<f>.py [args]`):
   PyPy** (~4× CPython; the sanctioned accelerator, but not on the default
   non-interactive PATH):
   `PYTHONPATH=/Users/mattwatts/code/ride-free-sim/src /Users/mattwatts/.local/bin/pypy3.11 -u data/gt_value_mc.py 3000`
+- `gt_sufficiency.py [n_max] [m1,m2,...]` — E36, the n!-wall sufficiency probe:
+  bins the optimal per-step hit by a ladder of candidate statistics, reports
+  exact-sufficiency (max Δhit) / R² / state-space growth, and prints concrete
+  order-dependence witnesses. Uses the shared core
+  `guessing_theorem.walk_prefixes` / `run_lengths`.
 
 Primary-source PDF of Clay 2025 was fetched to a tool-results path (ephemeral);
 re-fetch from arXiv:2507.10294 if needed. Related memory:

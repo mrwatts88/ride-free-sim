@@ -33,12 +33,44 @@ and the precisely-specified next step. Doc map at the bottom.
 > **Follow-up B DONE** (`gt_strategy_gap.py`, 5000-trial CRN): the (52,40)
 > suboptimality lead is REFUTED — DFH's G shows NO measurable gap to m=40 (optimal
 > to ±0.01, deep in Clay's hedged regime), so the strategy half holds at deck
-> scale. **▶ NEXT CHAPTER: break the n! wall — a polynomial exact algorithm / the
-> m-shelf transition matrix (Clay's OPEN object; would PROVE, not just evidence,
-> the general-m case). Framing + cheap first probe in `docs/GUESSING_THEOREM.md`
-> ("Open questions / next steps" §1).** PyPy at `/Users/mattwatts/.local/bin/pypy3.11`
-> (`PYTHONPATH=src`); memory `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9
-> value-test + 24.2e9 (A) + 24.1e9 (B), all consumed.
+> scale. **E36 DONE (2026-07-20) — the n!-wall scoping probe**
+> (`data/gt_sufficiency.py`, shared core `guessing_theorem.walk_prefixes`/
+> `run_lengths`, 6 pins, 328 green, no seeds): the optimal per-step hit is EXACTLY
+> a function of (direction, rank-of-last, ascending-**run-length composition**) —
+> ~2ⁿ, and NO polynomial coarsening works for m≥2 (even the remaining-SET+last+dir
+> ceiling leaves a 0.5 hit gap, because a descent = a shelf-lane boundary the set
+> discards). **That IS why Clay's m-shelf transition matrix is open: its operator
+> lives on run-compositions, an exponential state.** m=1 collapses to (dir,rank)
+> [O(n²)] ⇒ reproduces 3n/4; order-dependence is weak-mixing (set-gap
+> 0.61→0.33→0.04 at m=2/3/5). **E37 DONE (2026-07-20) — build (a), the EXACT
+> run-composition DP** (`guessing_theorem.exact_e_dp`, probe `data/gt_exact_dp.py`,
+> 4 pins, 331 green): Clay's m-shelf operator explicit and runnable — memoized DFS
+> over σ=(dir,rank,run-comp) + forward mass pass, E_opt(n,m)=Σ_σ P(σ)·h(σ). Gates
+> pass (reproduces E35 rationals on n≤7×m≤10 to 2e-15; deck-scale MC within se).
+> **Sharpens E36:** the state count is measured **Θ(n^{2m})** — poly in n per fixed
+> m (m=1 EXACTLY n²−n+1), exponential only in m (the DFH v≤m−1 valley cap), NOT the
+> flat ~2ⁿ. **Wall broken:** exact E_opt(52,1)=39=3·52/4, E_opt(52,2)=27.0347 (first
+> exact m≥2 deck-scale; m=3 to n≈36), and the value law is exactly-affine past a
+> transient, pinning **b(1,2,3)=0,−0.0486,−0.0747** (Follow-up A had only MC bounds).
+> **▶ NEXT CHAPTER (DECIDED, Matt 2026-07-20): do (b) FIRST, proof road in
+> parallel.** (b) the O(n³) APPROXIMATE DP over σ̃=(t,dir,rank,#descents) — the
+> large-m complement to (a) (exact is Θ(n^{2m}), dead for m≥5, yet m=5,10 is the
+> real-machine regime): assumed-density closure collapsing the run composition to
+> its count, deliverable = fast E_opt(52,m=5,10) with a MEASURED error bar gated
+> vs the E37 exact grid; new `guessing_theorem.approx_e_dp` + `data/gt_approx_dp.py`,
+> bank E38, seed 24.07e9. **Proof road (parallel, hard math):** build the operator
+> as a matrix → its SPECTRUM (Tripathi's m=1→general route), and/or the
+> exact-RATIONAL DP to prove the affine value law + get b(m) fractions. Full specs:
+> `docs/GUESSING_THEOREM.md` §1 (items 1b + 2).
+> Adjacent: rational posterior → closed-form b(m); poly NO-feedback number. PyPy at
+> `/Users/mattwatts/.local/bin/pypy3.11` (`PYTHONPATH=src`); memory
+> `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9 value-test + 24.2e9 (A) +
+> 24.1e9 (B) + 24.06e9 (E37 MC cross-check) consumed; the DP itself is seedless.
+> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE, better-equipped —
+> E37 built the explicit operator + found its exactly-affine value law; the target
+> is now two concrete hard-math questions (its spectrum / the affine law), not an
+> abstract matrix (HOPE VERDICT atop GUESSING_THEOREM.md; end every session with an
+> updated one, Matt's standing ask).**
 
 > **▶ TRACK A (paradigm-2 shuffle forensics) IS CLOSED — basically DEAD for a
 > human, renewable edge (Matt's call, 2026-07-20).** The physics was real (E26
@@ -408,7 +440,7 @@ synthetic instrument — these units price recoverable order information,
 NOT a real-game edge; the observer premise is full knowledge of shoe k's
 order (the baccarat-like ideal). Scope: distinct cards only (one physical
 deck) — multi-deck shoes repeat cards and need copy-marginalization in
-the observation model. 332 tests green (6 new). Seeds: 22.7e9 test pins,
+the observation model. 331 tests green (6 new). Seeds: 22.7e9 test pins,
 22.8e9 E27 battery; **next unused block 22.9e9+**.
 
 **M12b RUNG 2 DONE (same day — E28): the multi-deck copy-ambiguity

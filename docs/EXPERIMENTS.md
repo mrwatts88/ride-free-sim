@@ -2,6 +2,190 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E37 — Break the n! wall, constructively: the run-composition DP computes EXACT E_opt(n,m) at deck scale. Clay's m-shelf transition operator, made explicit — and its cost is Θ(n^{2m}): polynomial in n for each fixed m, exponential only in m
+
+**Date:** 2026-07-20 · **Question (E36's specified next chapter, build (a) — a
+math result, not a gambling edge):** E36 proved the optimal per-step hit, and the
+whole next-card posterior, is an exact function of the Markov state
+σ = (direction, rank-of-last-among-remaining, ascending-run-length composition),
+with a CLOSED transition (a revealed card extends the last run or opens a new one
+on a descent). So E_opt(n,m) = Σ over dealt prefixes of P·h collapses onto states,
+E_opt(n,m) = Σ_σ P(σ)·h(σ) — a DP whose transition operator IS Clay's stated open
+object, "the transition matrix for an arbitrary number of shelves." Build it, and
+answer: how far past the n≈9 enumeration wall does it reach, and what is its true
+cost?
+
+**Method (`guessing_theorem.exact_e_dp`, reported by `data/gt_exact_dp.py`;
+float-deterministic, no seeds except the MC cross-check).** A memoized DFS builds
+the state graph once — each state's next-card posterior read from ONE
+representative `ShelfPosterior`, deduped by σ (a state reached by many prefixes is
+explored once; the transition child's rank-of-last is exactly the revealed card's
+rank j among the remaining) — then a forward mass pass in prefix-length order sums
+P(σ)·h(σ). **Gates:** (1) reproduce the E35 exact rationals on the whole n≤7 ×
+m≤10 grid and the pinned E(9,m); (2) match the independent float-posterior MC
+(`mc_e`) at n=52. Cards are input-stack positions 1..n (forensics convention).
+
+**RESULTS:**
+
+1. **The DP is exact — proven end-to-end.** It reproduces the E35 enumeration on
+   all 70 cells of the n≤7, m≤10 grid to worst |Δ| = **2.2e-15**, and E(9,2)/E(9,3)
+   to Δ = 0 / 3e-15. A closure violation in the σ-transition would perturb the
+   aggregate; it does not, at any tested cell. This is build (a) delivered: a
+   genuine improvement over O(n·n!).
+
+2. **The cost is Θ(n^{2m}) — polynomial in n for each fixed m, exponential only in
+   m. This SHARPENS E36's "~2ⁿ".** Measured reachable-state counts give log-log
+   degrees **2.08 / 4.13 / 6.09** at m=1/2/3 (= 2m), and m=1 is EXACTLY n²−n+1
+   (13/21/31/…/2653 at n=4..52). The mechanism: the DFH law caps an m-shelf output
+   at **m−1 valleys** (`shelf_class_prob` vanishes for v>m−1 — the a≤m−1 constraint
+   in Thm 3.1), which bounds the up/down alternation, so reachable run-compositions
+   number Θ(n^{2m}) not 2ⁿ. E36's "~2ⁿ" was the worst case over all m (m~n gives
+   2ⁿ); for each FIXED m the operator is polynomial. So exact E_opt(52,m) exists for
+   small m, while Clay's general-m (m→∞) matrix stays genuinely hard — the same
+   split the whole thread keeps finding, now at the complexity level.
+
+3. **The n! wall is broken: first EXACT E_opt(52, m≥2).**
+   - **m=1:** E_opt(52,1) = **39.000000 = 3·52/4 EXACTLY** (2653 states, 0.1 s) —
+     Clay's proven value at deck scale, exact not sampled (DFH sampled 39).
+   - **m=2:** E_opt(52,2) = **27.034722** (566 203 states, 16 s PyPy), MC-confirmed
+     z +0.98 (DFH could only sample "27").
+   - **m=3:** exact to n≈26 in-memory (E_opt(26,3)=10.542142, 559 k states); n=52
+     is ~3.6e7 states (Θ(n⁶)) — PyPy-with-memory or run-composition pruning.
+   Reach by m: m=1 unbounded; m=2 to n=52; m=3 to n≈26–36; m≥5 exact wall n≈15–20
+   (the n^{2m} blow-up) — exactly why the general-m problem resists exact attack.
+
+4. **The value law is EXACTLY affine past the transient, pinning Follow-up A's
+   b(m).** With δ(n,m) = E_opt − c(m)·n, c(m)=H_2m/2m: the slope converges to c(m)
+   to the digit (m=2: the n=26→52 first difference is 0.520833 = 25/48 exactly),
+   and **δ flattens to a constant b(m) already by n≈20**:
+   ```
+   δ(n,2):  n9 −0.0374   n13 −0.0483   n16 −0.0487   n20 −0.0486   n26/36/52 −0.04861
+   ```
+   So **b(2) = −0.0486, pinned** (the residual o(1) is below 1e-5 by n=20) — where
+   Follow-up A's 20 000-trial MC could only bound it as "small, negative." The m=3
+   column (PyPy, to n=36 = 4.4e6 states) likewise pins **b(3) = −0.0747**
+   (δ −0.07452 → −0.07472 at n=26→36, slope 0.408314 = c(3) to 4 digits). So the
+   exact b(m) ladder is **0, −0.0486, −0.0747** at m=1,2,3 — deepening with m,
+   consistent with Follow-up A's MC (−0.05/−0.10) but now EXACT. Net: E_opt(n,m) =
+   c(m)·n + b(m) + o(1) with an exponentially-small (or zero) o(1) — sharper than
+   Clay's "≈".
+
+**VERDICT.** E36's build (a) is delivered and its complexity claim sharpened: the
+m-shelf transition operator is now explicit, runnable, and PROVEN-exact, with cost
+Θ(n^{2m}) — tractable in n for each fixed m, exponential in m. Deck-scale exact
+E_opt(52, m) now exists for m=1,2 (m=3 with more compute), replacing E35's Monte
+Carlo there, and the affine value law with a pinned b(2) refines Clay's Conjecture
+3 beyond its "≈". Honest scope: "exact" = float-deterministic (no sampling/no
+truncation), gated to the exact rationals at 2e-15 — a rational posterior would
+give closed-form b(m) (a noted follow-up); the Θ(n^{2m}) law is an empirical
+log-log fit backed by the v≤m−1 valley bound, not a proved tight bound.
+
+**Banked:** shared core `guessing_theorem.exact_e_dp` (two-layer rule; gated by the
+enumeration + MC reconstruction); probe `data/gt_exact_dp.py`; 4 regression pins in
+`tests/test_guessing_theorem.py` (enumeration match; m=1 = n²−n+1 with m≥2
+super-cubic; E_opt(52,1)=39 exact; the slow E_opt(52,2) deck-scale gate) — **331
+tests green.** Seeds: 24.06e9 (E37 MC cross-check only; the DP is seedless).
+
+## E36 — Break the n! wall: what statistic of the dealt prefix does the optimal per-step guess depend on? The minimal sufficient statistic is the run-length composition (exponential) — which is exactly WHY Clay's m-shelf transition matrix is open
+
+**Date:** 2026-07-20 · **Question (E35's specified next chapter — a math
+result, not a gambling edge):** can the exact optimal-guessing value E_opt(n,m)
+be computed in polynomial time, breaking the O(n·n!) enumeration that dies at
+n≈9? Because DFH's strategy G is optimal (E35, gap 0), by linearity
+E_opt(n,m) = Σ over dealt prefixes q of P(q)·h(q), where h(q) = max_c P(next=c|q)
+is the optimal per-step hit. Aggregating that sum WITHOUT enumerating prefixes is
+possible iff h(q) is a function of a SMALL, Markov-evolving statistic σ(q) of the
+prefix — and that aggregation is exactly **Clay's stated open object, "the
+transition matrix for an arbitrary number of shelves."** So this is the cheap
+scoping probe the chapter asked for: does such a σ exist?
+
+**Method (`data/gt_sufficiency.py`, exact/deterministic — no seeds).** DFS every
+reachable prefix once carrying a `ShelfPosterior` (the general-m output law in
+poly time per prefix), branching by `copy()`+`observe()` — lifted to the shared
+core `guessing_theorem.walk_prefixes`. At each prefix record h(q) and bin it by a
+ladder of candidate σ, from coarse to the exponential ceiling; a σ is EXACTLY
+SUFFICIENT at (n,m) iff the within-bin range of h is 0. Also report the
+mass-weighted R² (approximate sufficiency) and |state space| growth in n
+(polynomial ⇒ a DP is buildable). **Gate:** Σ P(q)·h(q) reproduces E35's exact
+rational E_opt to <1e-13 at every (n,m) — the walk and the permutation
+enumeration agree. Statistics: `step`; `dir_rank`=(t, G-direction, rank of last
+among remaining); coarse-gap variants; `dir_rank_desc` (adds #descents);
+`dir_rank_runcomp`=(dir, rank, ascending-run-length composition); the ceiling
+`set_last_dir`=(remaining SET, last, dir).
+
+**RESULTS (n=4..8, m∈{1,2,3,5}):**
+
+1. **m=1 (Clay's PROVEN case) — tractable, and the probe confirms it.** `dir_rank`
+   = (direction, rank-of-last) alone is EXACTLY sufficient (Δhit=0, R²=1) at every
+   n, with a quadratic state count (12/18/25/33/… ≈ n²/2). So m=1 exact values fall
+   out of an O(n²) DP — a constructive re-derivation of Clay's 3n/4. The probe
+   detects polynomial tractability precisely where a proof exists (validation).
+
+2. **m≥2 (the OPEN case) — the minimal sufficient statistic is the run-length
+   composition, which is EXPONENTIAL.** `dir_rank_runcomp` = (direction, rank,
+   ascending-run composition) is EXACTLY sufficient (Δhit=0, R²=1) at every tested
+   cell — n≤8 for m=2, n≤7 for m=3,5 — but its state count grows ≈2ⁿ
+   (m=2: 19/41/81/148/253 at n=4..8). Notably you need the run *composition* but
+   NOT the card values within runs (beyond the last card's rank), a real reduction
+   of the raw prefix — yet still super-polynomial. **Every polynomial coarsening
+   leaves a residual** that grows with n and shrinks with m:
+   - `set_last_dir` (exponential, but discards the descent ORDER): Δhit up to
+     **0.605** (n=7, m=2) — even the full remaining set + last + direction is not
+     sufficient.
+   - `dir_rank`: R² 0.951→0.99988 (m=2→5); Δhit up to 0.645 (n=8, m=2).
+   - `dir_rank_desc` (adds the descent COUNT): exact through n=5, R² up to 0.9999,
+     but a residual **0.25→0.47** survives at n≥6 (the descent PLACEMENT leaks).
+
+3. **Mechanism (witnessed).** Under the DFH label sort, a descent in the prefix
+   can occur ONLY across a shelf-lane boundary, so the run composition records how
+   the prefix has partitioned the machine's lanes; a set-level statistic throws
+   that away. Concrete witness (n=6, m=2): remaining {3,4,6}, last=5, dir=up —
+   prefix (1,2,5) [runs (3), no descent] → P(next=6)=0.5, hit **0.50**; prefix
+   (2,1,5) [runs (1,2), one descent 2→1] → P(next=6)=1.0, hit **1.00**. Same set,
+   last, and direction; the single earlier descent pins the remainder. The
+   descent-count residual is witnessed too: key (t=4, dir=dn, rank=2, #desc=2)
+   collides run compositions (2,1,1) [hit 0.75] vs (1,2,1) [hit 1.00] — identical
+   descent count, different placement.
+
+4. **The intractability is a WEAK-MIXING phenomenon.** The set-level max Δhit falls
+   **0.605 → 0.327 → 0.041** at m=2/3/5 (n=7): more shelves → better mixing →
+   posterior nearer uniform → the reveal order matters less (and the whole guessing
+   edge decays toward H_n). So exact computation is hardest exactly where the
+   guessing edge is LARGEST (small m, weak mixing) — the same regime that makes the
+   channel interesting.
+
+**VERDICT on "break the n! wall":**
+- **NO polynomial exact algorithm via the per-step guessing-state route for m≥2.**
+  The sufficient statistic is the run-length composition (~2ⁿ states); there is no
+  finite/polynomial combinatorial state carrying the guessing information. This
+  MECHANISTICALLY EXPLAINS why Clay's m-shelf transition matrix is open — its
+  transition operator lives on run-compositions, an exponential state space.
+  (Scope: a NO for THIS route, not a proof that no exact poly algorithm exists by
+  some other route — e.g., the NO-feedback value does have a polynomial
+  position-matrix form, RESEARCH_IDEAS 1C, still queued.)
+- **YES to a sub-factorial EXACT algorithm, and its validity is PROVEN not just
+  plausible.** The probe further checked that the ENTIRE next-card posterior (not
+  merely its max) is a function of the (dir, rank, run-composition) state — max
+  Δposterior per state = 0 at every tested (n,m) — so the state's TRANSITION is
+  closed (a revealed card either extends the last run or opens a new one via a
+  descent). Hence an O(2ⁿ)-state DP over this state computes E_opt(n,m) exactly, a
+  genuine improvement over O(n·n!), pushing the exact wall from n≈9 toward ~n≈20
+  (and to deck scale with rare-composition pruning). This DP's transition operator
+  IS Clay's m-shelf transition matrix, in an explicit exponential form.
+- **YES to a polynomial APPROXIMATE DP.** (dir, rank, #descents) [O(n³) state] is
+  nearly exact (per-step R² ≥ 0.995, →1 as m grows) with bias measurable against
+  the n≤9 exact grid — fast high-accuracy deck-scale values, exact in the
+  strong-mixing limit.
+
+**Banked:** shared core `guessing_theorem.walk_prefixes` + `run_lengths`
+(two-layer rule; gated by the E_opt reconstruction); probe
+`data/gt_sufficiency.py`; 6 regression pins in `tests/test_guessing_theorem.py`
+(run-composition hit-sufficiency, the closed-transition posterior check, m=1
+collapse, the set-level 0.5 witness, the reconstruction gate) — **328 tests
+green.** No seeds consumed (exact,
+deterministic). Two constructive builds are now specified for the next session
+(the 2ⁿ exact DP; the O(n³) approximate DP) in docs/GUESSING_THEOREM.md §1.
+
 ## E35 — The shelf-guessing theorem: exact verification of Clay 2025's Conjecture 3 (DFH strategy G optimal + the (n/2m)·H₂ₘ value law) for the OPEN multi-shelf case — a math result, not a gambling edge
 
 **Date:** 2026-07-20 · **Question (academic side-thread, thread 1A — NOT a
@@ -744,7 +928,7 @@ entries must be DISTINCT (one physical deck) — multi-deck shoes repeat
 cards and need copy-marginalization in the observation model (rung 2);
 the forward GSR riffle is not a label sort (its posterior is a separate
 easy cut-conditioned construction, deferred until a riffle target needs
-pricing). 332 tests green (6 new).
+pricing). 331 tests green (6 new).
 
 **Gates (tests + `data/e27_posterior_gate.py`, ALL PASS):** brute force —
 posterior conditionals equal full lane-assignment enumeration through an

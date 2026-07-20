@@ -185,11 +185,52 @@ a large-n/2m asymptotic). Core `src/ridefree/guessing_theorem.py`; probes
 upgrades the greenlit DFH-verification write-up. **Follow-ups A and B DONE**
 (2026-07-20, PyPy): A — b(m) is a small NEGATIVE constant deepening with m
 (`gt_bm_precision.py`); B — the (52,40) suboptimality lead REFUTED, G optimal to
-±0.01 to m=40 at deck scale (`gt_strategy_gap.py`). **Next chapter: break the n!
-wall — a polynomial exact algorithm / the m-shelf transition matrix (Clay's OPEN
-object, which would PROVE the general-m case, not just evidence it); framing in
-docs/GUESSING_THEOREM.md.** Collaboration hook: Clay (USC, ajclay@usc.edu) flagged
-this as future work.
+±0.01 to m=40 at deck scale (`gt_strategy_gap.py`). **Next chapter = M12e (below).**
+Collaboration hook: Clay (USC, ajclay@usc.edu) flagged this as future work.
+
+### M12e — Break the n! wall: the sufficiency probe ✅ (E36, 2026-07-20)
+
+The scoping step for a polynomial exact `E_opt(n,m)`. Since G is optimal (E35),
+`E_opt = Σ_t P(G correct at t)`, so exact deck-scale values need only the optimal
+per-step hit `h(prefix)` aggregated over prefixes — possible iff `h` is a function
+of a small Markov statistic. **Result (E36, `data/gt_sufficiency.py`; exact,
+deterministic):** the minimal sufficient statistic is **(direction, rank-of-last,
+ascending-run-length composition)** — verified Δhit=0 across n≤8, m∈{2,3,5} — but
+it is ~2ⁿ, and NO polynomial coarsening survives at m≥2 (even the remaining-SET +
+last + direction ceiling leaves a 0.5 hit gap; a descent = a shelf-lane boundary
+the set discards). **So there is no polynomial exact algorithm via the
+guessing-state route, and this mechanistically explains why Clay's m-shelf
+transition matrix is open** (its operator lives on run-compositions, an
+exponential state). m=1 collapses to (dir, rank) [O(n²)], reproducing 3n/4;
+order-dependence is a weak-mixing effect (set-gap 0.61→0.33→0.04 at m=2/3/5, n=7).
+Shared core `guessing_theorem.walk_prefixes`/`run_lengths`; 6 pins (328 green).
+**Two constructive builds specified (docs/GUESSING_THEOREM.md §1): (a)** the O(2ⁿ)
+EXACT DP over the run-composition state (= Clay's matrix in explicit form, pushes
+exact values past n≈9); **(b)** the O(n³) APPROXIMATE DP over (dir, rank,
+#descents), bias measurable vs the n≤9 exact grid. Adjacent: the polynomial
+NO-feedback exact number (position-matrix column-maxima, RESEARCH_IDEAS 1C).
+
+### M12f — The exact run-composition DP: Clay's operator, explicit ✅ (E37, 2026-07-20)
+
+Build (a) delivered. `guessing_theorem.exact_e_dp` aggregates the E36 state
+σ=(direction, rank-of-last, ascending-run composition) into
+`E_opt(n,m) = Σ_σ P(σ)·h(σ)` — a memoized DFS over σ (representative posterior per
+state, deduped) + a forward mass pass. This IS Clay's "m-shelf transition matrix"
+made explicit and runnable. **Result (E37, `data/gt_exact_dp.py`; float-exact):**
+gates pass (reproduces the E35 rationals on the whole n≤7×m≤10 grid to 2e-15;
+matches the deck-scale MC within se). **Cost is measured Θ(n^{2m})** — polynomial in
+n for each fixed m (m=1 EXACTLY n²−n+1; degrees 2m), exponential only in m (the DFH
+v≤m−1 valley cap), NOT the flat ~2ⁿ E36 hedged. **The n! wall is broken:** first
+exact deck-scale values E_opt(52,1)=39=3·52/4 and E_opt(52,2)=27.0347 (m=3 to
+n≈36); and the value law is exactly-affine past a transient, pinning
+**b(1,2,3)=0, −0.0486, −0.0747** (Follow-up A had only MC bounds). 4 pins (331
+green). **Next (DECIDED, Matt 2026-07-20): build (b) FIRST** — the O(n³) approximate
+DP over σ̃=(t,dir,rank,#descents), the large-m complement (exact is Θ(n^{2m}), dead
+for m≥5), deliverable fast E_opt(52,m=5,10) with a measured error bar gated vs this
+exact grid (`approx_e_dp`, `data/gt_approx_dp.py`, bank E38). **In parallel, the
+proof road** (hard math): build the operator as a matrix → its spectrum (Tripathi's
+m=1→general route), and/or the exact-rational DP to prove the affine value law + get
+b(m) as fractions. Full specs: docs/GUESSING_THEOREM.md §1 (items 1b + 2).
 
 ## M13 — Live-dealer data QC (reframed around the baccarat convergence)
 
