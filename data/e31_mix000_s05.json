@@ -1,0 +1,203 @@
+{
+ "shoes": 6,
+ "coups": 476,
+ "samples": 120,
+ "surprises": 250,
+ "n": 416,
+ "thresholds": {
+  "0.02": {
+   "filter": {
+    "banker": {
+     "bets": 177,
+     "predicted": 10.322854340562206,
+     "realized": -23.0
+    },
+    "player": {
+     "bets": 188,
+     "predicted": -1.7742576631341733,
+     "realized": 0.0
+    },
+    "tie": {
+     "bets": 146,
+     "predicted": -18.26948943756732,
+     "realized": -56.0
+    },
+    "dragon7": {
+     "bets": 198,
+     "predicted": 2.771485721223962,
+     "realized": -34.0
+    },
+    "panda8": {
+     "bets": 177,
+     "predicted": -11.564584032658379,
+     "realized": -99.0
+    }
+   },
+   "counter": {
+    "banker": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "player": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "tie": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "dragon7": {
+     "bets": 61,
+     "predicted": 3.168158751289136,
+     "realized": -61.0
+    },
+    "panda8": {
+     "bets": 14,
+     "predicted": 0.9588963107029895,
+     "realized": 12.0
+    }
+   },
+   "filter_bets": 886,
+   "filter_realized": -212.0,
+   "filter_predicted": -18.513991071573706,
+   "counter_realized": -49.0,
+   "z": -2.0763878268014144,
+   "excess_per_shoe": -27.166666666666668
+  },
+  "0.05": {
+   "filter": {
+    "banker": {
+     "bets": 124,
+     "predicted": 10.002592491007027,
+     "realized": -15.0
+    },
+    "player": {
+     "bets": 123,
+     "predicted": 0.14762045503624222,
+     "realized": 5.0
+    },
+    "tie": {
+     "bets": 139,
+     "predicted": -17.145543461869863,
+     "realized": -49.0
+    },
+    "dragon7": {
+     "bets": 193,
+     "predicted": -2.1709857876405176,
+     "realized": -29.0
+    },
+    "panda8": {
+     "bets": 171,
+     "predicted": -10.484558935529106,
+     "realized": -93.0
+    }
+   },
+   "counter": {
+    "banker": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "player": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "tie": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "dragon7": {
+     "bets": 25,
+     "predicted": 1.9599621014485349,
+     "realized": -25.0
+    },
+    "panda8": {
+     "bets": 8,
+     "predicted": 0.77939802829848,
+     "realized": -8.0
+    }
+   },
+   "filter_bets": 750,
+   "filter_realized": -181.0,
+   "filter_predicted": -19.65087523899622,
+   "counter_realized": -33.0,
+   "z": -2.0278781991927324,
+   "excess_per_shoe": -24.666666666666668
+  },
+  "0.1": {
+   "filter": {
+    "banker": {
+     "bets": 56,
+     "predicted": 9.304140300903478,
+     "realized": -7.0
+    },
+    "player": {
+     "bets": 69,
+     "predicted": 1.9987267812978344,
+     "realized": 9.0
+    },
+    "tie": {
+     "bets": 97,
+     "predicted": -11.278572211475105,
+     "realized": -34.0
+    },
+    "dragon7": {
+     "bets": 189,
+     "predicted": -2.7631193910718377,
+     "realized": -25.0
+    },
+    "panda8": {
+     "bets": 155,
+     "predicted": -15.640495544611367,
+     "realized": -77.0
+    }
+   },
+   "counter": {
+    "banker": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "player": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "tie": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "dragon7": {
+     "bets": 6,
+     "predicted": 0.7784259488191396,
+     "realized": -6.0
+    },
+    "panda8": {
+     "bets": 3,
+     "predicted": 0.42757976849524626,
+     "realized": -3.0
+    }
+   },
+   "filter_bets": 566,
+   "filter_realized": -134.0,
+   "filter_predicted": -18.379320064956996,
+   "counter_realized": -9.0,
+   "z": -1.4325467099735594,
+   "excess_per_shoe": -20.833333333333332
+  }
+ },
+ "shard": 5,
+ "seed": 23300500000,
+ "mix": 0.0,
+ "passes": 1,
+ "rules": "EZ_BACCARAT_8D",
+ "shelves": 10,
+ "seconds": 943.0629056659527,
+ "s_per_shoe": 157.17715094432546
+}

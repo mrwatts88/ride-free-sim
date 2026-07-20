@@ -1,0 +1,203 @@
+{
+ "shoes": 6,
+ "coups": 488,
+ "samples": 120,
+ "surprises": 158,
+ "n": 416,
+ "thresholds": {
+  "0.02": {
+   "filter": {
+    "banker": {
+     "bets": 186,
+     "predicted": 6.224879448286141,
+     "realized": -12.0
+    },
+    "player": {
+     "bets": 173,
+     "predicted": 2.1266711543928603,
+     "realized": 11.0
+    },
+    "tie": {
+     "bets": 142,
+     "predicted": -22.793332844895698,
+     "realized": 29.0
+    },
+    "dragon7": {
+     "bets": 220,
+     "predicted": -3.379294276180265,
+     "realized": -56.0
+    },
+    "panda8": {
+     "bets": 203,
+     "predicted": -7.755839928298691,
+     "realized": -73.0
+    }
+   },
+   "counter": {
+    "banker": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "player": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "tie": {
+     "bets": 1,
+     "predicted": 0.028960357021765123,
+     "realized": -1.0
+    },
+    "dragon7": {
+     "bets": 47,
+     "predicted": 6.584414152393207,
+     "realized": -6.0
+    },
+    "panda8": {
+     "bets": 34,
+     "predicted": 5.396961092464726,
+     "realized": 18.0
+    }
+   },
+   "filter_bets": 924,
+   "filter_realized": -101.0,
+   "filter_predicted": -25.576916446695652,
+   "counter_realized": 11.0,
+   "z": -1.2082569663620084,
+   "excess_per_shoe": -18.666666666666668
+  },
+  "0.05": {
+   "filter": {
+    "banker": {
+     "bets": 120,
+     "predicted": 5.302236407719477,
+     "realized": -14.0
+    },
+    "player": {
+     "bets": 110,
+     "predicted": 2.168977229371438,
+     "realized": 3.0
+    },
+    "tie": {
+     "bets": 140,
+     "predicted": -22.64588046001946,
+     "realized": 31.0
+    },
+    "dragon7": {
+     "bets": 218,
+     "predicted": -3.8091162699488708,
+     "realized": -54.0
+    },
+    "panda8": {
+     "bets": 202,
+     "predicted": -8.23404042759261,
+     "realized": -72.0
+    }
+   },
+   "counter": {
+    "banker": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "player": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "tie": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "dragon7": {
+     "bets": 34,
+     "predicted": 6.1292676354449265,
+     "realized": 7.0
+    },
+    "panda8": {
+     "bets": 26,
+     "predicted": 5.143658282436195,
+     "realized": 26.0
+    }
+   },
+   "filter_bets": 790,
+   "filter_realized": -106.0,
+   "filter_predicted": -27.217823520470024,
+   "counter_realized": 33.0,
+   "z": -1.6971681818409563,
+   "excess_per_shoe": -23.166666666666668
+  },
+  "0.1": {
+   "filter": {
+    "banker": {
+     "bets": 59,
+     "predicted": 4.615194551110745,
+     "realized": -1.0
+    },
+    "player": {
+     "bets": 50,
+     "predicted": 0.9837617298726733,
+     "realized": 1.0
+    },
+    "tie": {
+     "bets": 105,
+     "predicted": -15.749145289128101,
+     "realized": 21.0
+    },
+    "dragon7": {
+     "bets": 217,
+     "predicted": -3.8917388700100135,
+     "realized": -53.0
+    },
+    "panda8": {
+     "bets": 190,
+     "predicted": -5.557920084910513,
+     "realized": -86.0
+    }
+   },
+   "counter": {
+    "banker": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "player": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "tie": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "dragon7": {
+     "bets": 23,
+     "predicted": 5.387370491100261,
+     "realized": 18.0
+    },
+    "panda8": {
+     "bets": 19,
+     "predicted": 4.6165654454161364,
+     "realized": 7.0
+    }
+   },
+   "filter_bets": 621,
+   "filter_realized": -118.0,
+   "filter_predicted": -19.59984796306521,
+   "counter_realized": 25.0,
+   "z": -1.537990437205187,
+   "excess_per_shoe": -23.833333333333332
+  }
+ },
+ "shard": 1,
+ "seed": 23300100000,
+ "mix": 0.0,
+ "passes": 1,
+ "rules": "EZ_BACCARAT_8D",
+ "shelves": 10,
+ "seconds": 936.8145733329002,
+ "s_per_shoe": 156.13576222215002
+}

@@ -1,12 +1,67 @@
 # STATUS — read this first in a new session
 
-Updated 2026-07-19 (late session — M12b rung 3). This is the resume-here
-document: current state, key numbers, and the precisely-specified next
-step. Doc map at the bottom.
+Updated 2026-07-19 (late session — M12b rung 3, incl. rung 3c + E32
+baccarat closure). This is the resume-here document: current state, key
+numbers, and the precisely-specified next step. Doc map at the bottom.
 
-**M12b RUNG 3 DONE (2026-07-19, the "baccarat shuffle" session — E29 +
-E30): the throughput wall is down, the 8-deck door is open, and the first
-real-paytable probe returned an honest null with a named lead.**
+> **▶ NEXT STEP (start here): the BLACKJACK SHUFFLE ATTACK — the Gate-B
+> adapter.** Point the existing shelf-shuffle posterior core (E27–E29) at
+> blackjack, the best converter of order information we have (insurance =
+> a direct single-card bet; playing deviations = toll-free). START WITH
+> INSURANCE: measure the order-observer's insurance edge vs a perfect
+> composition counter at the shelf-shuffle strength we already have; gate
+> it; then decisions. Two-layer rule holds (thin adapter over the posterior
+> core, which NEVER imports a game). Rationale + the two-gate (survival /
+> conversion) frame are in the "DIRECTION CHOSEN" block below. Next unused
+> seed block: 23.5e9+.
+
+**M12b RUNG 3c DONE (2026-07-19, same session — E31): the D7/P8 lead is
+REFUTED by the cheapest possible experiment; the over-shrink is real but
+hides no edge; the exact-prefix pricer is DEFERRED (unmotivated).** Matt's
+call — because REALIZED profit is mix-independent for a fixed fired-bet
+set, the E30 lead could be interrogated on the EXISTING gated machinery
+before building anything. Result (no `src/` changes — 344 tests still
+valid): re-pricing the same process at de-shrunk mixes (0.0, 0.05, vs
+E30's 0.40) shows the filter's D7/P8 REALIZED swings **+0.7σ → −1.2σ →
+−1.4σ across three independent shoe sets — all consistent with ZERO**
+(shard-level, the honest unit; E30's "+1.9σ" came from per-bet pooling
+that double-counts correlated bets in a shoe; excess over the counter is
+z **+0.2**). The **over-shrink MECHANISM is real** (D7+P8 claim −8.9% at
+mix 0.40 → +2.7% at mix 0.05 — the value-level floor, calibrated on
+MARGINAL cards in E29, crushes a coup's JOINT 4–6-card claim by
+~(1−mix)^cards), so E30's "realized ≫ claimed" was **the CLAIM being
+wrong, not a hidden edge**; de-shrinking just fires more D7/P8 bets that
+pay the toll. The floor is load-bearing regularization (mix=0 drift drags
+the deep-shoe claim MORE negative than composition; mechanism curve
+validated by mix=1.0 ≡ counter to the decimal). **Rung-3c answer: at EZ
+Baccarat paytables through the 10-shelf machine, the order channel offers
+NO certified edge over a perfect card counter — the E30 null STANDS and
+its one lead was noise (the E3 lesson).** The cheap way earned its keep:
+"suggestive lead + expensive pricer queued" → "lead refuted, pricer
+deferred," for the cost of a parameter sweep. Seeds 23.3e9 (mechanism
+23_310_000_001–04). Full entry: EXPERIMENTS E31.
+
+**BACCARAT FULLY CLOSED (2026-07-19, E32 — Matt's skepticism, vindicated):**
+Matt pushed back on "the mains are dead from the linear EORs" (we never
+searched all compositions; a quadratic count could catch curvature; and EZ's
+push-on-banker-3c7 makes the banker main ride on the countable Dragon 7). The
+exact-calculator search settled it: **the mains ARE countable at deep pen —
+I was wrong that they aren't** (3.6–10.5% of last-coup R=21 shoes go +EV), and
+**EZ banker is the most countable main (10.5% vs classic 4.4%), Matt's push
+mechanism confirmed.** BUT the captured edge is **+0.045% u/opportunity for EZ
+banker — ~160× below the Dragon 7 side bet (+7.24%)**, last-coup-only,
+device-grade full-10-rank tracking, ≈ $0.6/h: Griffin's "technically beatable,
+practically worthless" holds. Also reconciles E30 (its "+2% main" filter
+stepped over the sub-2% main edges — the mains move, just not 2%). **Baccarat
+is now characterized from every angle: mains countable-but-nil, side bets the
+only money (M9), order adds nothing (E30/E31).** No `src/` changes (gate:
+fresh EVs reproduce WoO to the digit). Seeds 23.4e9; **next unused 23.5e9+.**
+Full entry: EXPERIMENTS E32.
+
+**M12b RUNG 3 (a/b) DONE (2026-07-19, the "baccarat shuffle" session — E29
++ E30): the throughput wall is down, the 8-deck door is open, and the
+first real-paytable probe returned an honest null with a named lead (that
+lead is now refuted — see rung 3c above).**
 - **Rung 3a (E29, ALL GATES PASS):** `AssumedDensityShelfPosterior` — the
   O(slots) assumed-density filter (fractional occupancy + ONE deferred
   chain; decision record in DESIGN.md). Reduces EXACTLY to the rung-1
@@ -48,22 +103,87 @@ real-paytable probe returned an honest null with a named lead.**
   4-6 sampled cards while realized keeps the full signal. SUGGESTIVE,
   NOT CERTIFIED (E3 lesson).**
 
-**THE PRECISELY-SPECIFIED NEXT STEP (rung 3c — earn the real-paytable
-number):** (1) **exact-4-card-prefix hybrid pricing** — enumerate the
-10-value tree for cards 1-4 exactly under the filter (naturals close ~34%
-of coups; composition-tail the draws), killing the selection MC noise that
-buys ~1.8 noise-bets/coup; cost ≈ the current M=120 sampling. (2)
-**coup-level contamination calibration** — the value-level mix 0.40
-over-shrinks JOINT claims (the D7/P8 signature); refit at coup level on
-probe seeds, certify OOS, E17 gate. (3) **the D7/P8-focused replication**
-— late-shoe window, mains dropped, ~200 shoes for 40:1-variance power; if
-the realized-vs-claimed gap survives a calibrated instrument, THAT is the
-first real-game order edge. Queued behind: the 2-pass coup control (~20×
-slot axis), observation degradation (partial view of shoe k), the poker
-arm (own legality pass first), M13 (parked behind M12b). Seeds: E29
-consumed 23.0e9 (test pins 23000000001-07) + 23.1e9 (battery); E30
-consumed 23.2e9 (shard-strided 23_200_001_000..006_000); **next unused
-block 23.3e9+**.
+**DIRECTION CHOSEN (2026-07-19): the BLACKJACK adapter is next.** The
+strategic fork below was resolved with Matt: Track A's headline — convert the
+big value-level order channel (E27–E29: +53 u/shoe of order information at 8
+decks, composition-fair) into REAL money — came up empty at EZ Baccarat (the
+flat no-decision bet is a poor converter: order beats nothing over a counter,
+E30/E31; and the mains themselves are countable-but-nil, E32). The two-gate
+frame (Matt): an attack must pass **Gate A — survival** (does order info
+survive the shuffle?) AND **Gate B — conversion** (does the game turn it into
+money?). Baccarat PASSED A (weak shelf shuffle, huge info) and FAILED B (no
+decisions, coarse many-to-one bets, robust tableau, real toll). **Blackjack is
+the opposite on Gate B** — the best converter we have: insurance is a direct
+single-card bet (order posterior on the hole card → EV moves directly), and
+playing deviations are TOLL-FREE conversions of order knowledge. It's a thin
+adapter over the same posterior core (two-layer rule), cheap, and a positive
+result points somewhere REAL (weak/hand-shuffled blackjack — the recalibrated
+target list, on the game Matt actually plays). Logic: if the best converter,
+handed perfect input knowledge and a weak shuffle, still can't monetize the
+channel, the paradigm is "information without money"; if it pays, we've found
+where the edge lives and poker's Gate-A gamble becomes worth the build. **Start
+with INSURANCE (cleanest single-card conversion), measure order-vs-counter edge
+at the shelf-shuffle strength we already have.** — The superseded fork options
+(kept for the record):
+1. **Close it harder (probably not worth it):** the item-3 200-shoe D7/P8
+   replication would tighten the null, but there is no longer a lead
+   pointing there, and value-level 2-pass already collapsed the channel
+   (E27/E29) so the 2-pass coup control is surely dead too. Low value.
+2. **A different adapter over the SAME posterior core (the two-layer rule
+   pays off here — swapping games is arithmetic):** blackjack
+   insurance-grade spots were always flagged as "the natural second
+   adapter"; a decision-bearing game (blackjack playing/insurance) may
+   convert order information where a flat baccarat bet cannot. Or the
+   **poker equity arm** (Track A × class 5), which still needs its
+   fold/gather models and its own legality pass (ROADMAP M12b).
+3. **Accept Track A's real-game null and pivot to M13** (live-dealer data
+   QC — the Evolution live-baccarat convergence target), which was parked
+   behind M12b; but note M12b's headline order-edge just priced to ~zero
+   money, so M13's premise needs re-examination too.
+4. **Re-examine the premise:** paradigm 2's thesis (know shoe k's order →
+   beat the randomness) priced a large INFORMATION channel that does not
+   monetize at the one real paytable we've tried. Is the paradigm's edge
+   only ever informational (unconvertible), or is baccarat's flat bet
+   simply the wrong converter? The honest data point: big bits, no money.
+**Three threads PARKED this session (Matt's ideas, real but not now):**
+(a) **poker as a targeted population-exploit** — ignore the shuffler entirely;
+model a specific soft population (live low-limit NLHE) and solve for the
+maximally-exploitative heuristic card. Sidesteps poker's Gate-A risk, matches
+our card-distillation style, but is a NEW machinery track (hand-vs-range equity
+engine + exploit solver) gated on an empirical population prior we don't have —
+arguably its own "paradigm 3." (b) **baccarat side-bet / progressive
+enumeration** — pure paradigm-1: we enumerated exactly ONE paytable (EZ's
+D7/P8); floors carry a zoo of other side bets (Dragon Bonus, Lucky 6, tie
+variants) and must-hit progressives, each a fresh exact enumeration that might
+have a countable/meter edge like D7/P8 did. Recon + enumeration, our wheelhouse,
+already paid once. (c) **sports betting — a narrow, specific attack (Matt's
+"paradigm 4")** — philosophically the MOST on-thesis: like paradigm 2, the true
+price is unknowable (only estimable), so the edge IS estimate-superiority over
+the line (renewable, compounds with data), but with a MARKET counterparty
+instead of a physical randomizer. More tractable than poker (public data
+abundant; the line is visible and BACKTESTABLE — measure edge via closing-line
+value). Matt's example, MLB pitcher strikeouts, is a natural fit for our
+count-modeling DNA (a rate-driven count: E[K] ≈ opponent/park-adjusted pitcher
+K% × expected batters faced, model the full distribution for P(K>line)) — but
+the mainline is HEAVILY sharpened (fails the "soft market" axis); edge lives in
+alternates/tails/less-followed markets. Target-selection criteria: modelable-
+from-stable-public-stats × soft/thin market × high-volume-or-low-variance ×
+a real data edge. NEW from-scratch machinery (data pipeline + predictive model +
+historical-odds DB + CLV backtest), hard structural ceiling (book limits/bans =
+the rake analog). **First move is RECON, not code: pick one market, get
+historical lines+outcomes, measure whether a SIMPLE public model beats the
+close — prove the edge exists before building the machine.** Queued knob: observation-degradation (partial view of shoe
+k) — but only relevant if a Gate-B-passing game revives Track A.
+**QUEUED WRITE-UP (Matt greenlit 2026-07-19): a standalone article on E27's
+DFH-conjecture verification** — the exact shelf-shuffle posterior confirms
+Diaconis–Fulman–Holmes' 2013 "conjectured-optimal" guessing strategy (posterior
+argmax ties it, +0.0065±0.0106); a durable academic/WoO contribution independent
+of any gambling edge. Can ship standalone OR fold into the comprehensive
+shuffle article written after the blackjack adapter answers the money question.
+Seeds: E29 consumed 23.0e9 (test pins 23000000001-07) + 23.1e9 (battery);
+E30 consumed 23.2e9 (23_200_001_000..006_000); E31 consumed 23.3e9
+(mix-/shard-strided + mechanism 23_310_000_001–04); E32 consumed 23.4e9
+(mains search); **next unused block 23.5e9+**.
 
 **PARADIGM 2 OPENED (2026-07-19) — read `docs/PARADIGM2.md` first.** After
 M11 closed, Matt asked whether there's "a different side we're not seeing" —

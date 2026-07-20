@@ -2,6 +2,140 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E32 — are the baccarat MAIN bets countable? YES at deep penetration (I was wrong), EZ banker most of all (Matt's push inkling confirmed) — but the captured edge is ~160× below the side bets, so practically nil
+
+**Date:** 2026-07-19 · **Question:** Matt's counter to "the mains are dead
+from the linear EORs": we never *searched* all compositions, and a
+quadratic/curvature count could catch what linear EORs miss (how quad-Q beat
+21+3). And EZ Baccarat's push-on-banker-3-card-7 makes the banker main EV ride
+on a COUNTABLE event (the Dragon 7), so it's the most plausible main-bet crack.
+Settle it computationally, not by citing Thorp.
+
+**Machinery (cheap — NO `src/` changes):** one `data/` script over the
+EXACT, WoO-gated `fast_outcomes(composition)` (one call returns every main +
+side EV). Gate: fresh 8-deck EVs reproduce the published references to the
+digit (EZ banker −1.0183%, classic −1.0579%, player −1.2351%, tie −14.3596%,
+D7 −7.6113%, P8 −10.1876%). Two arms: (1) SAMPLING — 40k random depletions to
+the cut (R=21 cards left, pen .95), priced exactly, with the side bets as a
+built-in gate (D7/P8 are countable — M9 — so they MUST show +EV, and do: 40%/
+31% of shoes); (2) DIRECTED CEILING — hill-climb the composition to maximize
+each main's EV at fixed R (the best achievable even hunting for it).
+
+**Findings (`data/e32_mains.json`):**
+
+| main | % last-coup shoes +EV | avg edge \| +EV | captured u/opp | max seen |
+|---|---|---|---|---|
+| **EZ banker** | **10.5%** | +0.43% | **+0.0448%** | +4.88% |
+| classic banker | 4.4% | +0.38% | +0.0169% | +3.65% |
+| player | 3.6% | +0.56% | +0.0202% | +4.42% |
+| tie | 3.6% | +6.0% | +0.220% | +58.7% |
+| Dragon 7 (side, ref) | 40.1% | +18.1% | +7.24% | +154.8% |
+
+1. **The mains ARE countable at deep pen — the "10× too small" claim was
+   wrong.** At R=21 (baccarat is dealt this deep), 3.6–10.5% of last-coup shoes
+   put a main +EV. Directed ceilings confirm huge headroom (rigged 20-card
+   compositions reach +44% EZ banker) — the +EV mains are real, just rare.
+2. **EZ banker is the most countable main (Matt's mechanism confirmed):** 10.5%
+   +EV vs classic banker's 4.4%, and 2.6× the captured edge — exactly because
+   the barred-3-card-7 push adds a composition-sensitive dimension classic
+   commission baccarat lacks. It is anti-correlated with the Dragon 7 (banker
+   main is best when 3c7 is unlikely), so a Dragon-7 counter gets the signal
+   free.
+3. **But it is practically nil.** Captured/opportunity — E[edge · 1(+EV)], what
+   you'd earn betting a main only in its +EV shoes — is **+0.045% for EZ
+   banker**, ~160× below the Dragon 7 side bet (+7.24%) sitting on the same
+   layout, last-coup only, and requiring device-grade full-10-rank composition
+   tracking (no single running count expresses it). At $100 ≈ $0.6/h. Griffin's
+   verdict holds: technically beatable, practically worthless.
+4. **Reconciles E30.** E30 reported "the counter never finds a +2% main" — a
+   THRESHOLD artifact: main edges are almost all sub-2% (avg +0.4%), so the +2%
+   filter stepped over them. The mains move; they just don't move 2%.
+
+**Verdict:** baccarat is now fully characterized from every angle — mains
+countable-but-worthless (+0.045% captured, deep-pen last-coup, device-grade),
+side bets the only real money (M9, done), order tracking adds nothing on top
+(E30/E31). An honest correction on record: the mains are not *uncountable*, and
+Matt's skepticism + EZ-push mechanism were both right; the textbook "unbeatable"
+means "not worth it," which the numbers now pin. Artifact: `data/e32_mains.py`,
+`e32_mains.json`. Seeds: 23.4e9 (23_400_000_001 sampling, ...002 hill-climb).
+**Next unused block: 23.5e9+.**
+
+## E31 — M12b rung 3c (the cheap diagnostic): the D7/P8 lead is REFUTED by replication; the over-shrink mechanism is real but hides no edge
+
+**Date:** 2026-07-19 · **Question:** E30's one live lead was Dragon-7 / Panda-8
+realized ≫ claimed (+6.9%/+9.9% realized vs −9.5%/−8.2% claimed, ≈ +1.9σ). Two
+readings competed: (a) a real order edge suppressed by the value-level
+contamination floor `mix`, or (b) noise. Because REALIZED profit is settled
+from the true coup — mix-independent for a fixed fired-bet set — the lead can
+be interrogated on the EXISTING gated machinery, no new pricer required (Matt's
+call: do the cheap way before building the exact-4-card-prefix pricer).
+
+**Machinery (cheap — NO `src/` changes, so all 344 tests stay valid):** two
+`data/` scripts over the E29-gated `coup_experiment` and `sampled_outcome_probs`.
+`e31_mechanism.py` freezes filter states at fixed depths and prices D7/P8 across
+the mix axis at M=1500 (CRN uniforms across mixes). `e31_mixsweep.py` +
+`e31_launch.py` re-run the coup experiment at de-shrunk mixes (0.0, 0.05),
+sharded across the perf cores under PyPy (E28's sanctioned accelerator).
+`e31_verdict.py` pools each mix's shards + the E30 mix-0.40 shards.
+
+**Mechanism curve (`e31_mechanism.json`, 4 shoes × 3 depths × 7 mixes):**
+- Machinery validates: at mix=1.0 the claim equals the counter (composition) EV
+  to the decimal in every row (the floor blends fully to composition; CRN gives
+  zero variance there).
+- The over-shrink is REAL at the aggregate: filter D7+P8 CLAIM/unit rises from
+  **−8.9% (mix 0.40) → +2.7% (mix 0.05)** as the joint claim de-shrinks. So
+  E30's "realized ≫ claimed +1.9σ" was measuring **the CLAIM being wrong
+  (over-shrunk), not a hidden edge** — the value-level floor, calibrated on
+  MARGINAL (single-card) predicted-vs-realized (E29), crushes a coup's JOINT
+  4–6-card claim by ~(1−mix)^cards.
+- But de-shrinking is NOT free: at depth 300, mix=0 claims go MORE negative than
+  composition (D7 −22.7%, P8 −25.0% vs counter −4.9%/−8.5%) — ADF drift, the
+  disease the floor was built to treat (E29). mix=0.05 is the claim sweet spot;
+  mix=0.0 drift drags the aggregate claim back down to −3.2%. The floor is
+  load-bearing regularization, not pure over-shrink.
+
+**Realized runs — the load-bearing readout (`e31_mix00{0,05}_s*.json`, 36 shoes
+each, M=120, EZ_BACCARAT_8D, pen .95, 10-shelf 1-pass; vs E30's 48 shoes at mix
+0.40). Shard-level D7+P8 realized u/shoe (n=6 shards each — the HONEST unit;
+per-bet pooling ignores within-shoe order correlation), threshold 0.02:**
+
+| mix | filter realized | z | counter realized | EXCESS (filter−counter) | z |
+|---|---|---|---|---|---|
+| 0.40 (E30) | +5.50 ± 8.23 | +0.7 | +3.98 ± 2.49 | **+1.52 ± 7.87** | +0.2 |
+| 0.05 | −6.08 ± 4.93 | −1.2 | −3.42 ± 2.34 | **−2.67 ± 4.82** | −0.6 |
+| 0.00 | −9.22 ± 6.48 | −1.4 | −1.08 ± 2.51 | **−8.14 ± 6.45** | −1.3 |
+
+1. **The lead is refuted.** Across three independent shoe sets the filter's
+   D7/P8 realized swings +0.7σ → −1.2σ → −1.4σ — all consistent with ZERO. The
+   E30 +8.4%/+5.50-u/shoe number was an upward fluctuation that does NOT
+   replicate; the excess over the counter is z **+0.2** at the shard level (the
+   "+1.9σ" came from per-bet pooling, which double-counts correlated bets in a
+   shoe). De-shrinking the claim does not surface an edge — it just fires more
+   D7/P8 bets that pay the ~−7-8% toll (realized ~−10% across all thresholds at
+   mix 0.0/0.05).
+2. **No order edge beyond composition.** The counter's mild positive D7/P8
+   (mix 0.40 +3.98 ± 2.49, z +1.6) is the KNOWN deep-shoe composition attack
+   (M9c/E20), not order structure; the filter never beats it (excess ≤ 0σ). The
+   large value-level (composition-fair) order channel of E27–E29 does not
+   convert into a real-paytable D7/P8 edge — the E30 null STANDS, and its one
+   apparent lead is noise (the E3 lesson, exactly as flagged).
+3. **The exact-4-card-prefix pricer (rung-3c item 1) is not motivated by this
+   lead.** Cleaner selection can only sharpen toward a stable realized signal,
+   and there is none: realized (which the pricer cannot change) shows no edge on
+   fresh shoes. Certifying any small residual would still need the item-3 scale
+   (200+ shoes, 40:1 variance) — but there is no longer a lead pointing there.
+
+**Verdict:** the cheap diagnostic did its job — it converted "suggestive lead +
+expensive pricer queued" into "lead refuted, pricer deferred," for the cost of a
+parameter sweep on already-gated machinery. Rung 3c's honest answer: **at EZ
+Baccarat paytables through the 10-shelf machine, the order channel offers no
+certified edge over a perfect card counter; the D7/P8 signature that survived
+E30 was the contamination floor mispricing joint claims, not a real signal.**
+Artifacts: `data/e31_mechanism.py`, `e31_mixsweep.py`, `e31_launch.py`,
+`e31_verdict.py`, `e31_mechanism.json`, `e31_mix00{0,05}_s01-06.json`. Seeds:
+23.3e9 block (mix- and shard-strided: 23_300_000_000 + shard·1e5 + mix·1e3;
+mechanism 23_310_000_001–04). **Next unused block: 23.4e9+.**
+
 ## E30 — M12b rung 3b: the baccarat coup adapter — machinery GATED, and the honest probe verdict: no certified real-paytable excess at 48 shoes; the D7/P8 realized-vs-claimed gap is the lead
 
 **Date:** 2026-07-19 · **Question:** convert the 8-deck order channel (E29:
