@@ -2,6 +2,186 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E35 — The shelf-guessing theorem: exact verification of Clay 2025's Conjecture 3 (DFH strategy G optimal + the (n/2m)·H₂ₘ value law) for the OPEN multi-shelf case — a math result, not a gambling edge
+
+**Date:** 2026-07-20 · **Question (academic side-thread, thread 1A — NOT a
+gambling edge; it upgrades the greenlit DFH-verification write-up):** with the
+exact shelf-shuffle posterior built and gated (M12a–b), can it attack the OPEN
+multi-shelf complete-feedback card-guessing problem? Clay 2025 (arXiv:2507.10294)
+proved only the single-shelf m=1 case — the optimal complete-feedback strategy is
+exactly DFH's G (Thm 1.4) and its reward is exactly 3n/4 (Thm 1.5) — and states
+that the transition matrix for an arbitrary number of shelves is an open problem.
+His **Conjecture 3** (appendix) asserts that for a general m-shelf shuffle with
+n/m "not too small," strategy G stays optimal (high-probability sense) and
+F_G(n,m) ≈ (n/2m)·H_{2m}. The 2026 follow-up cluster (Tripathi 2602.07920, Kuba
+2602.12928, asymmetric 2606.18047 / Clay–Kuba–Tripathi 2607.10418) is all
+single-shelf, so **m ≥ 2 is genuinely open.**
+
+**Method — two INDEPENDENT computations of E(n,m)** (the expected correct guesses
+under the Bayes-optimal complete-feedback strategy after ONE m-shelf pass of n
+distinct cards). Greedy argmax-with-feedback is globally optimal (a guess never
+affects the reveals). (1) **EXACT rationals:** DFH Thm 3.1 gives P(output perm) as
+a function of valley count alone (`forensics.shelf_class_prob`); enumerate all n!
+decks, build the prefix trie, and E_opt = Σ over prefixes of the max child
+joint-mass. E_G scores DFH's m-INDEPENDENT strategy G exactly (Σ_perm
+P(perm)·score_G). (2) **Low-variance MC for deck scale:** the `predicted`
+estimator Σ_t max_c P(next=c | prefix) along each dealt deck (via the float
+`ShelfPosterior`), whose mean is unbiased for E_opt with far lower variance than
+realized hits. The core is lifted to `src/ridefree/guessing_theorem.py` (pure
+shuffle-math — imports no game, per the two-layer rule); `data/gt_*.py` are the
+reporting probes.
+
+**Four gates (all pass).** (G1) total output probability = 1 exactly (Fraction) —
+the law normalizes. (G2) the exact E_opt agrees with the repo's INDEPENDENT
+slot-filtering posterior (`ShelfPosterior`, a float log-sum-exp construction, not
+the enumeration) within MC error at every step. (G3) **robustness**
+(`gt_robustness.py`): deliberately-suboptimal strategies (always-smallest,
+up-only) score STRICTLY below E_opt while G ties it exactly — rules out a "scoring
+the same thing twice" bug. (G4) the deck-scale MC reproduces the exact n=9
+rationals within se, and reproduces Clay's own n=52 table.
+
+**Results (exact, n ≤ 9, m = 1…10).**
+1. **Reproduces Clay's proven m=1 EXACTLY:** E(n,1) = 3n/4 for n ≥ 2 (3/2, 9/4, 3,
+   …, 27/4); boundary E(1,1) = 1.
+2. **DFH's strategy G is EXACTLY optimal across the whole grid** — the gap
+   E_opt − E_G = 0 as exact Fractions at all 90 cells, **including cells with
+   n/2m ≈ 0.4, i.e. outside Clay's "n/m not too small" hedge.** This is the first
+   exact, grid-wide verification of the *strategy* half of Conjecture 3, and it
+   appears to hold more broadly than the hedge states.
+3. **Clay's value formula is the asymptotic SLOPE c(m) = H_{2m}/(2m)** (c(1)=3/4,
+   c(2)=25/48, c(3)=49/120, c(10)=11167027/62078016 ≈ 0.1799): exact at m=1, an
+   approximation for m ≥ 2 that our exact values approach from below (m=2 crosses
+   near n=7, within 0.03 by n=8). At large m / small n it underestimates badly,
+   matching Clay's own (52,20)→6.2 vs 5.56 and (52,40)→4.7 vs 3.23.
+
+```
+exact E_opt(n,m)      (regenerate: data/gt_exact.py 9)
+ n\m    1       2       3       5       10
+ 5    3.7500  2.7188  2.4825  2.3561  2.3016
+ 6    4.5000  3.1660  2.7850  2.5737  2.4812
+ 7    5.2500  3.6440  3.0993  2.7828  2.6411
+ 8    6.0000  4.1415  3.4290  2.9896  2.7875
+ 9    6.7500  4.6501  3.7745  3.1981  2.9245
+```
+
+**Results (deck-scale value-test, PyPy 3000-trial + CPython 1200, in agreement;
+base seed 24_000_000_000; `data/gt_value_mc.py`).**
+4. **Clay's leading term is CONFIRMED as the exact asymptotic slope.** The implied
+   slope [E(n₂,m)−E(n₁,m)]/(n₂−n₁) converges to c(m) for every m (measured
+   0.750 / 0.519 / 0.408 / 0.293 / 0.179 at m=1/2/3/5/10 vs c(m) =
+   0.750 / 0.521 / 0.408 / 0.293 / 0.180). n=52 reproduces Clay's table
+   (38.99 / 26.98 / 17.51 / 9.29 at m=1/2/4/10 vs DFH sample 39 / 27 / 17.6 / 9.3).
+5. **The correction δ(n,m)=E−c(m)·n is SMALL and BOUNDED — no √n or log n growth,
+   exactly 0 at m=1** (the provable control, whose low-trial noise floor ~±0.3 at
+   n=208 shows the other large-n negatives are noise). Net: E(n,m)=c(m)·n + O(1),
+   the O(1) term MC-noise-limited at ≲0.1 (Follow-up A pins it).
+
+```
+δ(n,m) = E − c(m)·n     (PyPy 3000-base; se ~0.01–0.27, growing with n)
+ m\n     26      52      104        c(m)=H_2m/2m
+  1    -0.011  -0.015  -0.016       0.75000   (provably 0; δ = noise)
+  2    -0.041  -0.104  -0.021       0.52083
+  3    -0.062  -0.048  -0.037       0.40833
+  5    -0.069  -0.128  -0.081       0.29290
+ 10    +0.422  -0.068  -0.117       0.17989   (n=26 is n/2m=1.3: pre-asymptotic)
+```
+
+6. **The strategy/value REGIME SPLIT (a refinement Clay's paper bundles).**
+   Strategy optimality is BROAD (gap 0 at every cell, incl. tiny n/2m); the value
+   formula is a large-n/2m asymptotic (fails at small n/2m — e.g. n=52, m=20/40 →
+   formula 5.56/3.23 vs true 6.13/4.98). Clay hedges both under one "n/m not too
+   small"; our exact data separates them.
+
+**LEAD (now REFUTED by Follow-up B, below):** at (52,40) the optimal value ≈4.98
+exceeds DFH's *sampled* 4.7, which HINTED G might be slightly suboptimal at small
+n/2m — but the direct CRN gap measurement (Follow-up B) shows it is NOT: DFH's 4.7
+was a Monte-Carlo sample running low, not a real strategy gap.
+
+**Follow-up A — DONE (2026-07-20, PyPy 20000-trial, se ~0.008–0.021;
+`gt_bm_precision.py`, seed base 24_200_000_000): the O(1) correction b(m) is a
+small NEGATIVE constant that deepens with m — a refinement sharper than Clay's
+"≈".** The m=1 control measures δ ≡ 0 within noise (δ(52,1)=−0.004±0.012,
+δ(104,1)=−0.014±0.018), confirming the `predicted` estimator is unbiased. At 10×
+the value-test precision there is still NO √n / log n growth (|δ| ≤ 0.12 while
+√104 ≈ 10) — the E35 O(1)-boundedness holds firmly. At the more-asymptotic n=104
+point, δ(104,m) is a small, monotone-negative function of m:
+
+```
+δ(n,m) = E − c(m)·n   (20000 trials; se in parens)
+ m    δ(52,m)          δ(104,m)          reading
+ 1   -0.004(.012)     -0.014(.018)      ≡0 control ✓
+ 2   -0.066(.014)     -0.015(.021)      →~0            (|z|_104 = 0.7)
+ 3   -0.087(.014)     -0.053(.020)      small negative (|z|_104 = 2.6)
+ 5   -0.117(.013)     -0.100(.019)      negative       (|z|_104 = 5.4)
+10   -0.050(.008)     -0.117(.015)      negative       (|z|_104 = 7.8)
+```
+
+So the refined conjecture **E(n,m) = c(m)·n + b(m) + o(1) holds with a small
+NEGATIVE b(m) deepening with m** (≈ −0.01 / −0.05 / −0.10 / −0.12 at m=2/3/5/10),
+decisively nonzero for m=5,10 — sharper than Clay's "≈". Two honest caveats: (i)
+b(m) is BOUNDED, not precisely pinned — at n≤104 the o(1) tail is still comparable
+to b for small m (m=2: δ halves −0.066→−0.015 as n doubles), so exact b(m) values
+and any closed form need larger n (≥208) or a multi-n extrapolation; (ii) the
+large-m n=52 points still carry the E35 positive pre-asymptotic transient (m=10:
+δ(52)=−0.050 sits ABOVE δ(104)=−0.117, n/2m=2.6 not yet asymptotic — the same
+transient that made δ(26,10)=+0.42 in the value-test). Seeds 24.2e9 consumed.
+
+**Follow-up B — DONE (2026-07-20, PyPy 5000-trial CRN; `gt_strategy_gap.py`, seed
+base 24_100_000_000): the lead is REFUTED — DFH's strategy G shows NO measurable
+suboptimality anywhere tested, even deep in Clay's hedged small-n/2m regime.**
+Measuring the gap E_opt−E_G DIRECTLY on identical decks (common random numbers,
+low-variance), every cell m=5..40 at n=52 and n=104 is within ~2σ of ZERO — and
+the only ~2σ blips are NEGATIVE, which is impossible for a true gap (optimal
+cannot lose to G), so they are noise. The low-variance opt(pred) ties G(hit) to
+±0.01 throughout; e.g. (52,40): opt(pred) 4.975, G(hit) 5.021, gap −0.008±0.009.
+
+```
+gap = E_opt(hit) − E_G(hit)   (5000-trial CRN; se ~0.01)
+ m       n=52 (z)        n=104 (z)
+  5   -0.004 (-0.4)    +0.005 (+0.4)
+ 10   -0.015 (-1.3)    +0.004 (+0.3)
+ 13   +0.007 (+0.6)    +0.002 (+0.2)
+ 20   +0.007 (+0.7)    +0.012 (+1.0)
+ 26   -0.019 (-1.9)    -0.021 (-1.9)      (negative ⇒ noise, not a real gap)
+ 40   -0.008 (-0.9)    +0.012 (+1.2)
+```
+
+So the (52,40) "lead" was our value (~4.98) vs DFH's Monte-Carlo SAMPLE (4.7), not
+G underperforming. Net: **G is optimal to ±0.01 even at m=40, n=52 (n/2m≈0.65)** —
+well inside the regime Clay hedged — so the strategy half of Conjecture 3 holds at
+deck scale even more robustly than the exact n≤9 grid alone showed. (The E3
+lesson again: a suggestive lead dissolves under the honest-variance measurement.)
+Seeds 24.1e9 consumed.
+
+**Honest bounds (do not overclaim).** The m-invariant optimal *policy* is Clay's /
+DFH's conjecture, **not our discovery** (Conjecture 3 already asserts G for all m).
+Our value-add is **exact verification** of it across a grid (and beyond the hedge),
+the **strategy/value regime split**, and **exact finite-n ground truth** for the
+value correction. n ≤ 9 exact is strong *evidence*, not a proof; a proof of the
+general-m case needs the **m-shelf transition matrix**, which Clay states is open —
+real math, not a computation.
+
+**Artifacts.** Core `src/ridefree/guessing_theorem.py` (`total_prob`, `exact_e` /
+`exact_e_from_perms`, `mc_e`). Probes `data/gt_exact.py` (exact grid + gap +
+slopes), `gt_robustness.py` (strict-inequality, deliberately independent),
+`gt_clay_conjecture.py` (exact vs (n/2m)H_2m + the regime split),
+`gt_value_mc.py` (deck-scale value-test). **Follow-ups A and B run (above):
+`gt_bm_precision.py`** (pinned b(m) small-negative) **and `gt_strategy_gap.py`**
+(CRN gap sweep — no G suboptimality found, to m=40). Regression anchors:
+`tests/test_guessing_theorem.py` (total_prob=1; E(n,1)=3n/4 and gap=0 exact on the
+n≤7,m≤6 grid; two exact E(9,m) MC-validated). Resume doc `docs/GUESSING_THEOREM.md`.
+**Seeds (24.x guessing-theorem space — NOT shoe-sim seeds):** value-test base
+24_000_000_000 (consumed); Follow-up B 24_100_000_000, Follow-up A 24_200_000_000
+(reserved); test pins 24_035_000_000+. Exact probes are seedless/deterministic.
+
+**Verdict.** Strong, multi-pronged evidence for BOTH halves of Clay's Conjecture 3
+(strategy exact on n≤9/m≤10; value leading-term confirmed at deck scale, correction
+bounded O(1)), plus a refinement the paper doesn't separate (the strategy/value
+regime split) and exact ground truth for the value correction — a durable
+academic/WoO-adjacent contribution independent of any gambling edge. A proof of the
+general-m case still awaits the open m-shelf transition matrix. Clay (USC,
+ajclay@usc.edu) explicitly flagged this as future work — a collaboration hook.
+
 ## E34 — M12b Gate-B arm 2: HOLE-CARD PLAY — the order channel's BIG prize (+10%/round ceiling), but gated on shuffle weakness; dead at a well-mixed machine, huge (+2–5%/round) at weak shuffles
 
 **Date:** 2026-07-20 · **Question:** insurance (E33) proved order info converts

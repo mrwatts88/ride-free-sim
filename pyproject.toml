@@ -14,3 +14,12 @@ build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Heavy statistical / Monte-Carlo gates are marked `slow` and SKIPPED by default,
+# so routine `uv run pytest` stays fast (unit + exact tests). Run the full
+# validation battery before any milestone gate:
+#   uv run pytest -m slow              # just the heavy gates
+#   uv run pytest -m "slow or not slow"  # everything
+addopts = "-m 'not slow'"
+markers = [
+    "slow: heavy statistical/Monte-Carlo gate (millions of rounds); deselected by default",
+]

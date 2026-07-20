@@ -165,6 +165,32 @@ error-rate-at-pace analysis showing the human approximation keeps a stated
 fraction of the ceiling; recon items (which machine/procedure is on the target
 floor, penetration, pass count) enumerated as a rack-card checklist.
 
+### M12d — The shelf-guessing theorem: exact evidence for Clay's Conjecture 3 ✅ (E35, 2026-07-20)
+
+An *academic* spin-off, NOT a betting arm — a math result independent of any
+edge: reuse the exact shelf posterior (M12a–b) to attack the OPEN multi-shelf
+(m ≥ 2) complete-feedback card-guessing problem, which sits directly under Clay
+2025's Conjecture 3 (arXiv:2507.10294 — Clay proved only m=1; the m-shelf
+transition matrix is his stated open problem). **Result (E35, all four gates
+pass):** DFH's m-independent strategy G is EXACTLY optimal (gap 0 as rationals)
+across the whole n ≤ 9, m ≤ 10 grid — the first exact grid-wide verification of
+the *strategy* half, holding beyond Clay's "n/m not too small" hedge; and a
+deck-scale PyPy value-test confirms the *value* formula's leading term as the
+exact slope c(m) = H_2m/2m with a small, bounded O(1) correction (n=52 reproduces
+Clay's own table). Plus a refinement the paper bundles: the strategy and value
+halves have DIFFERENT regimes (strategy optimality is broad; the value formula is
+a large-n/2m asymptotic). Core `src/ridefree/guessing_theorem.py`; probes
+`data/gt_*.py`; anchors `tests/test_guessing_theorem.py`; resume doc
+`docs/GUESSING_THEOREM.md`. **Not a proof** (needs the open transition matrix); it
+upgrades the greenlit DFH-verification write-up. **Follow-ups A and B DONE**
+(2026-07-20, PyPy): A — b(m) is a small NEGATIVE constant deepening with m
+(`gt_bm_precision.py`); B — the (52,40) suboptimality lead REFUTED, G optimal to
+±0.01 to m=40 at deck scale (`gt_strategy_gap.py`). **Next chapter: break the n!
+wall — a polynomial exact algorithm / the m-shelf transition matrix (Clay's OPEN
+object, which would PROVE the general-m case, not just evidence it); framing in
+docs/GUESSING_THEOREM.md.** Collaboration hook: Clay (USC, ajclay@usc.edu) flagged
+this as future work.
+
 ## M13 — Live-dealer data QC (reframed around the baccarat convergence)
 
 **Reframe from the research pass:** the online-roulette-bias arm is demoted

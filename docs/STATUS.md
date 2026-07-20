@@ -5,6 +5,41 @@ human, renewable edge, after E26–E34 characterized it fully; NEXT CHAPTER =
 SPORTS BETTING). This is the resume-here document: current state, key numbers,
 and the precisely-specified next step. Doc map at the bottom.
 
+> **▶ ACTIVE SIDE-THREAD (2026-07-20) — the shelf-guessing theorem, now
+> FORMALIZED and banked as experiment E35: `docs/GUESSING_THEOREM.md` (resume
+> doc), `docs/EXPERIMENTS.md` E35, `tests/test_guessing_theorem.py`.** A
+> paradigm-2 Track-A *academic* spin-off (a math result, NOT a gambling edge —
+> it does NOT reopen Track A for money; it's the greenlit DFH-verification
+> write-up, upgraded). Opened when Matt asked for breakthrough ideas beyond
+> gambling; a 3-agent research pass produced an idea menu and Matt chose thread
+> "1A": reuse the exact shelf-shuffle posterior to attack the OPEN *multi-shelf*
+> (m≥2) card-guessing problem, which engages Clay 2025's Conjecture 3
+> (arXiv:2507.10294 — m≥2 is genuinely open, the m-shelf transition matrix being
+> the stated obstacle). **STATE (E35 closed):** the exact prefix-trie shows DFH's
+> strategy G is EXACTLY optimal for all n≤9, m≤10 (reproduces Clay's proven m=1
+> value 3n/4), holding beyond his "n/m not too small" hedge — the first exact
+> grid-wide verification of the *strategy* half of the conjecture; and the scaled
+> PyPy MC value-test CONFIRMED the *value* formula's leading term as the exact
+> slope c(m)=H_2m/2m with a small, bounded O(1) correction (both halves now
+> evidenced, plus a strategy/value regime-split refinement the paper doesn't
+> separate). Core lifted to `src/ridefree/guessing_theorem.py` (pure shuffle-math,
+> two-layer rule); probes `data/gt_*.py`; 356 tests green (the heavy MC gates are
+> now `slow`-marked and skipped by default — routine `uv run pytest` is ~36 s /
+> 322 tests; `uv run pytest -m "slow or not slow"` runs the full battery).
+> **Follow-up A DONE** (`gt_bm_precision.py`, 20000-trial PyPy): the O(1)
+> correction b(m) is a small NEGATIVE constant deepening with m
+> (δ(104,m) ≈ −0.01/−0.05/−0.10/−0.12 at m=2/3/5/10, nonzero for m=5,10) —
+> refines Clay's "≈" to E=c(m)n+b(m)+o(1); bounded not fully pinned (needs n≥208).
+> **Follow-up B DONE** (`gt_strategy_gap.py`, 5000-trial CRN): the (52,40)
+> suboptimality lead is REFUTED — DFH's G shows NO measurable gap to m=40 (optimal
+> to ±0.01, deep in Clay's hedged regime), so the strategy half holds at deck
+> scale. **▶ NEXT CHAPTER: break the n! wall — a polynomial exact algorithm / the
+> m-shelf transition matrix (Clay's OPEN object; would PROVE, not just evidence,
+> the general-m case). Framing + cheap first probe in `docs/GUESSING_THEOREM.md`
+> ("Open questions / next steps" §1).** PyPy at `/Users/mattwatts/.local/bin/pypy3.11`
+> (`PYTHONPATH=src`); memory `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9
+> value-test + 24.2e9 (A) + 24.1e9 (B), all consumed.
+
 > **▶ TRACK A (paradigm-2 shuffle forensics) IS CLOSED — basically DEAD for a
 > human, renewable edge (Matt's call, 2026-07-20).** The physics was real (E26
 > reproduced Diaconis; E27 VERIFIED the DFH conjecture; the order channel is
