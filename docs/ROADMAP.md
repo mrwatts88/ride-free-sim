@@ -245,12 +245,31 @@ E37's ordered Θ(n^{2m}), by up to (2m)!); a `max_run` cap merges the long-run t
 losslessly for very large m. **The finding:** predicting the per-step hit is not
 enough (the aggregate DP amplifies residual error), so the run-length *distribution*,
 not its *count*, is the minimal *aggregating* summary — sharpening E36. 5 pins (334
-green fast / 371 full). **Next: the PROOF ROAD** (both builds a+b done) toward Clay Conjecture 3
-general m (hard math): the operator's spectrum (Tripathi's m=1→general route) and/or
-a proof of the exactly-affine value law via the exact-rational DP (yielding b(m)
-fractions). Adjacent: a richer approximate statistic to close m=10's residual; the
-standalone write-up (folds in E36–E38); the Clay (USC) hook. Full specs:
-docs/GUESSING_THEOREM.md §1 (item 2).
+green fast / 371 full). **Next: the PROOF ROAD → delivered its first step as M12h
+(E39, below).**
+
+### M12h — The exact-rational DP: the m-shelf feedback operator's SPECTRUM ✅ (E39, 2026-07-20)
+
+The proof road, step 1. `guessing_theorem.exact_e_dp_rational` runs E37's run-composition
+DP in exact `Fraction`s (a `_RationalShelfPosterior` — the shelf slot geometry is
+integer, only the probabilities need rationalizing), so the value sequence
+δ(n,m)=E_opt−c(m)·n is exact. **Result (E39, `data/gt_rational_dp.py`; exact/seedless):**
+δ is C-finite over ℚ — Berlekamp–Massey recovers its minimal recurrence (order **4m−3**,
+held-out-verified) and it factors EXACTLY as `(x−1)·∏(x−i/m)^3·∏(x−(2i−1)/2m)`. So the
+**subdominant eigenvalues of Clay's m-shelf feedback operator are {i/m}(×3) ∪
+{(2i−1)/2m}(×1), spectral gap 1/m, correction (1−1/m)ⁿ** (exact over ℚ at m=2,3;
+OOS-validated at m=4). The generating-function limit pins **b(2)=−7/144, b(3)=−269/3600,
+b(4)=−63449/705600** exactly. By-products: σ is EXACTLY sufficient (rational DP == the n!
+enumeration as Fractions), and "exactly affine" is REFUTED (the o(1) is a nonzero,
+oscillatory tail). **Framing correction banked:** the earlier "gate m=1 against Tripathi's
+eigenvalues" was a wrong turn — Tripathi (arXiv:2602.07920) diagonalized the NO-feedback
+POSITION matrix (a different object from Clay's / our complete-feedback operator). 3 pins
+(336 green fast). **Why it matters:** proving this eigenvalue formula for all m proves the
+VALUE half of Conjecture 3 (the half Clay flagged open), sharper than conjectured; the
+strategy half (G optimal) is separate and already in hand. **Next (recommended order):**
+confirm the spectrum at m=5,6 (a checkpoint — 2 solid m's isn't a law); a closed-form b(m)
+(hunt with b(5),b(6)); then the general-m proof (identify the operator's eigenvectors, then
+guess-and-verify). Full plan: docs/GUESSING_THEOREM.md §2 + the top NEXT-SESSION block.
 
 ## M13 — Live-dealer data QC (reframed around the baccarat convergence)
 

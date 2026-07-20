@@ -5,9 +5,10 @@ human, renewable edge, after E26–E34 characterized it fully; NEXT CHAPTER =
 SPORTS BETTING). This is the resume-here document: current state, key numbers,
 and the precisely-specified next step. Doc map at the bottom.
 
-> **▶ ACTIVE SIDE-THREAD (2026-07-20) — the shelf-guessing theorem, now
-> FORMALIZED and banked as experiment E35: `docs/GUESSING_THEOREM.md` (resume
-> doc), `docs/EXPERIMENTS.md` E35, `tests/test_guessing_theorem.py`.** A
+> **▶ ACTIVE SIDE-THREAD (2026-07-20) — the shelf-guessing theorem, banked as
+> experiments E35–E39 (E39 = the PROOF ROAD, step 1: the m-shelf feedback
+> operator's SPECTRUM — see the E39 block just below): `docs/GUESSING_THEOREM.md`
+> (resume doc), `docs/EXPERIMENTS.md` E35–E39, `tests/test_guessing_theorem.py`.** A
 > paradigm-2 Track-A *academic* spin-off (a math result, NOT a gambling edge —
 > it does NOT reopen Track A for money; it's the greenlit DFH-verification
 > write-up, upgraded). Opened when Matt asked for breakthrough ideas beyond
@@ -68,22 +69,46 @@ and the precisely-specified next step. Doc map at the bottom.
 > shrinks the tail losslessly for large m. **THE FINDING:** the multiset, not the
 > count, is the minimal *aggregating* summary (predicting the per-step hit isn't
 > enough — the DP amplifies residual error), sharpening E36.
-> **▶ NEXT: the PROOF ROAD is now the primary thread** (both builds a+b done). Hard
-> math not a script, toward Clay Conjecture 3 general m: (i) build the operator as a
-> matrix → its SPECTRUM (Tripathi's m=1→general route, arXiv:2602.07920), and/or (ii)
-> prove the exactly-affine value law E37 found via the exact-RATIONAL DP (which also
-> gives b(m) fractions). Adjacent (E38-motivated): a richer approximate statistic to
-> close m=10's −0.085 residual; rational posterior → closed-form b(m); poly NO-feedback
-> number; standalone write-up (folds in E36–E38); Clay (USC) hook. Full specs:
-> `docs/GUESSING_THEOREM.md` §1 (item 2). PyPy at `/Users/mattwatts/.local/bin/pypy3.11`
+> **▶ E39 DONE (2026-07-20) — the PROOF ROAD, step 1: the m-shelf FEEDBACK
+> operator's SPECTRUM.** Ran E37's run-composition DP in EXACT RATIONALS
+> (`guessing_theorem.exact_e_dp_rational`, a `_RationalShelfPosterior`). The exact
+> value sequence δ(n,m)=E_opt−c(m)·n is C-finite over ℚ: Berlekamp–Massey gives its
+> minimal recurrence (order **4m−3**, held-out-verified), which factors EXACTLY as
+> `(x−1)·∏(x−i/m)^3·∏(x−(2i−1)/2m)`. So the subdominant eigenvalues of Clay's open
+> operator are **{i/m}(×3) ∪ {(2i−1)/2m}(×1)**, spectral **gap 1/m**, correction
+> **(1−1/m)ⁿ**; and **b(2)=−7/144, b(3)=−269/3600, b(4)=−63449/705600** exact (the
+> GF limit). σ is EXACTLY sufficient (rational DP == n! enumeration as Fractions),
+> and "exactly affine" is REFUTED (the o(1) is a nonzero oscillatory tail). Rigorous
+> over ℚ at m=2,3, OOS at m=4. **A FRAMING CORRECTION is banked: the earlier "gate
+> m=1 against Tripathi's eigenvalues" was a wrong turn — Tripathi diagonalized the
+> single-shelf POSITION matrix (the NO-feedback game, value ≈√(2n/π)), a DIFFERENT
+> object from Clay's / our complete-feedback operator (value 3n/4). Do not chase it
+> for Conjecture 3.** Probe `data/gt_rational_dp.py`; 3 pins; write-up EXPERIMENTS
+> E39; 336 tests green.
+> **▶ NEXT — the recommended plan (full version + framing in GUESSING_THEOREM.md's
+> top NEXT-SESSION block + §2; Matt endorsed it 2026-07-20).** WHY the spectrum is
+> the goal: proving `{1}∪{i/m}(×3)∪{(2i−1)/2m}` for ALL m PROVES Conjecture 3's
+> VALUE half (the hard part Clay flagged open) — sharper than he stated (exact slope
+> c(m)=H₂ₘ/2m + exact intercept b(m) + fade rate). The STRATEGY half (G optimal) is
+> separate and already in hand (our DP computes optimal play directly; G==optimal to
+> m=40). **PHASE 1 (cheap, do first): (1a)** confirm the eigenvalue law at m=5,6 —
+> it's exact only at m≤3, OOS at m=4; **CRITICAL CHECKPOINT — if m=5 breaks the
+> pattern, stop and rethink.** **(1b)** closed-form b(m): b(2,3,4) exact but 3 points
+> thin (odd denom part ((2m−1)!!)²; numerators −7/−269/−63449 opaque) — get b(5),b(6)
+> (cheap once the spectrum is assumed) + hunt a harmonic form. **PHASE 2 (the proof,
+> hard math):** find the operator's EIGENVECTORS (eigenvalues known, eigenvectors the
+> missing key), guess-and-verify for general m ⟹ the value half. Adjacent: standalone
+> write-up (greenlit, now with a spectral result); Clay/USC hook (concrete artifact). PyPy at `/Users/mattwatts/.local/bin/pypy3.11`
 > (`PYTHONPATH=src`); memory `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9
 > value-test + 24.2e9 (A) + 24.1e9 (B) + 24.06e9 (E37) + 24.07e9 (E38) consumed; the
-> DPs are seedless.
-> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE, unchanged altitude
-> by E38 — a computational + structural win (a value oracle to m≤5 deck scale + the
-> "multiset is the aggregating summary" insight), not a proof advance; the proof
-> still needs the operator's spectrum or the affine-law proof, Clay/USC the realistic
-> route (HOPE VERDICT atop GUESSING_THEOREM.md; update one every session, Matt's ask).**
+> DPs are seedless (E39 added no seeds).
+> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE, RAISED by E39 —
+> the first genuine step ONTO the proof road: attack (i) "the operator's
+> eigenstructure per fixed m" is DONE for m≤4 as an exact eigenvalue conjecture with
+> a clean m-pattern, so we now know WHAT to prove. Still not a proof (the all-m
+> spectrum theorem + closed-form b(m) remain), but a concrete spectral artifact now
+> exists; Clay/USC the realistic route (HOPE VERDICT atop GUESSING_THEOREM.md; update
+> one every session, Matt's ask).**
 
 > **▶ TRACK A (paradigm-2 shuffle forensics) IS CLOSED — basically DEAD for a
 > human, renewable edge (Matt's call, 2026-07-20).** The physics was real (E26

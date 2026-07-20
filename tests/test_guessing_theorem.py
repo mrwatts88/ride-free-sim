@@ -24,11 +24,14 @@ Test seeds: the 24.0e9 block (E35; NOT shoe-sim seeds — a separate space).
 from bisect import bisect_left
 from fractions import Fraction
 
+import pytest
+
 from ridefree.guessing_theorem import (
     approx_e_dp,
     build_perms,
     exact_e,
     exact_e_dp,
+    exact_e_dp_rational,
     exact_e_from_perms,
     mc_e,
     run_lengths,
@@ -388,3 +391,84 @@ def test_approx_e_dp_deck_scale_m10_matches_mc():
     assert ns == 264967, ns
     pred, se, _, _ = mc_e(52, 10, 1500, _SEED_BASE_E38 + 810)
     assert abs(e - pred) < 0.15, (e, pred, se)
+
+
+# --- E39: the EXACT-RATIONAL run-composition DP -> exact b(m) + the spectrum ---
+# Pin the proof-road instrument: exact_e_dp_rational runs E37's DP in exact
+# Fractions, so E_opt(n,m) is rational and the value law's correction
+# delta(n,m) = E_opt - c(m)*n can be studied EXACTLY. Two results the float DP
+# could not reach — (1) b(m) as an exact fraction (b(2)=-7/144, b(3)=-269/3600,
+# b(4)=-63449/705600), the o(1) being genuinely non-zero; (2) the feedback
+# operator's spectrum: delta(n) obeys an order-(4m-3) linear recurrence whose
+# char poly is (x-1)*prod(x-i/m)^3*prod(x-(2i-1)/2m), i.e. subdominant eigenvalues
+# {i/m} (mult 3) and {(2i-1)/2m} (mult 1), spectral gap 1/m. This is the
+# COMPLETE-FEEDBACK operator (Clay's open m-shelf matrix), NOT Tripathi's
+# no-feedback POSITION matrix. See docs/GUESSING_THEOREM.md §2, EXPERIMENTS E39.
+
+
+def test_exact_e_dp_rational_matches_enumeration_exactly():
+    """The rational DP reproduces the n! enumeration with EXACT Fraction equality
+    (not the float 1e-9 of the E37 gate) across the n<=7, m=1..4 grid — the
+    strongest confirmation that the (dir, rank, run-composition) state is EXACTLY
+    sufficient (a closure violation would surface as an unequal fraction)."""
+    for n in range(2, 8):
+        perms = build_perms(n)
+        for m in range(1, 5):
+            ref = exact_e_from_perms(n, m, perms)[0]
+            dp = exact_e_dp_rational(n, m)[0]
+            assert isinstance(dp, Fraction) and dp == ref, (n, m, dp, ref)
+
+
+def test_exact_e_dp_rational_m1_and_pinned_e9():
+    """m=1 is EXACTLY 3n/4 (Clay Thm 1.5) as a Fraction, and the two pinned exact
+    E(9, m) rationals reproduce — the rational DP agreeing with the enumeration
+    at n beyond the exact grid."""
+    for n in range(2, 11):
+        assert exact_e_dp_rational(n, 1)[0] == Fraction(3 * n, 4), n
+    for m, frac in EXACT_E9.items():
+        assert exact_e_dp_rational(9, m)[0] == frac, (m, frac)
+
+
+def _pmul(a, b):
+    r = [Fraction(0)] * (len(a) + len(b) - 1)
+    for i, ai in enumerate(a):
+        for j, bj in enumerate(b):
+            r[i + j] += ai * bj
+    return r
+
+
+def _b_and_spectrum_check(m, deltas):
+    """Build the eigenvalue-law recurrence for m, assert it reproduces the exact
+    delta sequence, and return b(m) = lim delta via the generating function."""
+    # char poly (x-1) * prod (x-i/m)^3 * prod (x-(2i-1)/2m)^1  (index = power)
+    p = [Fraction(-1), Fraction(1)]
+    for r, mult in ([(Fraction(i, m), 3) for i in range(1, m)]
+                    + [(Fraction(2 * i - 1, 2 * m), 1) for i in range(1, m)]):
+        for _ in range(mult):
+            p = _pmul(p, [-r, Fraction(1)])
+    L = len(p) - 1
+    assert L == 4 * m - 3, (m, L)
+    c = [-p[L - 1 - j] for j in range(L)]  # delta[i] = sum c[j] delta[i-1-j]
+    assert all(sum(c[j] * deltas[i - 1 - j] for j in range(L)) == deltas[i]
+               for i in range(L, len(deltas))), m  # recurrence holds exactly
+    # b = N(1)/E(1),  C=(1-x)E,  N=(C*G) mod x^L
+    C = [Fraction(1)] + [-cj for cj in c]
+    E, acc = [], Fraction(0)
+    for k in range(L):
+        acc += C[k]
+        E.append(acc)
+    N = [sum(C[j] * deltas[k - j] for j in range(min(k, L) + 1)
+             if 0 <= k - j < len(deltas)) for k in range(L)]
+    return sum(N) / sum(E)
+
+
+@pytest.mark.slow
+def test_rational_dp_recovers_b2_closed_form_and_spectrum():
+    """End-to-end (slow): from the exact delta(n,2) sequence, the order-5
+    eigenvalue-law recurrence — char poly (x-1)(x-1/4)(x-1/2)^3 — holds exactly,
+    and its generating-function limit is b(2) = -7/144 EXACTLY. Pins both the
+    exact intercept and the operator's subdominant spectrum {1/4, 1/2(x3)}."""
+    c = sum(Fraction(1, k) for k in range(1, 5)) / 4  # c(2) = H_4/4 = 25/48
+    deltas = [exact_e_dp_rational(n, 2)[0] - c * n for n in range(6, 19)]
+    b = _b_and_spectrum_check(2, deltas)
+    assert b == Fraction(-7, 144), b

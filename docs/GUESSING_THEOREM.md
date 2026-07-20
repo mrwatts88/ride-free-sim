@@ -2,50 +2,108 @@
 
 > ## ▶ NEXT SESSION — START HERE (updated 2026-07-20)
 >
-> **CURRENT: E35 + follow-ups A/B + E36 + E37 + E38 all DONE; 336 tests green**
-> (routine run; heavy MC/DP gates are `slow`-marked, skipped by default). **E38
-> delivered build (b) — WITH A PIVOT.** The spec was "collapse the run composition
-> to its COUNT (#descents)"; built and measured, that FAILS at deck scale (per-step
-> error compounds into a wrong asymptotic slope: E_opt(52,5) off −4.3, E_opt(52,10)
-> off −2.1 — a near-exact-looking n≤12 gate that collapses by n=52, because
-> #descents is bounded ~2m while run lengths grow ~n/2m). **The fix: key by the
-> run-length MULTISET (the distribution — how many runs of each length, run ORDER
-> discarded), not the count.** `guessing_theorem.approx_e_dp` is that DP (E37's exact
-> transition, coarsened dedup key, mode representative). It is EXACT-GRADE for m ≤ 5
-> at deck scale (m=5 bias vs MC +0.014 z+0.3; m=3 recovers E37's exact b(3)) and
-> ~0.9% low at m=10 (bias −0.085) — vastly better than #descents, and it reaches
-> where E37's Θ(n^{2m}) is dead. **Deliverable: fast, deterministic E_opt(52, m) =
-> 39, 27.035, 21.158, 15.112, 9.214 at m=1,2,3,5,10.** A `max_run` cap merges the
-> long-run tail losslessly (m=10 identical to 4 dp for any max_run ≥ 2). Cost =
-> run-length PARTITIONS (≪ E37's ordered Θ(n^{2m}), by up to (2m)!). Full write-up
-> EXPERIMENTS E38; probe `data/gt_approx_dp.py`; 5 pins.
+> **CURRENT: E35 + follow-ups A/B + E36 + E37 + E38 + E39 all DONE; 336 tests green**
+> (routine run; heavy MC/DP gates are `slow`-marked, skipped by default). **E39 is
+> step 1 of the PROOF ROAD, and it landed a real result: the m-shelf FEEDBACK
+> operator's SPECTRUM.** Running E37's run-composition DP in EXACT RATIONALS
+> (`guessing_theorem.exact_e_dp_rational`, a `_RationalShelfPosterior` — the shelf
+> slot geometry is integer, only the probabilities need rationalizing) makes the
+> value sequence `δ(n,m)=E_opt−c(m)·n` exact. It is C-finite over ℚ:
+> Berlekamp–Massey recovers its minimal recurrence (order **4m−3**, verified on
+> held-out terms), and its char poly factors EXACTLY over ℚ as
+> `(x−1)·∏_{i=1}^{m−1}(x−i/m)^3·∏_{i=1}^{m−1}(x−(2i−1)/2m)`. So the subdominant
+> eigenvalues of Clay's open operator are **{i/m}(×3) ∪ {(2i−1)/2m}(×1)**, the
+> **spectral gap is exactly 1/m**, and the value-law correction decays like
+> **(1−1/m)ⁿ**. The generating-function limit gives **b(2)=−7/144, b(3)=−269/3600,
+> b(4)=−63449/705600** exactly. Two by-products: σ is EXACTLY sufficient (rational
+> DP == the n! enumeration as Fractions, not just float 1e-9), and the "exactly
+> affine" reading is REFUTED — the o(1) is a nonzero, oscillatory (1−1/m)ⁿ tail
+> (m=2's δ overshoots at n=16 then returns to b(2)). Rigorous over ℚ at m=2,3
+> (independent BM); OOS-validated at m=4. Full write-up EXPERIMENTS E39; probe
+> `data/gt_rational_dp.py`; 3 pins.
 >
-> **▶ THE NEXT STEP — lead (2), THE PROOF ROAD, is now the primary live thread**
-> (both builds a+b are done; §1 item 2 has the full plan). Toward Clay Conjecture 3
-> (general m): the operator is explicit and small for small m, so (i) build it as a
-> matrix and compute its SPECTRUM (`data/gt_spectrum.py`; the Tripathi m=1→general
-> route, arXiv:2602.07920), and/or (ii) prove the exactly-affine value law E37 found
-> (E=c(m)·n+b(m), o(1)<1e-5 by n≈20) via the exact-RATIONAL DP (a rational
-> `ShelfPosterior`), which also yields b(m) as exact fractions to pattern-match.
-> **Adjacent, now motivated by E38:** a RICHER approximate statistic to close m=10's
-> −0.085 residual (the multiset drops run order; a small amount of order-info might
-> recover it — the multiset↔ordered gap is the lever); the standalone write-up
-> (greenlit, now folds in E36–E38); the Clay/USC hook (a concrete artifact).
+> **⚠ FRAMING CORRECTION banked with E39 — the Tripathi detour was a wrong turn.**
+> The earlier note "assemble the operator as a matrix, compute its spectrum, gate
+> m=1 against Tripathi's published eigenvalues" conflated TWO matrices. **Tripathi
+> (arXiv:2602.07920) diagonalized the single-shelf POSITION matrix**
+> `M(i,j)=[C(i−1,j−1)+C(i−1,n−j)]/2^i` (spectrum `{1/4^k}∪{0}`), which governs the
+> **NO-feedback** game (single-shelf value ≈ √(2n/π) ≈ 5.75 at n=52). **Clay's
+> Conjecture 3 and our E37/E39 operator are the COMPLETE-FEEDBACK problem**
+> (single-shelf value = 3n/4 = 39). Different games, different matrices; the
+> position matrix is NOT on the Conjecture-3 road, and E37's operator (a leveled
+> DAG) is nilpotent — no naive spectrum to assemble. E39 gets the FEEDBACK
+> operator's spectrum the right way: read off the exact value sequence, not from an
+> assembled matrix. Do not chase Tripathi's eigenvalues for Conjecture 3.
+>
+> **▶ THE NEXT STEP — the recommended plan, in plain terms (Matt endorsed this
+> framing 2026-07-20; §2 has the technical detail).**
+>
+> **WHAT WE ARE ULTIMATELY DOING, and why the spectrum IS the goal (not a side
+> quest).** Clay's Conjecture 3 bundles two claims: (1) the VALUE claim — the score
+> formula E_opt ≈ (n/2m)·H₂ₘ (this is the HARD half; Clay flagged "the m-shelf
+> transition matrix" as the open obstacle to it), and (2) the STRATEGY claim — that
+> DFH's simple rule G is the best possible strategy. **Proving our spectrum
+> `{1}∪{i/m}(×3)∪{(2i−1)/2m}` for all m PROVES claim (1) — the hard half — in a
+> SHARPER form than Clay stated:** the unit eigenvalue forces the linear growth (and
+> its eigenvector pins the slope to exactly c(m)=H₂ₘ/2m), the gap 1/m forces the
+> leftover to settle onto a fixed number b(m), so E_opt = c(m)·n + b(m) + O((1−1/m)ⁿ)
+> — Clay's formula PLUS the exact intercept and fade-rate he never claimed. Claim (2)
+> is SEPARATE and already in hand (our DP computes OPTIMAL play directly — greedy
+> Bayes-argmax is provably globally optimal, needs no assumption about G — and G is
+> verified == optimal everywhere computed, to m=40 at deck scale, Follow-up B). So
+> "prove the spectrum" is the concrete, well-defined form of "prove the open half of
+> Conjecture 3."
+>
+> **THE PLAN, in order:**
+> - **PHASE 1 — cheap, scriptable, DO FIRST (de-risk + gather; this is the endorsed
+>   "sharpened-A").**
+>   - *(1a) Confirm the eigenvalue law at m=5, ideally m=6.* It is EXACT over ℚ at
+>     m=2,3 and only OOS-validated at m=4 — two solid m's is not a law. Method:
+>     compute exact δ(n,5) with `exact_e_dp_rational` for enough n (PyPy; m=5 states
+>     grow ~n^{10}, so cap n modestly) and check the conjectured order-17 recurrence
+>     predicts out-of-sample, exactly as `data/gt_rational_dp.py`'s
+>     `analyze(m, ..., independent=False)` does for m=4. **CRITICAL CHECKPOINT: if
+>     m=5 breaks the pattern, STOP and rethink before any proof attempt — the whole
+>     Phase 2 rests on the law being universal.**
+>   - *(1b) Closed-form b(m)=f(m).* Have b(2,3,4)=−7/144, −269/3600, −63449/705600;
+>     three points is thin (the ODD part of the denominator is `((2m−1)!!)²`, but the
+>     power-of-2 and the numerators −7/−269/−63449 show no pattern yet). Once (1a)
+>     confirms the spectrum, the eigenvalue-law recurrence needs only ~4m−3 small-n δ
+>     values, so b(5),b(6) are cheap; then pattern-hunt (try a harmonic form
+>     paralleling c(m)=H₂ₘ/2m).
+> - **PHASE 2 — the actual proof (hard math, not a script).** Prove the eigenvalue
+>   formula for all m ⟹ the value half of Conjecture 3. Route: find the EIGENVECTORS
+>   (the "shapes") of the homogenized transfer operator — the eigenVALUES are known,
+>   the eigenVECTORS are the missing half and the key. Identify them from the
+>   small-m operators (which E39 builds explicitly), guess the general-m form, then
+>   VERIFY it satisfies the operator equation (guess-and-verify — usually a clean
+>   algebraic identity, not open-ended). Phase 1 is exactly what turns this from
+>   "hard open math" into "check these formulas fit." A unit eigenvalue with a
+>   spectral gap is precisely "the affine value law," so this and proving the value
+>   law are the same theorem.
+> - **Adjacent / outputs:** the standalone write-up (greenlit — now folds in E36–E39
+>   WITH a spectral result); the Clay/USC hook (ajclay@usc.edu; the explicit operator
+>   + its small-m spectrum + the affine-law mechanism is a concrete collaboration
+>   artifact). Still open from E38: a richer approximate statistic to close m=10's
+>   −0.085 residual (unrelated to the proof road).
 >
 > **▶ HOPE VERDICT — end EVERY session with an updated one (Matt's standing ask,
 > 2026-07-20): is hope ALIVE for the big proof** (proving Clay's Conjecture 3 for
-> general m ≥ 2)? **ALIVE, unchanged in altitude by E38 — which was a computational
-> + structural win, not a proof advance.** E38 did two things for the proof: it
-> built the large-m VALUE machine (fast exact-grade E_opt(52, m≤5), so the affine
-> law and b(m) can now be probed at more m without MC noise), and it SHARPENED the
-> structural picture — the run-length *multiset*, not the ordered composition, is
-> the minimal *aggregating* summary (order matters exactly per-step but washes out
-> in aggregate as m grows, the strong-mixing limit made concrete). But the proof
-> itself still needs the two hard-math attacks unchanged from E37: (i) the operator's
-> eigenstructure per fixed m, or (ii) a proof of the affine value law + closed-form
-> b(m). Neither is a script. So: hope alive, equipment better (a value oracle to
-> m≤5 deck scale + a cleaner structural target), proof distance unchanged — the
-> Clay/USC collaboration remains the realistic route to closing general m.
+> general m ≥ 2)? **ALIVE, and RAISED a notch by E39 — the first genuine step ONTO
+> the proof road, not just around it.** E39 executed attack (i) — "the operator's
+> eigenstructure per fixed m" — for m≤4: the subdominant spectrum is now a CONCRETE
+> exact conjecture, `{i/m}(×3) ∪ {(2i−1)/2m}(×1)`, gap 1/m (rigorous over ℚ at
+> m=2,3, OOS at m=4), and the affine law's mechanism is explicit (unit eigenvalue →
+> slope c(m); gap → convergence; b(m) → unit-eigenvector projection, pinned exactly
+> for m=2,3,4). That converts "analyze an open matrix" into a specific structural
+> claim to prove — a much better-defined target. Still NOT a proof: proving the
+> spectrum holds for ALL m (an induction on the run-composition operator, or its
+> eigenvector combinatorics) is the remaining hard-math step, and a closed-form b(m)
+> is open (3 exact points, no pattern yet). Neither is a script. So: hope alive and
+> better-aimed — we now know WHAT to prove (a clean eigenvalue formula) and have it
+> verified at small m; the Clay/USC collaboration remains the realistic route to the
+> general-m theorem, but now with a concrete spectral artifact in hand, not a vague
+> "we built the matrix."
 >
 > **TASK 1 IS DONE — the result is now FORMALIZED and banked as experiment E35.**
 > The exact grid-wide DFH-`G` optimality (n≤9, m≤10) + the deck-scale value-test
@@ -186,13 +244,19 @@ expected number of correct guesses `E(n, m)`.
   Reduces to `3n/4` at `m=1`. Closing line: *"In our future work, we hope to
   make this argument precise."*
 - **2026 cluster — all SINGLE-shelf** (so `m≥2` is genuinely unclaimed):
-  Tripathi 2602.07920 (confirms Clay's single-shelf eigenvalue conjectures);
+  Tripathi 2602.07920 (confirms Clay's single-shelf eigenvalue conjectures — but
+  those are the eigenvalues of the **POSITION matrix** `M(i,j)=P(card i→pos j)`,
+  which governs the **NO-feedback** game, `{1/4^k}∪{0}`, single-shelf value
+  ≈√(2n/π); a DIFFERENT object from Clay's complete-feedback transition matrix and
+  from our E37/E39 operator — do not conflate them, see E39's framing correction);
   Kuba 2602.12928; asymmetric single-shelf 2606.18047 and Clay–Kuba–Tripathi
   2607.10418. Note: Clay's *no-feedback* appendix conjecture (a different object)
   was later shown non-optimal — the area moves fast; check for new arXiv posts.
 
-**Bottom line:** the multi-shelf (`m ≥ 2`) complete-feedback problem is OPEN, and
-Clay's Conjecture 3 sits directly on top of what our exact machinery computes.
+**Bottom line:** the multi-shelf (`m ≥ 2`) **complete-feedback** problem is OPEN,
+and Clay's Conjecture 3 sits directly on top of what our exact machinery computes.
+(E39 has now computed that operator's subdominant SPECTRUM for m≤4:
+`{i/m}(×3)∪{(2i−1)/2m}(×1)`, gap 1/m — a concrete general-m conjecture to prove.)
 
 ## What we have established (exact, gated)
 
@@ -371,37 +435,48 @@ posterior, not just its max, is a function of σ; max Δposterior/state = 0).
   polynomial and exact. Produces the exact `m=10, n=52` no-feedback number and
   exercises the position matrix without the feedback complication.
 
-**2. ▶ THE PROOF ROAD — the deeper parallel thread (lead 2) toward Clay's
-Conjecture 3 for general m.** This is the big-proof direction (Matt's standing
-interest); it is hard research math, NOT a script, but E37 turned the target from
-an abstract open matrix into a concrete, explicit, small-for-small-m operator you
-can now stare at. Two attacks, pursue in parallel with build (b):
-- *(i) The spectrum.* E37's DP transition operator is Clay's m-shelf matrix in
-  explicit form. For each fixed m it is Θ(n^{2m}) but small at small n — build it as
-  an actual matrix (states × states) and compute its eigenvalues/eigenvectors.
-  Tripathi (arXiv:2602.07920) confirmed Clay's *single-shelf* eigenvalue conjectures;
-  the road to general m is to find the analogous eigenstructure here. Look for a
-  pattern in the spectrum across m (the eigenvalues that govern the n→∞ slope c(m)
-  and the correction b(m)). A `data/gt_spectrum.py` that assembles the operator and
-  reports its spectrum for m=1,2,3 is the concrete first step.
-- *(ii) Prove the affine value law.* E37 found E_opt(n,m) = c(m)·n + b(m) + o(1)
-  with the o(1) MEASURED below 1e-5 by n≈20 (m=2), the slope EXACTLY c(m) between
-  n=26 and 52. If this is *exactly* affine past some N(m) — not just numerically —
-  that is a clean theorem (a fixed intercept b(m) once the transient clears), and
-  its proof would come straight from the operator's dominant eigenvalue being
-  exactly 1 with a specific eigenvector. Testing exactness needs the exact-RATIONAL
-  DP (a rational `ShelfPosterior` — the per-state hit is a ratio of exact shelf-law
-  quantities); it also yields b(m) as exact fractions to pattern-match (item 3).
+**2. ▶ THE PROOF ROAD — the primary thread (lead 2) toward Clay's Conjecture 3 for
+general m. Step 1 DONE (E39): the operator's SPECTRUM, for m≤4.** This is the
+big-proof direction (Matt's standing interest); it is hard research math, NOT a
+script, but E37 turned the target from an abstract open matrix into a concrete
+operator, and E39 read off its eigenvalues.
+- *(i) The spectrum — DONE for m≤4 (E39), the RIGHT way.* Note first the FRAMING
+  FIX: E37's operator, as one matrix over all states, is a leveled DAG — strictly
+  triangular, hence NILPOTENT (all eigenvalues 0), so "assemble it and take its
+  spectrum" is vacuous; and Tripathi's `{1/4^k}` are the NO-feedback POSITION
+  matrix's eigenvalues, a different object (see the framing correction up top).
+  E39 instead reads the spectrum off the exact VALUE sequence: `δ(n,m)` is C-finite
+  over ℚ, and its minimal recurrence (Berlekamp–Massey, order 4m−3) has char poly
+  `(x−1)·∏_{i=1}^{m−1}(x−i/m)^3·∏_{i=1}^{m−1}(x−(2i−1)/2m)` EXACTLY. So the
+  operator's subdominant eigenvalues are **{i/m : i=1..m−1} (mult 3) ∪
+  {(2i−1)/2m : i=1..m−1} (simple)**, spectral gap **1/m**, slowest mode
+  **(1−1/m)ⁿ** — exact over ℚ at m=2,3 (BM from data alone), OOS-validated at m=4.
+  Probe `data/gt_rational_dp.py`. **The remaining general-m step:** PROVE this
+  eigenvalue formula for all m — now a specific structural claim about the
+  run-composition operator (an induction on the transition, or the eigenvectors'
+  combinatorics), not "analyze an open matrix." Confirm at m=5 first (validate the
+  law further before proving).
+- *(ii) The affine value law — MECHANISM now explicit (E39).* E37 found E_opt =
+  c(m)·n + b(m) + o(1); E39's exact DP shows the o(1) is a NONZERO, oscillatory
+  (1−1/m)ⁿ tail (NOT "exactly affine past N" — m=2's δ overshoots at n=16 then
+  returns to b(2)). The law's structure is exactly the spectrum: the unit
+  eigenvalue gives c(m)·n and its eigenvector projection gives b(m); the gap 1/m
+  gives convergence. So proving the affine law ⟺ proving eigenvalue 1 is simple and
+  dominant with a spectral gap — the same theorem as (i). b(m) is pinned exactly
+  (item 3). **Remaining:** the general-m proof (as in (i)).
 - *The write-up + Clay hook (items 4–5) are the natural outputs of this thread.*
   Clay (USC, ajclay@usc.edu) explicitly flagged general-m as future work; the
-  explicit operator + the affine law + pinned b(m) is now a concrete artifact to
-  open a collaboration on — much stronger than a cold email.
+  explicit operator + its computed small-m spectrum + the affine-law mechanism +
+  pinned b(m) is now a concrete artifact to open a collaboration on.
 
-**3. Pin `b(m)` — largely DONE via E37 for small m.** The exact DP pins b(1,2,3) =
-0, −0.0486, −0.0747 (δ flat to <1e-5 past n≈20–36), superseding Follow-up A's MC
-bounds. What remains: a CLOSED FORM b(m) = f(m) — needs either the exact-rational
-DP (rational posterior, above) for exact b(m) fractions to hunt a pattern, or
-larger-m exact points (m≥5 wants build (b) / pruning, since exact is Θ(n^{2m})).
+**3. Pin `b(m)` — DONE EXACTLY for m=2,3,4 (E39).** The exact-rational DP +
+generating-function limit pins **b(2)=−7/144, b(3)=−269/3600, b(4)=−63449/705600**
+(exact fractions, verified via the C-finite recurrence + Shanks), superseding
+E37's floats and Follow-up A's MC bounds. What remains: a CLOSED FORM b(m)=f(m) —
+3 points is thin (the odd part of the denominator is `((2m−1)!!)²`, but the 2-adic
+part and the numerators −7/−269/−63449 don't yet reveal a pattern); get b(5),b(6)
+(cheap now — assuming the spectrum, the recurrence needs only ~4m−3 small-n δ
+values), and/or hunt a harmonic form paralleling c(m)=H₂ₘ/2m.
 
 **4. The standalone write-up (greenlit).** Fold E35 + Follow-ups A/B **+ E37** into
 "exact verification of Conjecture 3's strategy half (optimal even beyond the hedge,
@@ -426,7 +501,14 @@ approximate DP `approx_e_dp`, WITH A PIVOT: the spec's #descents/run-COUNT closu
 fails at deck scale, so the working closure is the run-length MULTISET; exact-grade
 for m≤5 at deck scale, ~0.9% at m=10, fast+deterministic where (a) is Θ(n^{2m})-dead;
 the finding — the multiset, not the count, is the minimal aggregating summary;
-probe `data/gt_approx_dp.py`, 5 pins, 334 green fast / 371 full).
+probe `data/gt_approx_dp.py`, 5 pins, 334 green fast / 371 full); **E39** (the
+proof road, step 1 — the exact-rational DP `exact_e_dp_rational`: σ exactly
+sufficient (== enumeration as Fractions), the o(1) refuted-as-exactly-affine
+(oscillatory (1−1/m)ⁿ tail), **b(2,3,4)=−7/144, −269/3600, −63449/705600 exact**,
+and the FEEDBACK operator's subdominant SPECTRUM {i/m}(×3)∪{(2i−1)/2m}(×1), gap
+1/m — order-4m−3 recurrence, exact over ℚ at m≤3, OOS at m=4; also the Tripathi
+framing correction (position vs feedback matrix); probe `data/gt_rational_dp.py`,
+3 pins, 336 green fast).
 
 ## File map (how to reproduce)
 
@@ -442,7 +524,9 @@ Machinery (existing `src/ridefree/`, gated in `tests/`):
   the run-composition DP, Clay's m-shelf operator explicit; Θ(n^{2m}), deck-scale
   exact for small m)**, **`approx_e_dp(n, m, max_run=None)` (E38 — the run-length
   MULTISET DP; polynomial for large m, exact-grade to m≤5 at deck scale, ~1% at
-  m=10; `max_run` caps the run-length tail losslessly)**, `mc_e`.
+  m=10; `max_run` caps the run-length tail losslessly)**, **`exact_e_dp_rational`
+  + `_RationalShelfPosterior` (E39 — the SAME DP in exact `Fraction`s; E_opt(n,m)
+  rational → exact δ(n,m), b(m), and the operator spectrum)**, `mc_e`.
 
 Probes (`data/`, run `uv run python data/<f>.py [args]`):
 - `gt_exact.py [n_max]` — exact `E_opt(n,m)` grid + the exact DFH-optimality gap
@@ -457,6 +541,12 @@ Probes (`data/`, run `uv run python data/<f>.py [args]`):
   the deck-scale MC gate, and the fast deterministic deck-scale deliverable. **Run
   under PyPy** (the m=5 full multiset at n=52 is ~3.6e6 states, ~2.5 min):
   `PYTHONPATH=…/src /Users/mattwatts/.local/bin/pypy3.11 -u data/gt_approx_dp.py 52 1,2,3,5,10`
+- `gt_rational_dp.py [m1,..] [n_hi]` — E39, the exact-RATIONAL DP: gates (rational
+  == enumeration EXACTLY), the exact δ(n,m) sequence → Berlekamp–Massey minimal
+  recurrence → exact factorization over ℚ (the operator spectrum) → exact b(m) via
+  the generating-function limit; self-validating (no numpy). **PyPy** to push n /
+  reach m=4 (exact arithmetic, ~(2m)ⁿ denominators):
+  `PYTHONPATH=…/src /Users/mattwatts/.local/bin/pypy3.11 -u data/gt_rational_dp.py 2,3,4 26`
 - `gt_robustness.py` — strict-inequality check (suboptimal strategies `<` opt).
 - `gt_clay_conjecture.py` — exact `E_opt` vs Clay's `(n/2m)H_{2m}`; confirms
   `c(m)=H_{2m}/(2m)`, `m=1` exact, the regime split.

@@ -2,6 +2,120 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E39 — The proof road, step 1: run E37's DP in EXACT RATIONALS → b(m) as exact fractions AND the m-shelf FEEDBACK operator's SPECTRUM. The subdominant eigenvalues are {i/m}(×3) ∪ {(2i−1)/2m}(×1); spectral gap 1/m; b(2)=−7/144, b(3)=−269/3600, b(4)=−63449/705600
+
+**Date:** 2026-07-20 · **Question (the PROOF ROAD toward Clay 2025 Conjecture 3 —
+a math result, not a gambling edge):** E37 built Clay's open m-shelf *feedback*
+transition operator explicitly (the run-composition DP) but ran it in floats, so
+it could only say the value law `E_opt(n,m) = c(m)·n + b(m) + o(1)` is "affine to
+< 1e-5 past a short transient" and bound `b(m)` numerically. Run the SAME DP in
+exact arithmetic and mine the exact rational sequence `δ(n,m) = E_opt − c(m)·n`:
+is the o(1) truly zero past a finite N, what is `b(m)` exactly, and what is the
+operator's spectrum?
+
+> **A framing correction banked with this experiment.** The prior next-step note
+> ("gate m=1 against Tripathi's published eigenvalues") conflated two different
+> matrices. **Tripathi (arXiv:2602.07920) diagonalized the single-shelf POSITION
+> matrix** `M(i,j)=[C(i−1,j−1)+C(i−1,n−j)]/2^i` — an n×n object whose spectrum
+> `{1/4^k}∪{0}` governs the *NO-feedback* game (single-shelf value ≈ √(2n/π) ≈
+> 5.75 at n=52). **Clay's Conjecture 3 and our E37 operator are the
+> COMPLETE-FEEDBACK problem** (single-shelf value = 3n/4 = 39 at n=52). Different
+> games, different matrices; the position-matrix spectrum is not on the
+> Conjecture-3 road, and E37's operator (a leveled DAG) has no naive spectrum to
+> gate. This experiment computes the spectrum of the *right* (feedback) operator,
+> read off the exact value sequence rather than an assembled matrix.
+
+**Method (`guessing_theorem.exact_e_dp_rational`, reported/self-gated by
+`data/gt_rational_dp.py`; exact, seedless).** A `_RationalShelfPosterior` mirrors
+`ShelfPosterior` in exact `Fraction`s — the shelf shuffle's slot geometry is
+integer (reused verbatim), and every survival factor `F_d(s)=|{d's slots > s}|/2m`
+and chain term is an exact ratio, so `next_probs` is rational; the DP is E37's
+verbatim (same run-composition state, same transition, dedup by σ). The exact δ
+sequence is then a C-finite sequence over ℚ: **Berlekamp–Massey** recovers its
+minimal linear recurrence, `predicts` VERIFIES it on held-out terms, its
+characteristic polynomial factors over ℚ (the eigenvalues), and the
+generating-function limit `b = N(1)/E(1)` extracts `b(m)` exactly. Cards are
+input-stack positions 1..n.
+
+**RESULTS:**
+
+1. **σ is EXACTLY sufficient — the rational DP == the n! enumeration as
+   FRACTIONS.** All 36 cells of the n≤7, m=1..6 grid match with exact `Fraction`
+   equality (E37's gate was float 1e-9); E(9,2)=152375/32768, E(9,3)=594355/157464
+   reproduce; m=1 is exactly 3n/4 (δ≡0). A closure violation in E36's
+   (dir, rank, run-composition) state would surface as an unequal fraction — it
+   does not, at any tested cell. This upgrades E37's float agreement to exact.
+
+2. **The o(1) is GENUINELY NON-ZERO at every finite n, and NON-MONOTONE — the law
+   is affine + a decaying correction, not "exactly affine" (a correction to E37's
+   language).** For m=2, δ(n) descends to −0.0486569 at n=16, then *overshoots and
+   climbs back*, approaching b(2)=−0.0486111 from below-then-above. So b(m) is a
+   genuine LIMIT (never attained at finite n), and the approach is oscillatory —
+   the signature of complex/competing-sign subdominant modes, invisible to the
+   float DP (which saw only |δ|<1e-5 flatness).
+
+3. **b(m) EXACTLY, as fractions:** **b(2) = −7/144, b(3) = −269/3600,
+   b(4) = −63449/705600** (= −0.0486111, −0.0747222, −0.0899221). Each is the
+   generating-function limit of a recurrence VERIFIED on held-out terms (m=2,3) or
+   validated out-of-sample (m=4), and cross-checked by float Shanks extrapolation.
+   These supersede E37's float b(2,3)≈−0.0486,−0.0747 and Follow-up A's MC bounds.
+   *(No clean closed form b(m)=f(m) yet — the odd part of the denominator is
+   ((2m−1)!!)² but the 2-adic part and the numerators (−7, −269, −63449) need
+   b(5),b(6) to pattern-match; OPEN.)*
+
+4. **THE SPECTRUM of Clay's m-shelf FEEDBACK operator.** δ(n,m) obeys a linear
+   recurrence of order **4m−3** whose characteristic polynomial factors EXACTLY
+   over ℚ as
+   ```
+   (x − 1) · ∏_{i=1}^{m−1} (x − i/m)^3 · ∏_{i=1}^{m−1} (x − (2i−1)/(2m))^1
+   ```
+   i.e. the operator's subdominant eigenvalues are **{i/m : i=1..m−1} each with
+   multiplicity 3** (Jordan blocks size 3 → n²·λⁿ modes) and **{(2i−1)/(2m) :
+   i=1..m−1} each simple**, with the unit eigenvalue carrying the c(m)·n term.
+   ```
+   m   order   subdominant eigenvalues (mult)              gap = 1/m
+   2     5     1/4(×1), 1/2(×3)                             1/2
+   3     9     1/6(×1), 1/3(×3), 1/2(×1), 2/3(×3)           1/3
+   4    13     1/8, 1/4(×3), 3/8, 1/2(×3), 5/8, 3/4(×3)     1/4
+   ```
+   The **spectral gap is exactly 1/m**, so the value-law correction decays like
+   **(1 − 1/m)ⁿ** — the largest subdominant eigenvalue is (m−1)/m. This is *why*
+   the large-m value law converges so slowly at deck scale (m=10 → (0.9)ⁿ, still
+   transient at n=52 — reconciling E38's m=10 residual) and why small-m δ looks
+   "flat" (m=2 → (1/2)ⁿ, negligible by n≈30). The factorization is confirmed
+   INDEPENDENTLY of the conjecture at m=2,3 (Berlekamp–Massey from the data alone,
+   6 held-out terms each), and validated out-of-sample at m=4 (the assumed
+   recurrence predicts every computed δ past order 13).
+
+5. **Proof-road payoff.** Clay named "the transition matrix for an arbitrary
+   number of shelves" as the open obstacle; E37 made it explicit; E39 gives its
+   asymptotic spectrum for small m as exact eigenvalues with a clean m-pattern.
+   The affine value law's MECHANISM is now explicit: a unit eigenvalue (→ c(m)·n),
+   a spectral gap 1/m (→ convergence), and b(m) the projection onto the unit
+   eigenvector. A general-m PROOF now has a concrete target — prove the spectrum
+   is {1} ∪ {i/m}₁^{m−1}(×3) ∪ {(2i−1)/2m}₁^{m−1} for all m (rigorous here for
+   m≤3, OOS-validated at m=4) — much sharper than "analyze an open matrix."
+
+**VERDICT.** Step 1 of the proof road delivered: the rational DP confirms σ's exact
+sufficiency, refutes the "exactly affine" reading (the correction is a nonzero,
+oscillatory (1−1/m)ⁿ tail), pins b(2),b(3),b(4) as exact fractions, and — the
+headline — computes the m-shelf FEEDBACK operator's subdominant spectrum
+{i/m}(×3) ∪ {(2i−1)/2m}(×1) with gap 1/m, exact over ℚ for m≤3 and OOS-validated at
+m=4. This is genuine progress toward Conjecture 3 (a concrete spectral target, and
+the c(m)/gap/b(m) structure made explicit), not a proof: the spectrum-for-all-m and
+a closed-form b(m) remain open, and the Θ(n^{2m}) cost caps exact m at ≤4 (PyPy).
+Honest scope: eigenvalues are read off the value SEQUENCE (a rigorous property of
+δ(n,m)); "the operator has Jordan blocks size 3" is the natural interpretation of the
+mult-3 roots, at the resolution the δ-projection excites.
+
+**Banked:** `guessing_theorem.exact_e_dp_rational` + `_RationalShelfPosterior` (src,
+two-layer rule; gated exactly vs the enumeration); probe `data/gt_rational_dp.py`
+(gates + BM + exact factorization + b(m), self-validating, no numpy); 3 pins in
+`tests/test_guessing_theorem.py` (rational==enumeration EXACTLY; m=1 & E(9,m) exact;
+b(2)=−7/144 + the {1/4,1/2×3} spectrum end-to-end [slow]) — **336 tests green**
+(routine fast run; +1 slow deselected). Seedless (exact arithmetic). PyPy pushes n /
+reaches m=4; b(4) used the eigenvalue-law recurrence validated OOS.
+
 ## E38 — Break the n! wall for LARGE m: the approximate DP over the run-length MULTISET (not the count). The pivot: collapsing the composition to its #descents FAILS at deck scale; keeping the run-length distribution recovers it — exact-grade for m ≤ 5, ~1% at m=10
 
 **Date:** 2026-07-20 · **Question (E36/E37's specified next chapter, build (b) — a

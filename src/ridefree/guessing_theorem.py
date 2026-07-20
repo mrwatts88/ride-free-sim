@@ -24,6 +24,7 @@ docs/GUESSING_THEOREM.md for the full write-up and positioning.
 from __future__ import annotations
 
 import random
+from bisect import bisect_left
 from collections import defaultdict
 from fractions import Fraction
 from itertools import permutations
@@ -229,6 +230,208 @@ def exact_e_dp(n: int, m: int) -> tuple[float, int]:
     mass: dict[tuple, float] = defaultdict(float)
     mass[root] = 1.0
     e_opt = 0.0
+    for t in range(n):  # levels 0 .. n-1 (t=n-1 leaves contribute the sure card)
+        for state in by_t.get(t, ()):
+            hit, edges = memo[state]
+            m_state = mass[state]
+            e_opt += m_state * hit
+            for pc, child in edges:
+                mass[child] += m_state * pc
+    return e_opt, len(memo)
+
+
+class _RationalShelfPosterior:
+    """Exact-rational twin of `posterior.ShelfPosterior` — the next-card law as
+    exact `Fraction`s, so the run-composition DP can run in exact arithmetic (E39,
+    the proof-road instrument). Reuses `ShelfPosterior`'s slot geometry verbatim
+    (the shelf shuffle's slot structure is integer; only the probabilities need
+    rationalizing).
+
+    Each card independently lands in one of ``2m`` slots (shelf x top/bottom,
+    i.i.d. uniform); the output is the cards sorted by slot. The next-card law
+    after an observed increasing-slot prefix factorizes into a chain term h_t and
+    survival factors F_d(s) = |{d's slots > s}| / (2m), both exact ratios:
+
+        P(next = c) proportional to  sum over c's slots s of  H_t(s^-) *
+            product over remaining d != c of F_d(s),
+
+    with H_t(s^-) = P(chain's last slot < s). The chain carries only H_t (survivals
+    reapplied at query time) — the exact deferred-survival factorization
+    `ShelfPosterior` uses, here in `Fraction`s rather than logs. Interface
+    (`next_probs`/`observe`/`copy`) matches `ShelfPosterior` so `exact_e_dp_rational`
+    is `exact_e_dp` with the float posterior swapped out.
+    """
+
+    def __init__(self, shelves: int, n: int) -> None:
+        base = ShelfPosterior(shelves, list(range(1, n + 1)))
+        self.n = n
+        self.lanes = base.lanes
+        self.nslots = base.nslots
+        self._slots = base._slots  # per-card sorted integer slot lists
+        self._owner = base._owner  # slot index -> owning input position
+        self.stack = base.stack  # [1, 2, ..., n]
+        self._index = base._index
+        self._remaining = [True] * n
+        self._n_remaining = n
+        # Chain over the last observed card's slot: support (sorted) + normalized
+        # cumulative. None means t = 0 (H_0(s^-) == 1 for every s).
+        self._h_slots: list[int] | None = None
+        self._h_cum: list[Fraction] | None = None
+
+    def _h_before(self, s: int) -> Fraction:
+        """H_t(s^-): chain probability that the last observed slot is < s."""
+        if self._h_slots is None:
+            return Fraction(1)
+        return self._h_cum[bisect_left(self._h_slots, s)]
+
+    def _sweep(self):
+        """prod[s] = product of F_d(s) over remaining d with F_d(s) > 0;
+        zeros[s] = count of remaining d with F_d(s) == 0. One exact pass of the
+        global slot axis (the `ShelfPosterior` sweep, in `Fraction`s)."""
+        lanes = self.lanes
+        owner = self._owner
+        remaining = self._remaining
+        count = [lanes] * self.n
+        cur = Fraction(1)
+        cz = 0
+        prod = [Fraction(1)] * self.nslots
+        zeros = [0] * self.nslots
+        for s in range(self.nslots):
+            d = owner[s]
+            if remaining[d]:
+                k = count[d]
+                count[d] = k - 1
+                cur /= Fraction(k, lanes)  # drop F_d's old factor k/(2m)
+                if k == 1:
+                    cz += 1  # F_d(s) is now 0 (excluded from the product)
+                else:
+                    cur *= Fraction(k - 1, lanes)  # new F_d(s) = (k-1)/(2m)
+            prod[s] = cur
+            zeros[s] = cz
+        return prod, zeros
+
+    def next_probs(self) -> dict:
+        """P(next dealt card = c | observed prefix), as exact `Fraction`s."""
+        lanes = self.lanes
+        prod, zeros = self._sweep()
+        weights = {}
+        total = Fraction(0)
+        for i in range(self.n):
+            if not self._remaining[i]:
+                continue
+            acc = Fraction(0)
+            for r, s in enumerate(self._slots[i]):
+                h = self._h_before(s)
+                if h == 0:
+                    continue
+                kc = lanes - r - 1  # |c's slots > s| = F_c(s) * 2m
+                if zeros[s] - (1 if kc == 0 else 0) > 0:
+                    continue  # some other remaining d has F_d(s) == 0
+                others = prod[s] if kc == 0 else prod[s] / Fraction(kc, lanes)
+                acc += h * others
+            weights[self.stack[i]] = acc
+            total += acc
+        if total == 0:
+            raise ValueError("observed prefix impossible under this model")
+        return {card: w / total for card, w in weights.items()}
+
+    def observe(self, card) -> None:
+        """Condition on `card` dealt next; the new chain is proportional to
+        H_t(s^-) restricted to `card`'s slots (deferred survivals unchanged)."""
+        i = self._index[card]
+        slots = self._slots[i]
+        hvals = [self._h_before(s) for s in slots]
+        total = sum(hvals, Fraction(0))
+        if total == 0:
+            raise ValueError("observed prefix impossible under this model")
+        cum = [Fraction(0)]
+        acc = Fraction(0)
+        for v in hvals:
+            acc += v / total
+            cum.append(acc)
+        self._h_slots = slots
+        self._h_cum = cum
+        self._remaining[i] = False
+        self._n_remaining -= 1
+
+    def copy(self) -> "_RationalShelfPosterior":
+        twin = object.__new__(_RationalShelfPosterior)
+        twin.n = self.n
+        twin.lanes = self.lanes
+        twin.nslots = self.nslots
+        twin._slots = self._slots
+        twin._owner = self._owner
+        twin.stack = self.stack
+        twin._index = self._index
+        twin._remaining = list(self._remaining)
+        twin._n_remaining = self._n_remaining
+        twin._h_slots = self._h_slots  # replaced wholesale on observe; safe to share
+        twin._h_cum = self._h_cum
+        return twin
+
+
+def exact_e_dp_rational(n: int, m: int) -> tuple[Fraction, int]:
+    """EXACT-RATIONAL optimal-guessing value E_opt(n, m) as a `Fraction`, via the
+    run-composition DP (E39) — `exact_e_dp` run in exact arithmetic.
+
+    Identical state graph and transition to `exact_e_dp` (E37's explicit form of
+    Clay's m-shelf operator), but every posterior / hit / mass is an exact
+    `Fraction` (`_RationalShelfPosterior`), so E_opt(n, m) is returned rational.
+    This is the proof-road instrument: it lets the value law
+    E_opt = c(m)*n + b(m) + o(1) be interrogated EXACTLY — whether the o(1) is
+    truly zero past a finite N or (as expected) decays geometrically, and the
+    intercept b(m) as an exact fraction to pattern-match a closed form. The
+    geometric ratio recovered from the exact delta-sequence is a subdominant
+    eigenvalue of the operator (the spectral-proof down-payment).
+
+    The DP dedups states by sigma = (direction, rank-of-last, run-composition), so
+    it is correct iff sigma is EXACTLY sufficient (E36); the n!-enumeration
+    `exact_e` confirms that with exact `Fraction` equality at every cell it can
+    reach (n <= ~8). Returns ``(E_opt as Fraction, number of DP states)``.
+
+    Heavier than the float DP (exact arithmetic, denominators ~ (2m)^n) but the
+    state count is modest at moderate n: practical to n ~ 26-30 at m=2 and n ~ 20
+    at m=3 (CPython; PyPy for more). Pure shuffle-math (imports the posterior
+    layer only — the two-layer rule).
+    """
+    root = (True, 0, ())  # (direction, rank-of-last, run composition)
+    memo: dict[tuple, tuple[Fraction, list]] = {}
+
+    def explore(post, state) -> None:
+        probs = post.next_probs()
+        remaining = sorted(probs)
+        vec = [probs[c] for c in remaining]
+        hit = max(vec)
+        _dir, rank, runcomp = state
+        edges: list = []
+        if len(remaining) > 1:  # else a leaf: one card left, hit == 1, no branch
+            for j, card in enumerate(remaining):
+                pc = vec[j]
+                if pc == 0:
+                    continue
+                ascending = j >= rank  # card > last iff its rank >= last's rank
+                if not runcomp:
+                    child_runcomp = (1,)
+                elif ascending:
+                    child_runcomp = runcomp[:-1] + (runcomp[-1] + 1,)
+                else:
+                    child_runcomp = runcomp + (1,)
+                child = (ascending, j, child_runcomp)
+                edges.append((pc, child))
+                if child not in memo:  # dedup: explore each state's subtree once
+                    twin = post.copy()
+                    twin.observe(card)
+                    explore(twin, child)
+        memo[state] = (hit, edges)
+
+    explore(_RationalShelfPosterior(m, n), root)
+
+    by_t: dict[int, list] = defaultdict(list)
+    for state in memo:
+        by_t[sum(state[2])].append(state)
+    mass: dict[tuple, Fraction] = defaultdict(lambda: Fraction(0))
+    mass[root] = Fraction(1)
+    e_opt = Fraction(0)
     for t in range(n):  # levels 0 .. n-1 (t=n-1 leaves contribute the sure card)
         for state in by_t.get(t, ()):
             hit, edges = memo[state]
