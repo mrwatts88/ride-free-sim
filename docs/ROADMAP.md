@@ -118,9 +118,18 @@ isolated from mixing debt by the position-vs-class observer instrument
 (same-n same-seed): mixing debt grows 8.8→92 bits at n=52→208; copies cost
 51-87% of it. Instrument limits on record: MIX 0.40 at 8 decks
 (calibrated-by-contamination), ADF claims at 2-pass are junk (realized
-readout only). **Rung 3b (E30): the baccarat coup adapter over M9 —
-real-paytable P/B/T/D7/P8 pricing via coupled-CV split-sample sampling
-(coup.py).**
+readout only).
+
+**RUNG 3b ✅ (E30, same day): the baccarat coup adapter — machinery GATED,
+probe verdict an honest null with a named lead.** `coup.py`: coups resolve
+through the validated M9 engine, coupled-CV pricing (exact for a
+composition filter — the anchor gate), split-sample selection kills
+winner's curse. 48 shoes / 3,851 coups, EZ paytables, pen .95:
+filter-minus-counter ≈ 0 at this power; the counter reproduces M9's
+deep-shoe D7/P8 attack on cue; **D7/P8 realized ≫ claimed at every
+threshold (≈ +1.9σ — the mix-shrink signature): suggestive, NOT certified.
+Rung 3c spec in STATUS: exact-4-prefix pricing, coup-level contamination
+calibration, the ~200-shoe D7/P8 replication.**
 
 **RUNG 2 ✅ (E28, 2026-07-19): multi-deck copy ambiguity + the PyPy
 decision.** `MultiDeckShelfPosterior` — a particle filter over the latent

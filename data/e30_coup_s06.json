@@ -1,0 +1,203 @@
+{
+ "shoes": 8,
+ "coups": 644,
+ "samples": 120,
+ "surprises": 283,
+ "n": 416,
+ "thresholds": {
+  "0.02": {
+   "filter": {
+    "banker": {
+     "bets": 223,
+     "predicted": 0.9172157489678532,
+     "realized": -14.0
+    },
+    "player": {
+     "bets": 214,
+     "predicted": -3.11753779583593,
+     "realized": -4.0
+    },
+    "tie": {
+     "bets": 146,
+     "predicted": -8.691187226034629,
+     "realized": -20.0
+    },
+    "dragon7": {
+     "bets": 286,
+     "predicted": -56.14833336467952,
+     "realized": 42.0
+    },
+    "panda8": {
+     "bets": 248,
+     "predicted": -13.845983790966514,
+     "realized": -66.0
+    }
+   },
+   "counter": {
+    "banker": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "player": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "tie": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "dragon7": {
+     "bets": 54,
+     "predicted": 4.079583330099641,
+     "realized": 28.0
+    },
+    "panda8": {
+     "bets": 62,
+     "predicted": 4.918572195017649,
+     "realized": 68.0
+    }
+   },
+   "filter_bets": 1117,
+   "filter_realized": -62.0,
+   "filter_predicted": -80.88582642854874,
+   "counter_realized": 96.0,
+   "z": 0.1660419807896874,
+   "excess_per_shoe": -19.75
+  },
+  "0.05": {
+   "filter": {
+    "banker": {
+     "bets": 135,
+     "predicted": 1.2371480685375906,
+     "realized": -12.0
+    },
+    "player": {
+     "bets": 134,
+     "predicted": -1.4683451656296123,
+     "realized": -3.0
+    },
+    "tie": {
+     "bets": 144,
+     "predicted": -8.067135014739465,
+     "realized": -18.0
+    },
+    "dragon7": {
+     "bets": 279,
+     "predicted": -54.00462944621312,
+     "realized": 49.0
+    },
+    "panda8": {
+     "bets": 245,
+     "predicted": -15.015610221205087,
+     "realized": -63.0
+    }
+   },
+   "counter": {
+    "banker": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "player": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "tie": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "dragon7": {
+     "bets": 34,
+     "predicted": 3.351596711096369,
+     "realized": 48.0
+    },
+    "panda8": {
+     "bets": 40,
+     "predicted": 4.150619735408191,
+     "realized": 38.0
+    }
+   },
+   "filter_bets": 937,
+   "filter_realized": -47.0,
+   "filter_predicted": -77.3185717792497,
+   "counter_realized": 86.0,
+   "z": 0.258820769566881,
+   "excess_per_shoe": -16.625
+  },
+  "0.1": {
+   "filter": {
+    "banker": {
+     "bets": 39,
+     "predicted": 0.6235176079791555,
+     "realized": -4.0
+    },
+    "player": {
+     "bets": 49,
+     "predicted": -0.5827406306324059,
+     "realized": -4.0
+    },
+    "tie": {
+     "bets": 112,
+     "predicted": -3.368766890255646,
+     "realized": -40.0
+    },
+    "dragon7": {
+     "bets": 274,
+     "predicted": -53.34247148715614,
+     "realized": 54.0
+    },
+    "panda8": {
+     "bets": 223,
+     "predicted": -13.085479914130353,
+     "realized": -67.0
+    }
+   },
+   "counter": {
+    "banker": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "player": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "tie": {
+     "bets": 0,
+     "predicted": 0.0,
+     "realized": 0.0
+    },
+    "dragon7": {
+     "bets": 12,
+     "predicted": 1.8430801000617187,
+     "realized": -12.0
+    },
+    "panda8": {
+     "bets": 13,
+     "predicted": 2.216937726630565,
+     "realized": 13.0
+    }
+   },
+   "filter_bets": 697,
+   "filter_realized": -61.0,
+   "filter_predicted": -69.75594131419538,
+   "counter_realized": 1.0,
+   "z": 0.08525787717326211,
+   "excess_per_shoe": -7.75
+  }
+ },
+ "shard": 6,
+ "seed": 23200006000,
+ "mix": 0.4,
+ "passes": 1,
+ "rules": "EZ_BACCARAT_8D",
+ "shelves": 10,
+ "seconds": 1120.655056625139,
+ "s_per_shoe": 140.08188207814237
+}

@@ -1,7 +1,69 @@
 # STATUS — read this first in a new session
 
-Updated 2026-07-19. This is the resume-here document: current state, key numbers,
-and the precisely-specified next step. Doc map at the bottom.
+Updated 2026-07-19 (late session — M12b rung 3). This is the resume-here
+document: current state, key numbers, and the precisely-specified next
+step. Doc map at the bottom.
+
+**M12b RUNG 3 DONE (2026-07-19, the "baccarat shuffle" session — E29 +
+E30): the throughput wall is down, the 8-deck door is open, and the first
+real-paytable probe returned an honest null with a named lead.**
+- **Rung 3a (E29, ALL GATES PASS):** `AssumedDensityShelfPosterior` — the
+  O(slots) assumed-density filter (fractional occupancy + ONE deferred
+  chain; decision record in DESIGN.md). Reduces EXACTLY to the rung-1
+  posterior on distinct stacks (1e-9 gate); four structural rules each
+  cure a MEASURED failure (capped water-fill — per-class occupancy is
+  exact bookkeeping; the 1e-9 occupancy hedge; chain-defers-to-occupancy
+  with strand truncation + in-class repair + counted resets; the MIX
+  ε-contamination output floor). **57-76× the PF at equal fidelity**
+  (d3: ADF +32.9 vs PF +32.2 u/shoe, both calibrated), deterministic,
+  O(positions) copy(). **First calibrated 8-deck number: +53.0 u/shoe of
+  pure order structure OOS (z −1.70, mix 0.40 fitted on a separate fit
+  block)** — E28's "8-deck UNKNOWN, do not extrapolate" is RESOLVED by
+  measurement: the channel survives 8 copies (u/shoe by decks: 8.7 → 23 →
+  33 → 53). **Copy isolation (the queued study, done):** position-vs-class
+  observer on same-n same-seed shoes separates the confound — the fixed
+  10-shelf machine's mixing debt GROWS 8.8 → 35 → 64 → 92 bits/shoe at
+  n=52→208 (the n^1.5 shortfall in information units) while copy
+  ambiguity at fixed n costs 51%/68%/87% of those bits at 2/3/4 decks;
+  the surviving units still grow (+19 → +27 → +45/shoe). Instrument
+  limits on record: 8-deck is calibrated-BY-CONTAMINATION (mix 0.40, 52
+  surprises/shoe, realized ≈ 0.83× predicted inside CI); ADF claims at
+  2-pass are junk (z −2.37 on ~zero true signal) — only its REALIZED
+  readout (−0.37 u/shoe ≈ 0 ✓) or exact rung-1 machinery can certify a
+  fix. 344 tests green (9 new).
+- **Rung 3b (E30): the baccarat coup adapter is BUILT and GATED; the
+  real-paytable probe is an honest null.** `coup.py` (two-layer rule
+  intact): coups resolve through the validated M9 engine; pricing by
+  coupled control-variate sampling (exact-zero variance vs a composition
+  filter — the anchor gate); split-sample A-selects/B-predicts kills
+  winner's curse. 48 shoes / 3,851 coups at EZ paytables, pen .95,
+  10-shelf 1-pass, M=120/arm: **filter-minus-counter excess −0.9..+1.4
+  u/shoe ≈ 0 at this power** — the value-level channel does not
+  automatically clear the real-paytable toll; B-claims honestly call the
+  noise-fires (≈ −6%/bet at M=120 MC noise). The counter arm reproduces
+  M9's D7/P8 deep-shoe attack on cue (318+172 bets, +7-8%), zero main
+  bets. **THE LEAD: D7/P8 realized ≫ claimed at every threshold (D7
+  +6.9%/bet vs −9.5% claimed; P8 +9.9% vs −8.2%; ≈ +1.9σ combined) — the
+  suspected mechanism is the mix-0.40 shrink compounding across a coup's
+  4-6 sampled cards while realized keeps the full signal. SUGGESTIVE,
+  NOT CERTIFIED (E3 lesson).**
+
+**THE PRECISELY-SPECIFIED NEXT STEP (rung 3c — earn the real-paytable
+number):** (1) **exact-4-card-prefix hybrid pricing** — enumerate the
+10-value tree for cards 1-4 exactly under the filter (naturals close ~34%
+of coups; composition-tail the draws), killing the selection MC noise that
+buys ~1.8 noise-bets/coup; cost ≈ the current M=120 sampling. (2)
+**coup-level contamination calibration** — the value-level mix 0.40
+over-shrinks JOINT claims (the D7/P8 signature); refit at coup level on
+probe seeds, certify OOS, E17 gate. (3) **the D7/P8-focused replication**
+— late-shoe window, mains dropped, ~200 shoes for 40:1-variance power; if
+the realized-vs-claimed gap survives a calibrated instrument, THAT is the
+first real-game order edge. Queued behind: the 2-pass coup control (~20×
+slot axis), observation degradation (partial view of shoe k), the poker
+arm (own legality pass first), M13 (parked behind M12b). Seeds: E29
+consumed 23.0e9 (test pins 23000000001-07) + 23.1e9 (battery); E30
+consumed 23.2e9 (shard-strided 23_200_001_000..006_000); **next unused
+block 23.3e9+**.
 
 **PARADIGM 2 OPENED (2026-07-19) — read `docs/PARADIGM2.md` first.** After
 M11 closed, Matt asked whether there's "a different side we're not seeing" —
@@ -117,8 +179,9 @@ wobbles before the edge dies). Two-pass fix collapses the channel at
 multi-deck too (0 bets). 335 tests green. Seeds 22.9e9. Artifacts:
 `data/e28_multideck.*`, `data/bench_pypy.py`.
 
-**THE PRECISELY-SPECIFIED NEXT STEP: two immediate builds, then the real
-baccarat adapter.** (1) **The O(slots) assumed-density (soft-assignment)
+**[SUPERSEDED — all three items below LANDED as rung 3 (E29/E30), see the
+block at the top of this file] THE PRECISELY-SPECIFIED NEXT STEP: two
+immediate builds, then the real baccarat adapter.** (1) **The O(slots) assumed-density (soft-assignment)
 posterior** — the PF's O(particles × slots × cards) cost is the project's
 first throughput wall (8-deck 2-pass ≈ 16 s/shoe even under PyPy), and an
 8-deck production number needs a posterior whose cost is independent of

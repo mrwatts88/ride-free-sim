@@ -2,6 +2,71 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E30 — M12b rung 3b: the baccarat coup adapter — machinery GATED, and the honest probe verdict: no certified real-paytable excess at 48 shoes; the D7/P8 realized-vs-claimed gap is the lead
+
+**Date:** 2026-07-19 · **Question:** convert the 8-deck order channel (E29:
++53 u/shoe at composition-fair odds) into REAL bet units: price every coup
+of a known, shelf-shuffled 8-deck shoe at EZ Baccarat paytables
+(P/B/T/Dragon7/Panda8), with the perfect counter riding the same shoes so
+the filter's EXCESS is pure order structure in game currency.
+
+**Machinery (new; `coup.py`, decision record in DESIGN.md, 344 tests
+green):** coups resolve through the VALIDATED M9 engine (never a
+reimplemented tableau); pricing is coupled control-variate sampling
+(p̂ = mean[1_filter − 1_composition] + exact `fast_outcomes` — variance
+scales with the filter-vs-composition DIFFERENCE; exact with zero variance
+for a composition filter, the load-bearing test gate); bets are SELECTED on
+sample set A and PREDICTED by independent set B (winner's curse excluded
+by construction). `ExactOutcomes` reused with probabilities as float
+counts, so M9's EV methods apply verbatim.
+
+**Run (`data/e30_coup.py` × 6 shards, 48 shoes, 3,851 coups, M=120/arm,
+mix 0.40 from E29, EZ_BACCARAT_8D, pen .95, 10-shelf 1-pass; seeds 23.2e9;
+~138 s/shoe):**
+
+| t | filter bets | realized u/shoe | B-claims u/shoe | shard-z | counter u/shoe | EXCESS u/shoe |
+|---|---|---|---|---|---|---|
+| 0.02 | 6,779 | +3.13 | −8.56 | +1.46 | +3.98 | **−0.85** |
+| 0.05 | 5,605 | +2.79 | −8.07 | +1.58 | +2.02 | **+0.77** |
+| 0.10 | 4,235 | +1.02 | −6.81 | +1.06 | −0.40 | **+1.42** |
+
+1. **No certified real-game excess at this scale.** Filter-minus-counter
+   is −0.9..+1.4 u/shoe with a per-shoe sd near 20 — statistically zero at
+   48 shoes. The E29 value-level channel does NOT automatically clear the
+   real-paytable toll through this instrument.
+2. **The instrument is honest about itself**: B-claims say the fired bets
+   average ≈ −6%/bet (noise-selection pays the toll: at M=120 the MC sd
+   swamps a 2-10% threshold, ~1.8 bets/coup fire), and aggregate
+   realized-vs-claimed stays inside the gate (shard-z ≤ +1.58 < 4.5).
+   Main bets and tie behave exactly as claimed (tie −16% realized ≈ toll;
+   the counter NEVER finds a +2% main — matches M9b: composition cannot
+   move the mains).
+3. **THE LEAD: Dragon 7 / Panda 8 realized far above their claims at every
+   threshold** (t=0.02: D7 +6.9%/bet realized vs −9.5% claimed on 1,572
+   bets; P8 +9.9% vs −8.2% on 1,561; combined ≈ +1.9σ). The suspected
+   mechanism is structural, not luck: the mix-0.40 contamination shrinks
+   CLAIMED deviations toward composition at EVERY sampled card, compounding
+   over a coup's 4-6 cards, while realized profit keeps the full signal —
+   i.e., at 8 decks the claims are over-shrunk for exactly the bets where
+   order structure pays (the 3-card-total events). +1-1.6σ per bet type is
+   SUGGESTIVE, NOT CERTIFIED (the E3 lesson: replicate before believing;
+   40:1 variance needs ~4× the shoes for a clean read).
+4. **The counter arm reproduces M9's attack surface on cue**: 318 D7 + 172
+   P8 composition bets at +7-8% exact EV, all deep-shoe, zero main bets —
+   the E20/M9c shape, now appearing as the baseline the filter must beat.
+
+**Verdict:** rung 3b's DELIVERABLE (the conversion machinery, gated,
+honest) is DONE; the real-paytable NUMBER is not yet earned. Sharpening
+paths, in order: (1) exact-4-card-prefix hybrid pricing (kills selection
+MC noise at ~the same cost as M=120 sampling); (2) coup-level calibration
+of the contamination (the value-level mix over-shrinks joint claims —
+refit on probe seeds, certify OOS); (3) a D7/P8-focused late-shoe run at
+4× shoes with mains dropped. Queued behind those: the 2-pass coup control
+(the value-level control already holds — E29 part 4 — and the 2-pass slot
+axis is ~20× the cost), and the observation-degradation knob (partial view
+of shoe k). Artifacts: `data/e30_coup.py`, `e30_verdict.py`,
+`e30_coup_s01-06.json`.
+
 ## E29 — M12b rung 3a: the O(slots) assumed-density posterior GATED; the copy tax isolated from the mixing debt; the 8-deck door opened
 
 **Date:** 2026-07-19 · **Question:** the PF's O(particles × slots) cost is
