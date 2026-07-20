@@ -2,8 +2,35 @@
 
 > ## ▶ NEXT SESSION — START HERE (updated 2026-07-20)
 >
-> **CURRENT: E35 + follow-ups A/B + E36 + E37 + E38 + E39 + E40 all DONE; 338 tests
+> **CURRENT: E35 + follow-ups A/B + E36 + E37 + E38 + E39 + E40 + E41 all DONE; tests
 > green** (routine fast run; heavy MC/DP gates are `slow`-marked, skipped by default).
+>
+> **▶▶ E41 (2026-07-20) — PHASE 2 BREAKTHROUGH: the SLOPE c(m) = H₂ₘ/(2m) is now PROVEN
+> for ALL m — the open, hard half of Clay's Conjecture 3. See §THE SLOPE PROOF below for
+> the full argument.** A DIRECT block-decomposition proof that bypasses the "m-shelf
+> transition matrix" obstacle Clay flagged as open. Three ingredients, all gated
+> (`data/gt_slope_proof.py`): (i) the **2m-block model** — each card draws an i.i.d.
+> uniform label ℓ∈{0..2m−1}; output = 2m monotone blocks `B₀↑B₁↓…` concatenated; (ii)
+> the **label-exchangeability LEMMA** (exact, verified by enumerating all (2m)ⁿ label
+> vectors): conditioned on the prefix's true block-parse, the undealt labels are exactly
+> independent-uniform on {ℓ..2m−1} (values > v) / {ℓ+1..2m−1} (values < v), so the
+> optimal hit is EXACTLY **1/(2m−ℓ)** and the MAP guess is `v+1` (= DFH's G); (iii) each
+> block holds a fraction 1/(2m) of the deck and the non-interior steps are O(1), so
+> `E_opt = Σ_ℓ (1/(2m−ℓ))·(n/2m) + O(1) = (H₂ₘ/2m)n + O(1)`. **H₂ₘ demystified: it is
+> Σ_ℓ 1/(2m−ℓ), the average over blocks of 1/(#still-live blocks).** With the strategy
+> half already in hand (G optimal to m=40), `E_opt = (H₂ₘ/2m)n + O(1)` is a THEOREM.
+> **▶ NEXT STEP (the Phase-2 tail — prove the FULL value law; detailed plan in §THE SLOPE
+> PROOF → "▶ NEXT STEP"):** finish what we found — prove BOTH the exact intercept
+> **b(m) = 3/2 − 1/(4m) − H₂ₘ⁽²⁾** AND the exact fade rate **O((1−1/m)ⁿ)** (E40 confirmed
+> both at m≤6; they're our sharpening beyond Clay). Now a bounded boundary computation, not
+> "find the eigenvectors." Two verified leads already in hand: **(fade)** the observer's
+> per-step hit excess over 1/(2m−ℓ) decays at rate EXACTLY 1−1/m (confirmed m=2,3,4,5 to
+> 4 dp) — so the fade IS the block-0 parse-mixing correction and needs only the dominant
+> rate, not the full E39 spectrum; **(intercept)** H₂ₘ⁽²⁾ = Σ_ℓ 1/(2m−ℓ)² is the same 2m
+> slots squared (second-order block term), the corrections cancel to 0 at m=1 (b(1)=0, the
+> warm-up). CAVEAT: per-block intercepts look scrambled (transitions cross boundaries) —
+> sum over the whole deck. The E39 spectrum is now a cross-check, not the route.
+>
 > **▶ E40 (2026-07-20) — PHASE 1 of the proof road is DONE, and it landed the headline
 > the spectrum was pointing at: a CLOSED FORM for the value-law intercept.**
 > - **(1a) The critical checkpoint PASSED.** The E39 eigenvalue law
@@ -83,23 +110,19 @@
 >   unique ≤3-feature exact fit of b(1..6), limit 3/2 − π²/6. The full value law is now
 >   explicit: E_opt(n,m) = (H_{2m}/2m)·n + [3/2 − 1/(4m) − H_{2m}^{(2)}] + O((1−1/m)ⁿ).
 >   (Details: EXPERIMENTS E40; §2–3 below; `data/gt_bm_closed_form.py`.)
-> - **▶ PHASE 2 — NOW THE ACTIVE STEP: the actual proof (hard math, not a script).**
->   Prove the eigenvalue formula for all m ⟹ the value half of Conjecture 3. Route:
->   find the EIGENVECTORS (the "shapes") of the homogenized transfer operator — the
->   eigenVALUES are known (proven-pattern at m≤6), the eigenVECTORS are the missing
->   half and the key. Identify them from the small-m operators (E39 builds them
->   explicitly), guess the general-m form, then VERIFY it satisfies the operator
->   equation (guess-and-verify — usually a clean algebraic identity). **Phase 1's
->   closed form is the concrete lever:** the unit eigenvector's projection is EXACTLY
->   3/2 − 1/(4m) − H_{2m}^{(2)} and the slope-mode's is H_{2m}/2m — first- vs
->   second-order harmonic sums over the SAME 2m slots. That parallel is almost
->   certainly the eigenvector's signature: look for a unit eigenvector whose entries
->   are built from partial sums of 1/k and 1/k² over the slot geometry, guess-and-verify
->   against E37's explicit small-m operator. A unit eigenvalue with a spectral gap is
->   precisely "the affine value law," so this and proving the value law are one theorem.
->   *(Optional de-risk first: push the eigenvalue-law confirmation to m=7 — cheap
->   relative to a proof, one more data point — but the checkpoint already passed at
->   m=5,6, so this is confidence, not a gate.)*
+> - **✅ PHASE 2 — THE SLOPE IS PROVEN (E41, 2026-07-20).** The value half's leading
+>   term c(m) = H_{2m}/(2m) is now a THEOREM for all m, proved NOT via the operator
+>   eigenvectors but by a direct **block-decomposition + label-exchangeability lemma**
+>   (§THE SLOPE PROOF; `data/gt_slope_proof.py`). The eigenvector route (find the
+>   homogenized transfer operator's unit eigenvector, guess-and-verify a harmonic ansatz)
+>   turned out to be unnecessary for the slope — the elementary route reached it first,
+>   and demystified H_{2m} = Σ_ℓ 1/(2m−ℓ) as the block-average hit. **▶ REMAINING PHASE-2
+>   TAIL:** derive the exact intercept b(m) = 3/2 − 1/(4m) − H_{2m}^{(2)} (E40) by summing
+>   the O(1) block-boundary/transition/parse-mixing corrections. H_{2m}^{(2)} = Σ_ℓ
+>   1/(2m−ℓ)² is the same 2m slots squared (second-order block term); the corrections
+>   cancel to exactly 0 at m=1 (b(1)=0). This is a bounded, concrete computation. The
+>   eigenvector/spectrum machinery (E39) remains available as a cross-check or an
+>   alternative route to the intercept, but is no longer the required path.
 > - **Adjacent / outputs:** the standalone write-up (greenlit — now folds in E36–E40
 >   WITH the spectrum AND the closed-form value law); the Clay/USC hook
 >   (ajclay@usc.edu; the explicit operator + its small-m spectrum + the closed-form
@@ -110,25 +133,26 @@
 >
 > **▶ HOPE VERDICT — end EVERY session with an updated one (Matt's standing ask,
 > 2026-07-20): is hope ALIVE for the big proof** (proving Clay's Conjecture 3 for
-> general m ≥ 2)? **ALIVE, and RAISED AGAIN by E40 — Phase 1 closed with a bigger
-> result than expected.** E39 gave the spectrum as a conjecture at m≤4; E40 (a) passed
-> the critical checkpoint (the eigenvalue law holds at m=5 AND m=6 — five m's, not a
-> two-point accident, so the universality assumption Phase 2 rests on is well-founded)
-> and (b) landed a CLOSED FORM for the intercept, b(m)=3/2−1/(4m)−H_{2m}^{(2)}, giving
-> the COMPLETE value law E_opt = (H_{2m}/2m)n + b(m) + O((1−1/m)ⁿ) — Clay's leading
-> term PLUS the exact intercept and fade rate he never claimed. Why this raises hope
-> concretely: the closed form is not just an answer, it's the strongest available HINT
-> for the Phase-2 eigenvector — slope from Σ1/k, intercept from Σ1/k² over the same 2m
-> slots screams "the unit eigenvector is built from harmonic partial sums of the slot
-> geometry," turning Phase 2 from "find an unknown eigenvector" into "guess-and-verify
-> a harmonic ansatz against E37's explicit operator." Still NOT a proof: the general-m
-> spectrum theorem + its eigenvectors remain real hard math (an induction on the
-> run-composition operator, or the eigenvector combinatorics), not a script. But the
-> target is now maximally concrete — a clean eigenvalue formula AND a clean
-> eigenvector-projection formula, both verified at m≤6. The Clay/USC collaboration is
-> the realistic route to the general-m theorem, now with a genuinely strong artifact:
-> the explicit operator + its spectrum + a closed-form value law that sharpens the
-> conjecture itself.
+> general m ≥ 2)? **ALIVE — and PARTLY REALIZED. E41 PROVED the hard, open half: the
+> slope c(m) = H_{2m}/(2m) for all m.** The main open question of Conjecture 3's value
+> claim was the leading term for general m (Clay proved only m=1; he attributed the
+> obstacle to the "m-shelf transition matrix"). E41 proves it outright by a DIFFERENT,
+> more elementary route — the 2m-block decomposition + an exact label-exchangeability
+> lemma (verified by full enumeration) — that sidesteps the transition matrix entirely.
+> This is not incremental confirmation; it is a theorem: `E_opt(n,m) = (H_{2m}/2m)n +
+> O(1)` for every m (with the strategy half, G optimal, already in hand). Why the direct
+> route beat the eigenvector route: the harmonic H_{2m} was never mysterious once you see
+> it is Σ_ℓ 1/(2m−ℓ), the block-average of 1/(#still-live blocks) — the observer's
+> exclusion of exhausted blocks, made exact by the lemma. What remains is now SMALLER and
+> concrete: the exact intercept b(m)=3/2−1/(4m)−H_{2m}^{(2)} (E40, confirmed m≤6) and the
+> geometric fade, i.e. summing the O(1) block-boundary corrections — a bounded
+> computation, with the second-order structure (H_{2m}^{(2)} = Σ_ℓ 1/(2m−ℓ)²) already
+> identified, not the open-ended "find the operator's eigenvectors" it looked like after
+> E40. The Clay/USC collaboration now carries a genuinely strong artifact: a proof of the
+> conjecture's leading term for all m, plus a fully explicit (and m≤6-confirmed) closed
+> form for the next order. Honest: the intercept and fade are still conjectural (the
+> hardest boundary bookkeeping is unfinished), so Conjecture 3 is not yet CLOSED — but
+> its headline is proven.
 >
 > **TASK 1 IS DONE — the result is now FORMALIZED and banked as experiment E35.**
 > The exact grid-wide DFH-`G` optimality (n≤9, m≤10) + the deck-scale value-test
@@ -282,6 +306,165 @@ expected number of correct guesses `E(n, m)`.
 and Clay's Conjecture 3 sits directly on top of what our exact machinery computes.
 (E39 has now computed that operator's subdominant SPECTRUM for m≤4:
 `{i/m}(×3)∪{(2i−1)/2m}(×1)`, gap 1/m — a concrete general-m conjecture to prove.)
+
+## THE SLOPE PROOF (E41) — Clay's Conjecture 3 leading term, proven for all m
+
+This is the Phase-2 result: a **rigorous proof that `E_opt(n,m) = (H_{2m}/2m)·n + O(1)`
+for every m**, i.e. the slope (the open, hard half of Conjecture 3's value claim) is
+`c(m) = H_{2m}/(2m)`. The argument is a direct probabilistic one and never touches the
+"m-shelf transition matrix" Clay flagged as the open obstacle. Gated in
+`data/gt_slope_proof.py`.
+
+### The 2m-block model (exact restatement of the shuffle)
+
+Label the cards by their initial stack position, `c ∈ {1,…,n}` (so "card c" has value
+c). The m-shelf shuffle (DFH Description 1, = `ShelfShuffle`, = the slot geometry in
+`ShelfPosterior`) is exactly this: each card `c` independently draws a uniform **label**
+`L_c ∈ {0,1,…,2m−1}` (shelf × top/bottom), and the output orders the cards by the key
+
+    κ_c = (L_c, +c)  if L_c even,     κ_c = (L_c, −c)  if L_c odd.
+
+Because the key is lexicographic with the label first, the output is the **2m blocks**
+`B_ℓ = {c : L_c = ℓ}` written in order `ℓ = 0,1,…,2m−1`, each block internally sorted by
+value — **ascending for even ℓ, descending for odd ℓ**:
+
+    output  =  B_0↑  B_1↓  B_2↑  B_3↓  …  B_{2m−1}↓      (concatenation, not a merge).
+
+So the output is `2m` consecutive monotone runs (a "valley" appears only at each
+odd→even block junction, giving ≤ m−1 valleys — the DFH class law). The optimal
+complete-feedback value is `E_opt = Σ_{t=1}^n E[h_t]` with `h_t = max_c P(o_t = c |
+o_1,…,o_{t−1})` (greedy Bayes is optimal because guesses never affect the reveals).
+
+### The Key Lemma (exact label exchangeability)
+
+> **Lemma.** Fix a dealt prefix `o_1,…,o_s` and *condition on its true block-parse*: its
+> maximal monotone runs are the nonempty prefixes of `B_0,…,B_ℓ`, the current (say
+> ascending, ℓ even) run ends at `o_s = v`, and blocks `0..ℓ−1` are fully dealt. Then the
+> labels of the **undealt** cards are **exactly independent**, with
+>
+>     L_c ~ Uniform{ℓ,   ℓ+1, …, 2m−1}   for undealt c > v     (2m−ℓ   values),
+>     L_c ~ Uniform{ℓ+1, …,     2m−1}     for undealt c < v     (2m−ℓ−1 values).
+
+*Proof.* The label prior is a product measure over cards. Under the fixed parse,
+conditioning on "the length-s output prefix is `o_1…o_s`" is the intersection of
+per-card events: (i) each dealt card's label equals its parsed block index (forced by
+the parse); (ii) each undealt card `c` has key `κ_c > κ_v = (ℓ, v)`, i.e. `L_c > ℓ`, or
+`L_c = ℓ ∧ c > v`. A product prior intersected with per-card constraints has a product
+posterior, uniform on each card's surviving label set: `{ℓ,…,2m−1}` for `c > v` (label
+ℓ survives since `c > v`), and `{ℓ+1,…,2m−1}` for `c < v` (label ℓ would have sorted `c`
+before `v`). ∎
+
+**Consequence (the exact hit).** Let `w_1 < w_2 < …` be the undealt values above `v`.
+The next output card is the minimum-key undealt card; a card `w_j` is next iff
+`L_{w_j} = ℓ` and `L_{w_1},…,L_{w_{j−1}} > ℓ`, so
+
+    P(o_{s+1} = w_j)  =  (1/(2m−ℓ)) · (1 − 1/(2m−ℓ))^{j−1}      (geometric),
+
+maximized at `j = 1`. Hence the **optimal hit is exactly `1/(2m−ℓ)`**, and the MAP guess
+is `w_1` = the smallest undealt value above `v` (which is `v+1` whenever `v+1` is
+undealt) — *exactly DFH's strategy G*. The descending case is the mirror image (guess
+`v−1`, hit `1/(2m−ℓ)`). **GATE 1** in `data/gt_slope_proof.py` verifies the Lemma and the
+hit EXACTLY by enumerating all `(2m)ⁿ` label vectors (m=2,n=6: 1382 events; m=3,n=5:
+1575), conditioning on each (prefix, parse) and checking independence, uniformity, and
+`hit = 1/(2m−ℓ)` as exact fractions.
+
+### Assembling the slope
+
+Call a guess-position *interior* if its prefix has an unambiguous parse and an undealt
+value on the continuation side; by the Lemma an interior position in block ℓ has hit
+`1/(2m−ℓ)`. The **non-interior** positions are `O(1)` in expectation for fixed m:
+
+- **block transitions** (the first card of each block, a peak or valley): `≤ 2m−1` per
+  shuffle;
+- **value-range endgame** (an ascending position with nothing undealt above forces `v` =
+  the block maximum — a peak, already counted; the descending analogue always has undealt
+  values below until the very end and is interior with hit → 1): `O(m)`;
+- **parse-ambiguous prefixes** — these require an interior block to be empty (else the
+  run structure pins the parse), probability `≤ 2m(1−1/2m)ⁿ` each, so expected count
+  `O(n·(1−1/2m)ⁿ) = O(1)`. (This mixing over parses is exactly why the observer's actual
+  finite-n hit sits slightly ABOVE `1/(2m−ℓ)`; **GATE 2** shows the excess → 0
+  geometrically in exact rationals.)
+
+Each block ℓ therefore supplies `|B_ℓ| − O(1)` interior positions, and `E|B_ℓ| = n/2m`
+(uniform labels). Summing:
+
+    E_opt(n,m)  =  Σ_{ℓ=0}^{2m−1} (1/(2m−ℓ)) · (n/2m − O(1))  +  O(1)
+                =  (1/2m) Σ_{ℓ=0}^{2m−1} 1/(2m−ℓ) · n  +  O(1)
+                =  (H_{2m}/2m) · n  +  O(1).                          ∎
+
+*(Both bounds are rigorous. Lower: the explicit strategy "guess `w_1`" is `w_1`-correct
+with probability exactly `1/(2m−ℓ)` per the Lemma, conditional on the true parse, so
+`E_opt ≥ E[score] = (H_{2m}/2m)n − O(1)`. Upper: the observer's actual hit
+`h_t = max_c Σ_P P(parse=P | prefix)·P(o_t=c | prefix,P) ≤ Σ_P P(P|prefix)·max_c
+P(o_t=c|prefix,P) ≤ Σ_P P(P|prefix)·(1/(2m−ℓ_P))`, whose prefix-average collapses by the
+tower property to `E[1/(2m−ℓ(t))]` — so parse-mixing, which raises individual hits above
+`1/(2m−ℓ)`, cannot raise the SUM above `(H_{2m}/2m)n + O(1)`; the `O(1)` endgame where
+`max_c` sits on a below-`v` transition card is bounded separately.)*
+
+**GATE 3** measures the decomposition directly (block-ℓ mean hit → `1/(2m−ℓ)`, occupancy
+→ `1/(2m)`, mean hit → `H_{2m}/2m`). At m=1 this is exactly `3n/4` (two blocks, hits
+`1/2` and `1` → slope ¾), recovering Clay's proven Thm 1.5 and its "first-descent"
+mechanism.
+
+### This proof is COMPLETE-FEEDBACK only (no position-matrix contamination)
+
+Guard against the E39 confusion: this proof uses NOTHING from the no-feedback /
+position-matrix world (Tripathi arXiv:2602.07920, `M(i,j)=P(card i→pos j)`, eigenvalues
+`{1/4^k}`, single-shelf no-feedback value `√(2n/π)≈5.75`). It rests only on (i) the
+2m-block model — the physical shuffle itself, game-agnostic — and (ii) the Key Lemma,
+which is *intrinsically* complete-feedback: the hit `1/(#still-live blocks)` exists only
+because the observer, having SEEN the revealed prefix, knows which blocks are exhausted.
+The decisive check: at m=1 the formula gives `c(1)·52 = 39` = the complete-feedback value
+(Clay Thm 1.5, `3n/4`), NOT the no-feedback `√(2·52/π)≈5.75`. A position-matrix leak
+would land near 5.75; it lands on 39. Feedback-clean.
+
+### What is proven, and what remains
+
+- **PROVEN (all m):** the slope `c(m) = H_{2m}/(2m)` — the leading term of Conjecture 3,
+  open for m ≥ 2, the piece Clay attributed to the open transition matrix. `H_{2m}` is
+  literally `Σ_ℓ 1/(2m−ℓ)` = the block-average of `1/(#still-live blocks)`. With the
+  strategy half in hand (G optimal to m=40), `E_opt = (H_{2m}/2m)n + O(1)` is a theorem.
+
+### ▶ NEXT STEP — prove the FULL value law: BOTH the intercept b(m) AND the fade rate
+
+The remaining target (endorsed 2026-07-20) is to upgrade the `O(1)` to the exact constant
+and the correction to its exact rate, i.e. prove — from the block picture — that
+
+    E_opt(n,m) = (H_{2m}/2m)·n  +  [ 3/2 − 1/(4m) − H_{2m}^{(2)} ]  +  O((1−1/m)^n),
+
+both the **intercept** and the **fade rate**, which E40 confirmed at m≤6 but which are our
+own sharpening (Clay conjectured only the leading term). This is now a bounded boundary
+computation, not "find the eigenvectors." Concrete plan and the leads already in hand:
+
+- **Decompose** `E_opt − c(m)n = Σ_t (h_t − 1/(2m−ℓ(t)))` over interior steps `+` the
+  non-interior contributions (block transitions/peaks-valleys; the value-range endgame;
+  the first step). Each piece is `O(1)`; their sum is `b(m)` and their slowest tail is the
+  fade. The exact-rational posterior `_RationalShelfPosterior` gives every per-step
+  correction as an exact `Fraction`, so this can be done exactly (rebuild the E41
+  `data/gt_slope_proof.py` GATE-2 style at each block, not just block 0).
+- **LEAD (fade rate) — VERIFIED, the strongest handle:** the observer's per-step hit
+  EXCESS over `1/(2m−ℓ)` (from mixing over parse hypotheses — an interior block could be
+  empty) decays at rate **exactly `1−1/m` per step**, confirmed to 4 dp at m=2,3,4,5
+  (ratios 0.5000, 0.6667, 0.7500, 0.8000 at block 0). So the fade `O((1−1/m)^n)` IS the
+  block-0 empty-block/parse-mixing correction, and you only need the DOMINANT rate `1−1/m`
+  — NOT the full E39 spectrum. (Empty-block prob is `(1−1/2m)^n` per block, but the
+  *observer's confusion* between block ℓ and ℓ+2 turns it into `(1−1/m)^n`; nail that
+  factor of 2 in the exponent and the fade is proven.)
+- **LEAD (intercept) — the second-order structure:** `H_{2m}^{(2)} = Σ_{k=1}^{2m} 1/k² =
+  Σ_ℓ 1/(2m−ℓ)²` is the SAME 2m slots the slope averages at first order, now squared — so
+  each block ℓ's net `O(1)` correction should carry a `−1/(2m−ℓ)²` piece (a geometric
+  series in the parse-mixing tail summing to `~1/(2m−ℓ)²`), plus the global `3/2 − 1/(4m)`.
+  **CAVEAT (learned this session):** do NOT expect the correction to split cleanly as
+  `−1/(2m−ℓ)²` *per block* when you bin by run-index — the transition (peak/valley) step
+  gets attributed across a block boundary, so per-block intercepts look scrambled (measured
+  0.16/0.04/0.25/−0.50 at m=2) even though their SUM is exactly `b(2)=−7/144`. Attribute
+  transitions carefully, or work with the whole-deck sum.
+- **WARM-UP / sanity:** m=1 (two blocks, hits 1/2 and 1) — the corrections must cancel to
+  exactly 0 (`b(1)=0`, no fade). Deriving b(1)=0 from the boundary sum is the smallest
+  instance and validates the bookkeeping before general m.
+- The E39 spectrum/eigenvector machinery remains available as a cross-check (its dominant
+  subdominant eigenvalue is exactly the `1−1/m` the fade lead predicts), but is NOT the
+  required route.
 
 ## What we have established (exact, gated)
 

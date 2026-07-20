@@ -27,6 +27,7 @@ from fractions import Fraction
 import pytest
 
 from ridefree.guessing_theorem import (
+    _RationalShelfPosterior,
     approx_e_dp,
     build_perms,
     exact_e,
@@ -551,3 +552,119 @@ def test_bm_closed_form_matches_spectrum_recurrence_from_pinned_deltas():
     b = _b_and_spectrum_check(5, deltas)  # order-17 recurrence must hold OOS
     assert b == Fraction(-126713, 1270080), b
     assert b == _bm_closed_form(5)
+
+
+# --- E41: the SLOPE PROOF — c(m) = H_2m/2m for all m, via block decomposition ---
+# Pin the Phase-2 proof (data/gt_slope_proof.py, docs/GUESSING_THEOREM.md §THE SLOPE
+# PROOF): the m-shelf output is 2m monotone blocks B_ell (label ell = card's uniform
+# lane), and the KEY LEMMA — conditioned on the prefix's true block-parse, the undealt
+# labels are exactly independent-uniform ({ell..2m-1} for values > v, {ell+1..2m-1}
+# for < v) — makes the optimal hit EXACTLY 1/(2m-ell). Each block holds 1/(2m) of the
+# deck, so the mean hit -> (1/2m) sum 1/(2m-ell) = H_2m/2m. This PROVES the open leading
+# term of Clay's Conjecture 3. Exact/deterministic (the Lemma is enumeration; the
+# convergence is exact rationals).
+
+
+def _output_from_labels(labels):
+    """Deterministic shuffle output for label vector labels[c-1]=L_c: sort cards
+    1..n by key (L, +c) even / (L, -c) odd — matching ShelfShuffle's slot order."""
+    n = len(labels)
+    return sorted(range(1, n + 1),
+                  key=lambda c: (labels[c - 1],
+                                 c if labels[c - 1] % 2 == 0 else -c))
+
+
+def test_slope_proof_label_lemma_exact_by_enumeration():
+    """THE LINCHPIN, exact: enumerate every (2m)^n label vector; for each dealt
+    prefix at an ascending interior position, condition on the prefix AND its true
+    block-parse (dealt cards' labels) and verify the undealt labels are EXACTLY
+    independent-uniform on the Lemma's sets, and the optimal hit is EXACTLY
+    1/(2m-ell). A single counterexample would break the slope proof."""
+    from collections import defaultdict
+    from itertools import product
+
+    for m, n in [(2, 5), (3, 4)]:
+        lanes = 2 * m
+        joint: dict = defaultdict(lambda: defaultdict(int))
+        for labels in product(range(lanes), repeat=n):
+            out = _output_from_labels(labels)
+            for s in range(1, n):
+                prefix = tuple(out[:s])
+                v = out[s - 1]
+                ell = labels[v - 1]
+                if ell % 2 != 0:  # test ascending runs (descending is the mirror)
+                    continue
+                undealt = tuple(c for c in range(1, n + 1) if c not in prefix)
+                if not any(c > v for c in undealt):
+                    continue
+                parse = tuple(labels[c - 1] for c in prefix)
+                key = (prefix, parse, v, ell)
+                joint[key][tuple(labels[c - 1] for c in undealt)] += 1
+        checked = 0
+        for (prefix, parse, v, ell), dist in joint.items():
+            undealt = [c for c in range(1, n + 1) if c not in prefix]
+            supports = [list(range(ell if c > v else ell + 1, lanes))
+                        for c in undealt]
+            total = sum(dist.values())
+            # every combination in the product support occurs exactly once (=>
+            # undealt labels independent + uniform), and nothing outside it occurs
+            prod_size = 1
+            for sup in supports:
+                prod_size *= len(sup)
+            assert len(dist) == prod_size and total == prod_size, (
+                m, prefix, len(dist), prod_size)
+            for combo in product(*supports):
+                assert dist.get(combo, 0) == 1, (m, prefix, combo)
+            # optimal hit = P(next = w_1) = 1/(2m-ell), w_1 = min undealt > v
+            w1 = min(c for c in undealt if c > v)
+            wi = undealt.index(w1)
+            hit = Fraction(sum(cnt for lab, cnt in dist.items() if lab[wi] == ell),
+                           total)
+            assert hit == Fraction(1, lanes - ell), (m, prefix, hit)
+            checked += 1
+        assert checked > 50, (m, checked)  # the enumeration actually exercised it
+
+
+def test_slope_proof_hit_converges_to_block_rate():
+    """The observer's true finite-n hit at a fixed block-0 interior prefix (1,2,3)
+    is slightly ABOVE 1/(2m) (it mixes over parse hypotheses — an interior block
+    could be empty), and that excess decays MONOTONICALLY to 0 as n grows, in exact
+    rationals — so the optimal hit -> 1/(2m-ell)=1/(2m) at block 0, the block-rate
+    the slope proof sums. (This is why the O(1) intercept is a boundary/mixing term.)"""
+    for m in (2, 3):
+        target = Fraction(1, 2 * m)
+        prev_excess = None
+        for n in (10, 14, 18, 22):
+            post = _RationalShelfPosterior(m, n)
+            for c in (1, 2, 3):
+                post.observe(c)
+            excess = max(post.next_probs().values()) - target
+            assert excess > 0, (m, n, excess)  # observer is never below block rate
+            if prev_excess is not None:
+                assert excess < prev_excess / 3, (m, n, excess, prev_excess)
+            prev_excess = excess
+        assert prev_excess < Fraction(1, 1000), (m, prev_excess)  # -> 0
+
+
+def test_slope_proof_block_hit_law_exact_rational():
+    """The block-hit law 1/(2m-ell), pinned on hand-built DEEP interior prefixes via
+    the exact-rational posterior: an ascending run near the bottom of the value range
+    with an empty odd block skipped is far from all boundaries, so the optimal hit is
+    within the geometric tail of 1/(2m-ell). Constructs prefixes that walk into blocks
+    0,1,2 (via a peak then a valley) and checks each block's rate."""
+    m, n = 2, 40  # 2m=4 blocks; large n so the parse-mixing excess is tiny
+    # block 0 (ascending): prefix 1,2,3 -> hit ~ 1/4
+    p0 = _RationalShelfPosterior(m, n)
+    for c in (1, 2, 3):
+        p0.observe(c)
+    assert abs(float(max(p0.next_probs().values())) - 1 / 4) < 1e-3
+    # into block 1 (descending) via a peak at the top, then descend: 1,2,3,40,39,38
+    p1 = _RationalShelfPosterior(m, n)
+    for c in (1, 2, 3, 40, 39, 38):
+        p1.observe(c)
+    assert abs(float(max(p1.next_probs().values())) - 1 / 3) < 1e-2  # 1/(4-1)
+    # into block 2 (ascending) via a valley: ...,38,4,5,6 (descend then ascend low)
+    p2 = _RationalShelfPosterior(m, n)
+    for c in (1, 2, 3, 40, 39, 38, 4, 5, 6):
+        p2.observe(c)
+    assert abs(float(max(p2.next_probs().values())) - 1 / 2) < 1e-2  # 1/(4-2)

@@ -6,10 +6,12 @@ SPORTS BETTING). This is the resume-here document: current state, key numbers,
 and the precisely-specified next step. Doc map at the bottom.
 
 > **▶ ACTIVE SIDE-THREAD (2026-07-20) — the shelf-guessing theorem, banked as
-> experiments E35–E40 (E40 = the PROOF ROAD, Phase 1 DONE: the eigenvalue law
-> confirmed at m=5/6 + a CLOSED FORM for the intercept b(m)=3/2−1/(4m)−H₂ₘ⁽²⁾ — see
-> the E40 block just below): `docs/GUESSING_THEOREM.md` (resume doc),
-> `docs/EXPERIMENTS.md` E35–E40, `tests/test_guessing_theorem.py`.** A
+> experiments E35–E41 (▶▶ E41 = PHASE 2 BREAKTHROUGH: the SLOPE c(m)=H₂ₘ/(2m) is now
+> PROVEN for ALL m — the open, hard half of Clay's Conjecture 3 — via a direct
+> block-decomposition + label-exchangeability lemma, bypassing the "m-shelf transition
+> matrix" obstacle; see the E41 block just below): `docs/GUESSING_THEOREM.md` (resume
+> doc + §THE SLOPE PROOF), `docs/EXPERIMENTS.md` E35–E41, `data/gt_slope_proof.py`,
+> `tests/test_guessing_theorem.py`.** A
 > paradigm-2 Track-A *academic* spin-off (a math result, NOT a gambling edge —
 > it does NOT reopen Track A for money; it's the greenlit DFH-verification
 > write-up, upgraded). Opened when Matt asked for breakthrough ideas beyond
@@ -86,6 +88,29 @@ and the precisely-specified next step. Doc map at the bottom.
 > object from Clay's / our complete-feedback operator (value 3n/4). Do not chase it
 > for Conjecture 3.** Probe `data/gt_rational_dp.py`; 3 pins; write-up EXPERIMENTS
 > E39; 336 tests green.
+> **▶▶ E41 DONE (2026-07-20) — the PROOF ROAD, Phase 2 BREAKTHROUGH: a RIGOROUS PROOF
+> of the SLOPE c(m) = H₂ₘ/(2m) for ALL m — the open, hard half of Clay's Conjecture 3.**
+> Not the endorsed eigenvector route — a DIRECT probabilistic proof that bypasses the
+> "m-shelf transition matrix" Clay flagged as the obstacle. Three gated ingredients
+> (`data/gt_slope_proof.py`): (1) the **2m-block model** — each card draws an i.i.d.
+> uniform label ℓ∈{0..2m−1}, output = 2m monotone blocks B₀↑B₁↓… concatenated
+> (even ascending, odd descending); (2) the **label-exchangeability LEMMA**, EXACT and
+> verified by enumerating all (2m)ⁿ label vectors: conditioned on the prefix's true
+> block-parse, the undealt labels are exactly independent-uniform on {ℓ..2m−1} (values
+> above the last card) / {ℓ+1..2m−1} (below), so the optimal hit is EXACTLY **1/(2m−ℓ)**
+> and the MAP guess is v+1 (= DFH's G); (3) each block holds a fraction 1/(2m) of the
+> deck and non-interior steps (transitions O(m); parse-ambiguous prefixes, needing an
+> empty interior block, O(n(1−1/2m)ⁿ)=O(1)) are O(1), so E_opt = Σ_ℓ (1/(2m−ℓ))·(n/2m)
+> + O(1) = **(H₂ₘ/2m)n + O(1)**. **H₂ₘ demystified: it is Σ_ℓ 1/(2m−ℓ) = the block-average
+> of 1/(#still-live blocks)** — the observer's exclusion of exhausted blocks. With the
+> strategy half already in hand (G optimal to m=40), E_opt = (H₂ₘ/2m)n + O(1) is a
+> THEOREM. **REMAINING (the concrete Phase-2 tail):** derive the exact intercept
+> b(m)=3/2−1/(4m)−H₂ₘ⁽²⁾ (E40) by summing the O(1) block-boundary corrections — H₂ₘ⁽²⁾ =
+> Σ_ℓ 1/(2m−ℓ)² is the SAME 2m slots squared (second-order block term), cancelling to 0
+> at m=1. The operator spectrum (E39) is now a corollary target, not the route. 3 new
+> test pins (Lemma by enumeration; geometric convergence; block-hit law), **341 green
+> fast**; write-up EXPERIMENTS E41 + GUESSING_THEOREM.md §THE SLOPE PROOF. Seedless
+> where exact; MC slope gate base seed 24.3e9.
 > **▶ E40 DONE (2026-07-20) — the PROOF ROAD, Phase 1 COMPLETE: eigenvalue law
 > confirmed at m=5/6 + a CLOSED FORM for the intercept.** **(1a) The critical
 > checkpoint PASSED:** the E39 eigenvalue law `{i/m}(×3)∪{(2i−1)/2m}(×1)`, gap 1/m,
@@ -103,31 +128,40 @@ and the precisely-specified next step. Doc map at the bottom.
 > `data/gt_rational_dp.py` (m=5,6 enabled); write-up EXPERIMENTS E40; 2 fast pins
 > +1 slow; **338 tests green**. (E39's "denom odd part = ((2m−1)!!)²" was a small-m
 > coincidence — breaks at m=5; the closed form supersedes it.)
-> **▶ NEXT — PHASE 2, now the active step (the actual proof; hard math, not a script;
-> full framing in GUESSING_THEOREM.md's top NEXT-SESSION block + §2).** Prove the
-> eigenvalue formula `{1}∪{i/m}(×3)∪{(2i−1)/2m}` for ALL m ⟹ Conjecture 3's VALUE half
-> (the hard part Clay flagged open). Route: find the operator's unit EIGENVECTOR
-> (eigenvalues known; the closed-form b(m) IS its projection, so look for entries built
-> from harmonic partial sums of the slot geometry), guess-and-verify against E37's
-> explicit small-m operator. The STRATEGY half (G optimal) is separate and already in
-> hand (G==optimal to m=40). Optional cheap de-risk: push the eigenvalue-law
-> confirmation to m=7 (confidence, not a gate — m=5,6 already passed). Adjacent:
-> standalone write-up (greenlit, now with the spectrum + closed-form value law);
-> Clay/USC hook (ajclay@usc.edu — a strong concrete artifact). PyPy at
-> `/Users/mattwatts/.local/bin/pypy3.11` (`PYTHONPATH=src`); memory
-> `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9 value-test + 24.2e9 (A) + 24.1e9
-> (B) + 24.06e9 (E37) + 24.07e9 (E38) consumed; the DPs are seedless (E39, E40 added
-> no seeds).
-> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE, RAISED AGAIN by E40 —
-> Phase 1 closed bigger than expected.** The eigenvalue law is no two-point accident
-> (holds at m≤6), AND the intercept has a clean closed form — so the target is now
-> maximally concrete: a clean eigenvalue formula AND a clean eigenvector-projection
-> formula (the slope/intercept = first/second harmonic parallel), both verified at
-> m≤6, turning Phase 2 into guess-and-verify a harmonic eigenvector ansatz. Still not a
-> proof (the all-m spectrum theorem + its eigenvectors remain hard math), but the
-> Clay/USC route now carries a genuinely strong artifact — the explicit operator + its
-> spectrum + a closed-form value law that sharpens the conjecture itself (HOPE VERDICT
-> atop GUESSING_THEOREM.md; update one every session, Matt's ask).**
+> **▶ NEXT — the Phase-2 TAIL (the slope is now PROVEN; E41): prove the FULL value law —
+> BOTH the exact intercept b(m) = 3/2 − 1/(4m) − H₂ₘ⁽²⁾ AND the exact fade rate
+> O((1−1/m)ⁿ)** (E40 confirmed BOTH at m≤6; they are our sharpening beyond Clay, who
+> conjectured only the leading term). Sum the O(1) block-boundary/transition/parse-mixing
+> corrections in the E41 block picture; detailed plan + leads in GUESSING_THEOREM.md §THE
+> SLOPE PROOF → "▶ NEXT STEP". Two VERIFIED leads: **(fade)** the observer's per-step hit
+> excess over 1/(2m−ℓ) decays at rate EXACTLY 1−1/m per step (confirmed m=2,3,4,5 to 4 dp
+> — 0.5/0.667/0.75/0.80), so the fade O((1−1/m)ⁿ) IS the block-0 parse-mixing correction
+> and needs only the dominant rate, not the full E39 spectrum; **(intercept)** H₂ₘ⁽²⁾ =
+> Σ_ℓ 1/(2m−ℓ)² is the second-order block sum over the SAME 2m slots the slope averages
+> at first order, corrections cancel to 0 at m=1 (b(1)=0, the warm-up). CAVEAT: per-block
+> intercepts look scrambled (transitions cross block boundaries) — work with the
+> whole-deck sum. Use `_RationalShelfPosterior` for exact per-step corrections. This is a
+> bounded boundary computation, not "find the operator's eigenvectors"; E39's spectrum is
+> now a cross-check. Once BOTH are derived, the FULL value law is a theorem.
+> Adjacent: the standalone write-up (greenlit — now leads with the PROOF of the slope +
+> the closed-form value law); Clay/USC hook (ajclay@usc.edu — now a proof of his
+> conjecture's open leading term, not just a confirmation). Optional cheap de-risk: none
+> needed for the slope (proven). PyPy at `/Users/mattwatts/.local/bin/pypy3.11`
+> (`PYTHONPATH=src`); memory `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9
+> value-test + 24.2e9 (A) + 24.1e9 (B) + 24.06e9 (E37) + 24.07e9 (E38) + 24.3e9 (E41 MC
+> slope gate) consumed; the exact DPs/enumeration are seedless.
+> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE — and PARTLY REALIZED
+> by E41.** The hard, open half (the slope c(m)=H₂ₘ/(2m) for all m) is now PROVEN — a
+> theorem, by a direct block-decomposition that sidesteps the transition-matrix obstacle
+> Clay named, with the linchpin lemma verified by exhaustive enumeration. This is the
+> concrete realization of the hope this thread has been building toward: not another
+> m-point confirmation but an actual proof of the leading term. What remains is smaller
+> and concrete — sum the O(1) block corrections to the exact intercept b(m) (structure
+> identified: second-order over the same 2m slots), plus the geometric fade — so
+> Conjecture 3 is not yet fully CLOSED, but its headline is proven. The Clay/USC route
+> now carries the strongest possible artifact: a proof of the conjecture's open leading
+> term for all m. (HOPE VERDICT atop GUESSING_THEOREM.md; update one every session,
+> Matt's ask.)**
 
 > **▶ TRACK A (paradigm-2 shuffle forensics) IS CLOSED — basically DEAD for a
 > human, renewable edge (Matt's call, 2026-07-20).** The physics was real (E26
