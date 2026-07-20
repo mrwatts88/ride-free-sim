@@ -2,6 +2,96 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E38 — Break the n! wall for LARGE m: the approximate DP over the run-length MULTISET (not the count). The pivot: collapsing the composition to its #descents FAILS at deck scale; keeping the run-length distribution recovers it — exact-grade for m ≤ 5, ~1% at m=10
+
+**Date:** 2026-07-20 · **Question (E36/E37's specified next chapter, build (b) — a
+math result, not a gambling edge):** E37's exact `exact_e_dp` is Θ(n^{2m}) — dead
+for m ≥ 5, exactly the DFH real-machine regime (m=10). Build (b) was specified as
+the O(n³) APPROXIMATE DP that "collapses the run composition to its count
+(#descents)", an assumed-density closure, to reach the large-m regime E37 cannot.
+Build it, MEASURE its bias against the exact grid + MC — and it delivers if the
+bias is small and shrinks with m (the strong-mixing limit).
+
+**Method (`guessing_theorem.approx_e_dp`, reported by `data/gt_approx_dp.py`;
+float-deterministic, MC cross-check seeds 24.07e9).** A level-synchronous forward
+DP with E37's exact transition (a revealed card extends the last ascending run, or
+opens a new one on a descent) but a COARSENED dedup key: each state keeps ONE mode
+representative `ShelfPosterior` (highest-mass incoming edge, its ordered run-comp
+carried so the transition stays exact). **Gates:** (1) small-grid vs the n! enumeration
+(m=1 exact); (2) vs `exact_e_dp` wherever exact is feasible (the bias grid); (3) vs
+the independent MC (`mc_e`) at n=52. Cards are input-stack positions 1..n.
+
+**RESULTS:**
+
+1. **THE PIVOT — "collapse to the count" (#descents) FAILS at deck scale; the
+   run-length MULTISET is the working closure.** The literal spec (key by
+   #descents = runs − 1) looks near-exact at n ≤ 12 (m=10 bias 0.002) but that is a
+   TRAP: #descents is bounded ~2m while run lengths grow ~n/2m, so it discards an
+   ever-larger share of the composition as n grows and its per-step error compounds
+   into a WRONG asymptotic SLOPE. Keying instead by the run-length MULTISET (the
+   distribution — how many runs of each length, run ORDER discarded) fixes it. At
+   n=52, vs MC (both keys = the SAME transition, differing only in the dedup key):
+   ```
+   m    #descents (rejected)     MULTISET (E38)        MC truth
+   3    20.492  (bias −0.667)    21.158  (−0.002)      21.16 ± 0.05
+   5    10.831  (bias −4.281)    15.112  (+0.000)      15.11 ± 0.05
+   10    7.186  (bias −2.117)     9.214  (−0.088)       9.30 ± 0.03
+   ```
+   The multiset recovers what the count throws away, by 1–2 orders of magnitude.
+
+2. **The multiset closure is EXACT-GRADE for m ≤ 5 at deck scale, ~1% at m=10.**
+   Deck-scale MC gate (2000 trials): m=5 bias **+0.014 (z +0.3)** — within MC error;
+   m=1 exact (39.000 = 3·52/4); m=3 δ = Ẽ − c(3)·n = **−0.0754 recovers E37's exact
+   b(3) = −0.0747**. m=10 carries a small real residual **−0.085 (z −3.6, ≈ 0.9%)** —
+   the one cell where MC still estimates E_opt better. The deliverable, fast and
+   DETERMINISTIC where E37 is Θ(n^{2m})-dead: **E_opt(52, m) = 39, 27.035, 21.158,
+   15.112, 9.214 at m = 1, 2, 3, 5, 10.**
+
+3. **The bias is small, BOUNDED, and NON-MONOTONE in n — the opposite of #descents'
+   runaway.** vs `exact_e_dp` (where feasible): m=1 ≡ 0; m=2 → −0.00003 by n=52
+   (converges); m=3 rises to −0.119 (n=16) then FALLS to −0.039 (n=26) — a hump that
+   keeps shrinking, unlike the count's monotone blow-up to −0.7/−4.3. So the per-step
+   multiset error does NOT compound into a slope error; it saturates and decays.
+
+4. **Why it works — the multiset is APPROXIMATELY sufficient, and the gap shrinks
+   with m (strong mixing).** E36-style binning of the optimal per-step hit: the
+   ORDERED composition is exactly sufficient (gap 0, E36); the MULTISET's within-bin
+   gap is small and falls with m (n=6: **0.25 / 0.068 / 0.011 at m=2/3/5**) toward
+   the well-mixed limit; the COUNT's gap is ~0.7–0.8 (hopeless). More shelves ⇒
+   better mixing ⇒ run order matters less ⇒ the multiset (which drops order) suffices.
+
+5. **Cost — run-length PARTITIONS, and a lossless `max_run` cap for very large m.**
+   The σ̂ count is polynomial in n per fixed m and far below E37's ordered-composition
+   Θ(n^{2m}) (smaller by up to (2m)!): m=3 at n=52 is 7.3e5 states (vs E37's ~3.6e7,
+   infeasible), m=5 is 3.6e6 (E37: ~n^10, astronomically dead). It still grows with m
+   (partitions into ≤~2m parts), so m=10 sets `max_run` — capping run lengths in the
+   KEY only (transition stays exact) merges the long-run tail, which barely moves the
+   optimal hit at large m: E_opt(52,10) is identical to 4 dp for every max_run ≥ 2,
+   from 2.6e5 states (max_run=2) instead of 8.1e5 (max_run=3) or an infeasible full
+   multiset.
+
+**VERDICT.** Build (b) is delivered, with a corrected closure: the run-length
+MULTISET, not the run count. It reaches the large-m regime E37 cannot — fast,
+deterministic E_opt(52, m) that is exact-grade for m ≤ 5 and ~1% low at m=10 (the
+real DFH machine), replacing E35's Monte-Carlo sample there with a reproducible
+number. The pivot is itself the finding: it is NOT enough for a statistic to predict
+the per-step hit well; the aggregate DP amplifies residual error, so the run-length
+*distribution* (not its count) is the load-bearing summary — sharpening E36's
+"order is load-bearing" to "the run-length multiset is the minimal *aggregating*
+summary." Honest scope: "exact-grade" = within MC se, not proven-zero (the multiset
+is a genuine approximation, gap shrinking with m but nonzero for m ≥ 2); m=10's
+−0.085 residual is on record; the value is float-deterministic (no sampling / no
+truncation beyond the documented lossless `max_run`).
+
+**Banked:** shared core `guessing_theorem.approx_e_dp` (two-layer rule; gated by the
+enumeration + exact-DP + MC comparisons); probe `data/gt_approx_dp.py` (the contrast,
+the bias grid, the deck-scale deliverable); 5 regression pins in
+`tests/test_guessing_theorem.py` (m=1 exact; small-grid bounded bias; `max_run`
+lossless-reduction; the multiset-beats-#descents deck-scale contrast [slow]; the
+E_opt(52,10) MC gate [slow]) — **334 tests green** (routine fast run; the 2 slow
+E38 gates deselected by default). Seeds: 24.07e9 (E38 MC
+cross-checks only; the DP is seedless).
+
 ## E37 — Break the n! wall, constructively: the run-composition DP computes EXACT E_opt(n,m) at deck scale. Clay's m-shelf transition operator, made explicit — and its cost is Θ(n^{2m}): polynomial in n for each fixed m, exponential only in m
 
 **Date:** 2026-07-20 · **Question (E36's specified next chapter, build (a) — a

@@ -239,6 +239,108 @@ def exact_e_dp(n: int, m: int) -> tuple[float, int]:
     return e_opt, len(memo)
 
 
+def approx_e_dp(n: int, m: int, max_run: int | None = None) -> tuple[float, int]:
+    """Approximate optimal-guessing value Ẽ_opt(n, m) via the run-length-MULTISET
+    DP — the polynomial, large-m companion to the exact `exact_e_dp` (E38, the
+    build (b) E36/E37 specified). Reaches deck scale where `exact_e_dp` is dead.
+
+    `exact_e_dp`'s state is σ = (dir, rank, ascending-run COMPOSITION), exactly
+    sufficient (E36) but Θ(n^{2m}) — dead for m ≥ 5, the DFH-real-machine regime
+    (m=10). This DP coarsens the ORDERED composition to its run-length MULTISET
+    (how many runs of each length; the order of the runs is discarded), keying
+    states by σ̂ = (dir, rank, sorted-run-composition). That is the E38 closure.
+
+    Why the multiset and not just #descents: the run *count* alone (#descents)
+    FAILS at deck scale — it is bounded (~2m) while run lengths grow ~n/2m, so it
+    discards an ever-larger share of the composition as n grows, and the per-step
+    error compounds into a WRONG asymptotic slope (measured: E_opt(52,5) off by
+    −4.3, E_opt(52,10) by −2.1 — a near-exact-looking n≤12 gate that collapses by
+    n=52). The multiset keeps the run-length *distribution*, which is what the
+    posterior actually depends on, and it recovers the deck-scale value: E_opt(52,5)
+    to within MC error. It is APPROXIMATELY sufficient (E36's ordered composition
+    is exactly sufficient; the multiset's within-bin hit gap is small and SHRINKS
+    with m — the strong-mixing limit — but is nonzero for m ≥ 2). So this is a
+    genuine approximation whose bias is MEASURED against `exact_e_dp` + the E35 MC
+    (`data/gt_approx_dp.py`), EXACT only at m=1 (there the composition is irrelevant
+    to the law — reproduces `exact_e_dp` / 3n/4 to float precision). Measured deck
+    scale (n=52): exact-grade for m ≤ 5 (bias within MC se — e.g. m=5 z +0.3, and
+    m=3 recovers E37's exact b(3)); a small residual bias at m=10 (−0.085, ≈ 0.9%),
+    the one place MC still estimates E_opt better.
+
+    Closure (assumed-density / mode): each σ̂ carries ONE representative
+    `ShelfPosterior` — the posterior of a real dealt prefix realizing σ̂, reached
+    via σ̂'s highest-mass incoming edge (the mode ordered-composition among those
+    folded into σ̂, its ordered run-comp carried so the transition is E37's exact
+    one). The hit h(σ̂) = max_c P(next=c) and the transition law are read from it;
+    folded compositions' masses sum exactly. Ẽ_opt(n,m) = Σ_σ̂ P(σ̂)·h(σ̂).
+
+    Cost: the returned σ̂ count is the reachable (dir, rank, run-multiset) states
+    summed over prefix length — run-length PARTITIONS, polynomial in n for each
+    fixed m and far below `exact_e_dp`'s ORDERED-composition Θ(n^{2m}) (smaller by
+    up to (2m)!), though it still grows with m (partitions into ≤~2m parts) — m=5
+    reaches n=52 (~3.6e6 states, ~2.5 min PyPy), m=10 wants ``max_run``. Setting
+    ``max_run`` caps run lengths at that value in the state KEY only (the transition
+    still uses the true ordered run-comp, so it stays E37-exact — only the bucketing
+    coarsens): it merges long runs, shrinking the state space to a NEAR-identical
+    value (measured: m=10, n=52 gives the same E to 4 dp for every max_run ≥ 2, at
+    ~2.6e5 states for max_run=2) — the tail of the run-length distribution barely
+    moves the optimal hit at large m. ``max_run=None`` (default) keeps the full
+    multiset. Returns ``(Ẽ_opt, σ̂-state count)``.
+
+    Pure shuffle-math (imports the posterior layer only — the two-layer rule).
+    """
+    root_post = ShelfPosterior(m, list(range(1, n + 1)))
+    # σ̂ = (direction, rank-of-last, run-length multiset) -> (mass, representative
+    # posterior, its ORDERED run-composition [carried for the exact transition]).
+    level: dict[tuple, tuple[float, ShelfPosterior, tuple]] = {
+        (True, 0, ()): (1.0, root_post, ())
+    }
+    e_opt = 0.0
+    n_states = 0
+    for _t in range(n):  # levels 0 .. n-1 (t=n-1 leaves add the sure last card)
+        n_states += len(level)
+        nxt_mass: dict[tuple, float] = defaultdict(float)
+        # child σ̂ -> (best incoming edge mass, parent posterior, card, child run-comp)
+        nxt_best: dict[tuple, tuple[float, ShelfPosterior, int, tuple]] = {}
+        for (_dir, rank, _ms), (mass, post, runcomp) in level.items():
+            probs = post.next_probs()
+            remaining = sorted(probs)
+            vec = [probs[c] for c in remaining]
+            e_opt += mass * max(vec)
+            if len(remaining) <= 1:
+                continue  # leaf: one card left (hit == 1, already counted)
+            for j, card in enumerate(remaining):
+                pc = vec[j]
+                if pc <= 0.0:
+                    continue
+                ascending = j >= rank  # card > last iff its rank ≥ last's rank
+                # E37's exact transition on the ORDERED run-comp: a revealed card
+                # extends the last ascending run, or (on a descent) opens a new one.
+                if not runcomp:
+                    crc = (1,)
+                elif ascending:
+                    crc = runcomp[:-1] + (runcomp[-1] + 1,)
+                else:
+                    crc = runcomp + (1,)
+                # key by the run-length MULTISET (discard run order — the E38
+                # coarsening), run lengths capped at max_run when set (large-m).
+                ms = crc if max_run is None else tuple(min(r, max_run) for r in crc)
+                child = (ascending, j, tuple(sorted(ms)))
+                em = mass * pc
+                nxt_mass[child] += em
+                best = nxt_best.get(child)
+                if best is None or em > best[0]:  # keep the mode-composition path
+                    nxt_best[child] = (em, post, card, crc)
+        new_level: dict[tuple, tuple[float, ShelfPosterior, tuple]] = {}
+        for child, tot in nxt_mass.items():
+            _, parent_post, card, crc = nxt_best[child]
+            rep = parent_post.copy()
+            rep.observe(card)  # materialize the representative once per σ̂
+            new_level[child] = (tot, rep, crc)
+        level = new_level
+    return e_opt, n_states
+
+
 def mc_e(n: int, m: int, trials: int, seed: int):
     """Monte-Carlo E(n, m) via the low-variance ``predicted`` estimator.
 

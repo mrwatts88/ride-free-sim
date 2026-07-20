@@ -25,6 +25,7 @@ from bisect import bisect_left
 from fractions import Fraction
 
 from ridefree.guessing_theorem import (
+    approx_e_dp,
     build_perms,
     exact_e,
     exact_e_dp,
@@ -266,3 +267,124 @@ def test_exact_e_dp_deck_scale_m2_matches_mc():
     assert ns == 566203, ns
     pred, se_pred, _, _ = mc_e(52, 2, 1500, _SEED_BASE_E37 + 2)
     assert abs(e - pred) <= 4 * se_pred, (e, pred, se_pred)
+
+
+# --- E38: the run-length-MULTISET approximate DP — deck-scale E_opt for large m -
+# Pin build (b): approx_e_dp coarsens E37's exactly-sufficient ORDERED
+# run-composition to keep only the run-length MULTISET (run order discarded). This
+# is EXACT at m=1 (the composition is irrelevant to the law) and carries a small
+# BOUNDED bias for m≥2 that shrinks with m (strong mixing), recovering the
+# deck-scale value where exact_e_dp is Θ(n^{2m})-dead. The literal alternative —
+# keeping only the run COUNT (#descents) — instead FAILS at deck scale (its bias
+# grows with n into a wrong slope), which is why the multiset is the closure. The
+# `max_run` cap merges long runs in the KEY only (transition stays exact),
+# shrinking the state space near-losslessly for very large m. See
+# docs/GUESSING_THEOREM.md §1, EXPERIMENTS E38. Float-deterministic.
+
+_SEED_BASE_E38 = 24_070_000_000  # E38 deck-scale MC gate (24.x guessing space)
+
+
+def test_approx_e_dp_m1_is_exact():
+    """m=1: the composition is irrelevant to the law, so the multiset closure is
+    EXACT — reproduces Clay's 3n/4 from n²−n+1 states, all the way to deck scale
+    (the one m with a closed form to check the approximate DP against)."""
+    for n in (3, 6, 12, 20, 52):
+        e, _ = approx_e_dp(n, 1)
+        assert abs(e - 0.75 * n) < 1e-9, (n, e)
+
+
+def test_approx_e_dp_small_grid_bounded_bias():
+    """On the n≤7 grid the multiset DP tracks the exact enumeration to a small
+    bounded gap (an approximation for m≥2, not zero-gap), and m=1 is exact — the
+    approximate counterpart to the E37 exactness gate."""
+    worst_m1 = worst = 0.0
+    for n in range(1, 8):
+        perms = build_perms(n)
+        for m in range(1, 8):
+            ref = float(exact_e_from_perms(n, m, perms)[0])
+            e, _ = approx_e_dp(n, m)
+            worst = max(worst, abs(e - ref))
+            if m == 1:
+                worst_m1 = max(worst_m1, abs(e - ref))
+    assert worst_m1 < 1e-9, worst_m1
+    assert worst < 0.05, worst
+
+
+def test_approx_e_dp_max_run_cap_is_lossless_reduction():
+    """`max_run` caps run lengths in the state KEY only (the transition uses the
+    true ordered run-comp, so it stays E37-exact), so max_run≥n reproduces the
+    full multiset EXACTLY, while a finite cap gives a near-identical value from
+    no more states — the large-m feasibility lever, shown not to distort."""
+    for n, m in [(16, 3), (20, 5)]:
+        full, ns_full = approx_e_dp(n, m)
+        big, ns_big = approx_e_dp(n, m, max_run=n)
+        cap, ns_cap = approx_e_dp(n, m, max_run=3)
+        assert abs(full - big) < 1e-12 and ns_full == ns_big, (n, m)
+        assert abs(cap - full) < 1e-3, (n, m, cap - full)
+        assert ns_cap <= ns_full, (n, m, ns_cap, ns_full)
+
+
+def test_approx_e_dp_multiset_beats_run_count_at_deck_scale():
+    """The E38 pivot at deck scale (m=3, n=52), where exact_e_dp is dead so MC is
+    the referee: keeping the run-length MULTISET tracks the true value to within MC
+    error, while keeping only the run COUNT (#descents) falls ~0.7 low — the count
+    is bounded ~2m while run lengths grow, so it discards the slope-carrying signal.
+    (Slow: the deck-scale DPs + the MC referee.)"""
+    pred, se, _, _ = mc_e(52, 3, 2000, _SEED_BASE_E38 + 3)
+    multiset, _ = approx_e_dp(52, 3, max_run=2)  # cap is lossless here (see study)
+    count = _run_count_e_dp(52, 3)  # the rejected closure: #descents key only
+    assert abs(multiset - pred) < 0.1, (multiset, pred, se)
+    assert count < pred - 0.4, (count, pred)
+
+
+def _run_count_e_dp(n: int, m: int) -> float:
+    """The REJECTED E38 closure (for the contrast test): E37's transition keyed by
+    the run COUNT #descents only, mode representative per (dir, rank, #descents)."""
+    from ridefree.posterior import ShelfPosterior
+
+    root = ShelfPosterior(m, list(range(1, n + 1)))
+    level = {(True, 0, 0): (1.0, root, ())}
+    e_opt = 0.0
+    for _t in range(n):
+        nm: dict = {}
+        nb: dict = {}
+        for (_d, rank, _k), (mass, post, rc) in level.items():
+            probs = post.next_probs()
+            rem = sorted(probs)
+            vec = [probs[c] for c in rem]
+            e_opt += mass * max(vec)
+            if len(rem) <= 1:
+                continue
+            for j, card in enumerate(rem):
+                pc = vec[j]
+                if pc <= 0.0:
+                    continue
+                asc = j >= rank
+                crc = (1,) if not rc else (
+                    rc[:-1] + (rc[-1] + 1,) if asc else rc + (1,))
+                child = (asc, j, len(crc) - 1)
+                em = mass * pc
+                nm[child] = nm.get(child, 0.0) + em
+                b = nb.get(child)
+                if b is None or em > b[0]:
+                    nb[child] = (em, post, card, crc)
+        level = {}
+        for child, tot in nm.items():
+            _, pp, card, crc = nb[child]
+            rep = pp.copy()
+            rep.observe(card)
+            level[child] = (tot, rep, crc)
+    return e_opt
+
+
+def test_approx_e_dp_deck_scale_m10_matches_mc():
+    """The large-m deliverable: E_opt(52,10) — the DFH real machine — where
+    exact_e_dp is Θ(n^20)-dead and E35 had only a Monte-Carlo sample. The multiset
+    DP (max_run=2, converged) is float-deterministic and lands within ~0.1 of the
+    independent MC (and DFH's published 9.3) — the honest small residual bias of
+    the closure. (Slow: the state graph + the MC cross-check.)"""
+    e, ns = approx_e_dp(52, 10, max_run=2)
+    assert abs(e - 9.21440) < 1e-3, e  # pinned float-deterministic value
+    assert ns == 264967, ns
+    pred, se, _, _ = mc_e(52, 10, 1500, _SEED_BASE_E38 + 810)
+    assert abs(e - pred) < 0.15, (e, pred, se)

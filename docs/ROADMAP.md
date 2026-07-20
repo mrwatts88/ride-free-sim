@@ -224,13 +224,33 @@ v≤m−1 valley cap), NOT the flat ~2ⁿ E36 hedged. **The n! wall is broken:**
 exact deck-scale values E_opt(52,1)=39=3·52/4 and E_opt(52,2)=27.0347 (m=3 to
 n≈36); and the value law is exactly-affine past a transient, pinning
 **b(1,2,3)=0, −0.0486, −0.0747** (Follow-up A had only MC bounds). 4 pins (331
-green). **Next (DECIDED, Matt 2026-07-20): build (b) FIRST** — the O(n³) approximate
-DP over σ̃=(t,dir,rank,#descents), the large-m complement (exact is Θ(n^{2m}), dead
-for m≥5), deliverable fast E_opt(52,m=5,10) with a measured error bar gated vs this
-exact grid (`approx_e_dp`, `data/gt_approx_dp.py`, bank E38). **In parallel, the
-proof road** (hard math): build the operator as a matrix → its spectrum (Tripathi's
-m=1→general route), and/or the exact-rational DP to prove the affine value law + get
-b(m) as fractions. Full specs: docs/GUESSING_THEOREM.md §1 (items 1b + 2).
+green). Build (b) followed as **M12g (E38, below)**.
+
+### M12g — The large-m approximate DP: the run-length multiset (a pivot) ✅ (E38, 2026-07-20)
+
+Build (b) delivered, with a corrected closure. The plan was to key by
+σ̃=(t,dir,rank,**#descents**) — collapse the run composition to its COUNT. Built and
+measured (`guessing_theorem.approx_e_dp`, `data/gt_approx_dp.py`), that FAILS at deck
+scale: #descents is bounded ~2m while run lengths grow ~n/2m, so its per-step error
+compounds into a WRONG asymptotic slope (E_opt(52,5) off −4.3, E_opt(52,10) off −2.1
+— a near-exact-looking n≤12 gate that collapses by n=52; a mass-weighting beam does
+not help, the lumping is intrinsic). **The fix: key by the run-length MULTISET (the
+run *distribution*, order discarded), not the count** — same E37 transition, coarser
+dedup key, mode representative. **Result (E38, float-deterministic):** EXACT-GRADE
+for m ≤ 5 at deck scale (m=5 bias vs MC +0.014 z+0.3; m=3 δ recovers E37's exact
+b(3)=−0.0747) and ~0.9% low at m=10 (bias −0.085), vs #descents' −2 to −4.
+**Deliverable: fast, deterministic E_opt(52, m) = 39, 27.035, 21.158, 15.112, 9.214
+at m=1,2,3,5,10**, where E37's Θ(n^{2m}) is dead. Cost = run-length PARTITIONS (≪
+E37's ordered Θ(n^{2m}), by up to (2m)!); a `max_run` cap merges the long-run tail
+losslessly for very large m. **The finding:** predicting the per-step hit is not
+enough (the aggregate DP amplifies residual error), so the run-length *distribution*,
+not its *count*, is the minimal *aggregating* summary — sharpening E36. 5 pins (334
+green fast / 371 full). **Next: the PROOF ROAD** (both builds a+b done) toward Clay Conjecture 3
+general m (hard math): the operator's spectrum (Tripathi's m=1→general route) and/or
+a proof of the exactly-affine value law via the exact-rational DP (yielding b(m)
+fractions). Adjacent: a richer approximate statistic to close m=10's residual; the
+standalone write-up (folds in E36–E38); the Clay (USC) hook. Full specs:
+docs/GUESSING_THEOREM.md §1 (item 2).
 
 ## M13 — Live-dealer data QC (reframed around the baccarat convergence)
 

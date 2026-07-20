@@ -52,25 +52,38 @@ and the precisely-specified next step. Doc map at the bottom.
 > flat ~2ⁿ. **Wall broken:** exact E_opt(52,1)=39=3·52/4, E_opt(52,2)=27.0347 (first
 > exact m≥2 deck-scale; m=3 to n≈36), and the value law is exactly-affine past a
 > transient, pinning **b(1,2,3)=0,−0.0486,−0.0747** (Follow-up A had only MC bounds).
-> **▶ NEXT CHAPTER (DECIDED, Matt 2026-07-20): do (b) FIRST, proof road in
-> parallel.** (b) the O(n³) APPROXIMATE DP over σ̃=(t,dir,rank,#descents) — the
-> large-m complement to (a) (exact is Θ(n^{2m}), dead for m≥5, yet m=5,10 is the
-> real-machine regime): assumed-density closure collapsing the run composition to
-> its count, deliverable = fast E_opt(52,m=5,10) with a MEASURED error bar gated
-> vs the E37 exact grid; new `guessing_theorem.approx_e_dp` + `data/gt_approx_dp.py`,
-> bank E38, seed 24.07e9. **Proof road (parallel, hard math):** build the operator
-> as a matrix → its SPECTRUM (Tripathi's m=1→general route), and/or the
-> exact-RATIONAL DP to prove the affine value law + get b(m) fractions. Full specs:
-> `docs/GUESSING_THEOREM.md` §1 (items 1b + 2).
-> Adjacent: rational posterior → closed-form b(m); poly NO-feedback number. PyPy at
-> `/Users/mattwatts/.local/bin/pypy3.11` (`PYTHONPATH=src`); memory
-> `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9 value-test + 24.2e9 (A) +
-> 24.1e9 (B) + 24.06e9 (E37 MC cross-check) consumed; the DP itself is seedless.
-> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE, better-equipped —
-> E37 built the explicit operator + found its exactly-affine value law; the target
-> is now two concrete hard-math questions (its spectrum / the affine law), not an
-> abstract matrix (HOPE VERDICT atop GUESSING_THEOREM.md; end every session with an
-> updated one, Matt's standing ask).**
+> **E38 DONE (2026-07-20) — build (b), the large-m APPROXIMATE DP, WITH A PIVOT**
+> (`guessing_theorem.approx_e_dp`, probe `data/gt_approx_dp.py`, 5 pins, 334 green).
+> The spec was to key by σ̃=(t,dir,rank,**#descents**) — collapse the composition to
+> its COUNT. Built + measured, that FAILS at deck scale: #descents is bounded ~2m
+> while run lengths grow ~n/2m, so its per-step error compounds into a WRONG slope
+> (E_opt(52,5) off −4.3, E_opt(52,10) off −2.1 — a near-exact-looking n≤12 gate that
+> collapses by n=52; beam-reweighting doesn't help, the lumping is intrinsic). **The
+> fix: key by the run-length MULTISET (run *distribution*, order discarded), not the
+> count.** Same E37 transition, coarser key, mode representative. **Exact-grade for
+> m≤5 at deck scale** (m=5 bias vs MC +0.014 z+0.3; m=3 δ recovers E37's exact b(3))
+> and **~0.9% low at m=10** (−0.085) — vs #descents' −2 to −4. **Deliverable: fast,
+> deterministic E_opt(52,m) = 39/27.035/21.158/15.112/9.214 at m=1,2,3,5,10**, where
+> E37's Θ(n^{2m}) is dead; cost = run-length PARTITIONS (≪ ordered), a `max_run` cap
+> shrinks the tail losslessly for large m. **THE FINDING:** the multiset, not the
+> count, is the minimal *aggregating* summary (predicting the per-step hit isn't
+> enough — the DP amplifies residual error), sharpening E36.
+> **▶ NEXT: the PROOF ROAD is now the primary thread** (both builds a+b done). Hard
+> math not a script, toward Clay Conjecture 3 general m: (i) build the operator as a
+> matrix → its SPECTRUM (Tripathi's m=1→general route, arXiv:2602.07920), and/or (ii)
+> prove the exactly-affine value law E37 found via the exact-RATIONAL DP (which also
+> gives b(m) fractions). Adjacent (E38-motivated): a richer approximate statistic to
+> close m=10's −0.085 residual; rational posterior → closed-form b(m); poly NO-feedback
+> number; standalone write-up (folds in E36–E38); Clay (USC) hook. Full specs:
+> `docs/GUESSING_THEOREM.md` §1 (item 2). PyPy at `/Users/mattwatts/.local/bin/pypy3.11`
+> (`PYTHONPATH=src`); memory `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9
+> value-test + 24.2e9 (A) + 24.1e9 (B) + 24.06e9 (E37) + 24.07e9 (E38) consumed; the
+> DPs are seedless.
+> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE, unchanged altitude
+> by E38 — a computational + structural win (a value oracle to m≤5 deck scale + the
+> "multiset is the aggregating summary" insight), not a proof advance; the proof
+> still needs the operator's spectrum or the affine-law proof, Clay/USC the realistic
+> route (HOPE VERDICT atop GUESSING_THEOREM.md; update one every session, Matt's ask).**
 
 > **▶ TRACK A (paradigm-2 shuffle forensics) IS CLOSED — basically DEAD for a
 > human, renewable edge (Matt's call, 2026-07-20).** The physics was real (E26

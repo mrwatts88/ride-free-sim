@@ -2,44 +2,50 @@
 
 > ## ▶ NEXT SESSION — START HERE (updated 2026-07-20)
 >
-> **CURRENT: E35 + follow-ups A/B + E36 + E37 all DONE; 331 tests green** (routine
-> run; the heavy MC/DP gates are `slow`-marked and skipped by default). **E37
-> delivered E36's build (a):** `guessing_theorem.exact_e_dp` — Clay's m-shelf
-> transition operator made explicit and runnable, computing EXACT E_opt(n,m) past
-> the n! wall (first exact deck-scale values: E_opt(52,1)=39 exactly,
-> E_opt(52,2)=27.0347). It also SHARPENED E36's cost claim: the operator is
-> **Θ(n^{2m})** — polynomial in n for each fixed m (m=1 exactly n²−n+1), exponential
-> only in m — because the DFH law caps valleys at m−1; and it PINNED the value
-> correction **b(m) = 0, −0.0486, −0.0747 at m=1,2,3** (Follow-up A had only MC
-> bounds). **▶ DECIDED (Matt, 2026-07-20): do lead (1) — build (b) — FIRST; lead
-> (2) — the proof road — is the deeper parallel thread. BOTH fully specified in §1.**
-> **(1) THE NEXT BUILD — build (b), the O(n³) approximate DP** over σ̃ = (t, dir,
-> rank, #descents): the LARGE-m complement to E37's exact DP (exact is Θ(n^{2m}),
-> dead for m≥5, yet m=5,10 is the real-machine regime). Assumed-density/moment
-> closure (E29 doctrine) that collapses the run *composition* to its *count*;
-> deliverable = fast E_opt(52, m=5,10) with a MEASURED error bar, gated against
-> E37's exact grid + E35 MC. New `guessing_theorem.approx_e_dp` + `data/gt_approx_dp.py`,
-> bank as **E38** (§1 has the full plan: state, method, gates, files, seed 24.07e9).
-> **(2) THE PROOF ROAD (parallel, hard math not a script)** toward Clay Conjecture 3
-> (general m): the operator is now explicit and small for small m, so (i) build it
-> as a matrix and compute its SPECTRUM (`data/gt_spectrum.py`; the Tripathi m=1→
-> general route, arXiv:2602.07920), and/or (ii) prove the exactly-affine value law
-> E37 found (E=c(m)·n+b(m), o(1)<1e-5 by n≈20) — which needs the exact-RATIONAL DP
-> (a rational `ShelfPosterior`), also yielding b(m) as exact fractions. §1 item 2.
+> **CURRENT: E35 + follow-ups A/B + E36 + E37 + E38 all DONE; 336 tests green**
+> (routine run; heavy MC/DP gates are `slow`-marked, skipped by default). **E38
+> delivered build (b) — WITH A PIVOT.** The spec was "collapse the run composition
+> to its COUNT (#descents)"; built and measured, that FAILS at deck scale (per-step
+> error compounds into a wrong asymptotic slope: E_opt(52,5) off −4.3, E_opt(52,10)
+> off −2.1 — a near-exact-looking n≤12 gate that collapses by n=52, because
+> #descents is bounded ~2m while run lengths grow ~n/2m). **The fix: key by the
+> run-length MULTISET (the distribution — how many runs of each length, run ORDER
+> discarded), not the count.** `guessing_theorem.approx_e_dp` is that DP (E37's exact
+> transition, coarsened dedup key, mode representative). It is EXACT-GRADE for m ≤ 5
+> at deck scale (m=5 bias vs MC +0.014 z+0.3; m=3 recovers E37's exact b(3)) and
+> ~0.9% low at m=10 (bias −0.085) — vastly better than #descents, and it reaches
+> where E37's Θ(n^{2m}) is dead. **Deliverable: fast, deterministic E_opt(52, m) =
+> 39, 27.035, 21.158, 15.112, 9.214 at m=1,2,3,5,10.** A `max_run` cap merges the
+> long-run tail losslessly (m=10 identical to 4 dp for any max_run ≥ 2). Cost =
+> run-length PARTITIONS (≪ E37's ordered Θ(n^{2m}), by up to (2m)!). Full write-up
+> EXPERIMENTS E38; probe `data/gt_approx_dp.py`; 5 pins.
+>
+> **▶ THE NEXT STEP — lead (2), THE PROOF ROAD, is now the primary live thread**
+> (both builds a+b are done; §1 item 2 has the full plan). Toward Clay Conjecture 3
+> (general m): the operator is explicit and small for small m, so (i) build it as a
+> matrix and compute its SPECTRUM (`data/gt_spectrum.py`; the Tripathi m=1→general
+> route, arXiv:2602.07920), and/or (ii) prove the exactly-affine value law E37 found
+> (E=c(m)·n+b(m), o(1)<1e-5 by n≈20) via the exact-RATIONAL DP (a rational
+> `ShelfPosterior`), which also yields b(m) as exact fractions to pattern-match.
+> **Adjacent, now motivated by E38:** a RICHER approximate statistic to close m=10's
+> −0.085 residual (the multiset drops run order; a small amount of order-info might
+> recover it — the multiset↔ordered gap is the lever); the standalone write-up
+> (greenlit, now folds in E36–E38); the Clay/USC hook (a concrete artifact).
 >
 > **▶ HOPE VERDICT — end EVERY session with an updated one (Matt's standing ask,
 > 2026-07-20): is hope ALIVE for the big proof** (proving Clay's Conjecture 3 for
-> general m ≥ 2)? **ALIVE — and E37 genuinely advanced the equipment** (E36 only
-> clarified; E37 *built*). We now hold Clay's open object not just runnable but
-> **explicit, sized (Θ(n^{2m}), with the v≤m−1 reason), and PROVEN-exact**, and —
-> the new leverage — its OUTPUT is **exactly affine to <1e-5** past a short
-> transient, E_opt(n,m) = c(m)·n + b(m) + (vanishing), with b(m) now pinned for
-> small m. That converts the proof target from an abstract matrix into two concrete
-> hard-math questions you can now stare at directly: (i) find the operator's
-> eigenstructure for each fixed m (computable now, the m=1→general-m road Tripathi
-> walked), or (ii) prove the affine law + a closed form for b(m). Still hard-math
-> hope, not one-more-script — but materially better-founded than before E37, and
-> the natural Clay/USC collaboration hook is now a concrete artifact, not a plan.
+> general m ≥ 2)? **ALIVE, unchanged in altitude by E38 — which was a computational
+> + structural win, not a proof advance.** E38 did two things for the proof: it
+> built the large-m VALUE machine (fast exact-grade E_opt(52, m≤5), so the affine
+> law and b(m) can now be probed at more m without MC noise), and it SHARPENED the
+> structural picture — the run-length *multiset*, not the ordered composition, is
+> the minimal *aggregating* summary (order matters exactly per-step but washes out
+> in aggregate as m grows, the strong-mixing limit made concrete). But the proof
+> itself still needs the two hard-math attacks unchanged from E37: (i) the operator's
+> eigenstructure per fixed m, or (ii) a proof of the affine value law + closed-form
+> b(m). Neither is a script. So: hope alive, equipment better (a value oracle to
+> m≤5 deck scale + a cleaner structural target), proof distance unchanged — the
+> Clay/USC collaboration remains the realistic route to closing general m.
 >
 > **TASK 1 IS DONE — the result is now FORMALIZED and banked as experiment E35.**
 > The exact grid-wide DFH-`G` optimality (n≤9, m≤10) + the deck-scale value-test
@@ -75,22 +81,24 @@
 > shared core `guessing_theorem.walk_prefixes`/`run_lengths`, probe
 > `data/gt_sufficiency.py`, 6 pins (328 green).
 >
-> **▶ THE NEXT CHAPTER — build (a) is DONE (E37); (b) + the proof road remain**
-> (framing + specs in "Open questions / next steps" §1 below):
+> **▶ THE NEXT CHAPTER — builds (a) AND (b) are DONE (E37, E38); the proof road
+> remains** (framing + specs in "Open questions / next steps" §1 below):
 > **(a) the EXACT run-composition DP — DONE, E37** (`guessing_theorem.exact_e_dp`,
 > probe `data/gt_exact_dp.py`): Clay's m-shelf operator explicit and runnable,
 > exact E_opt to deck scale for small m, cost measured Θ(n^{2m}) (NOT 2ⁿ — poly in
-> n per fixed m), b(m) pinned. **(b) the O(n³) APPROXIMATE DP** over
-> (dir, rank, #descents) — STILL OPEN, and now the natural next build: it gives fast
-> deck-scale values for the LARGE m where (a)'s Θ(n^{2m}) is infeasible (m≥5),
-> nearly exact (per-step R²≥0.995, →1 as m grows), bias measurable vs the exact DP
-> grid; exact in the strong-mixing limit. **The proof road** (Matt's big-proof
-> interest): the operator is now explicit and small for small m — compute its
+> n per fixed m), b(m) pinned. **(b) the APPROXIMATE DP — DONE, E38, with a PIVOT**
+> (`guessing_theorem.approx_e_dp`, probe `data/gt_approx_dp.py`): the spec's
+> #descents (run COUNT) closure FAILS at deck scale (compounds to a wrong slope);
+> the run-length MULTISET (run distribution) is the working closure — exact-grade
+> for m≤5 (m=5 z+0.3 vs MC; recovers b(3)), ~0.9% low at m=10, fast+deterministic
+> where (a) is Θ(n^{2m})-dead. The finding: the multiset, not the count, is the
+> minimal *aggregating* summary. **The proof road** (Matt's big-proof interest, now
+> the primary thread): the operator is explicit and small for small m — compute its
 > spectrum (Tripathi's m=1 route) and/or prove the exactly-affine value law E37
-> found. Adjacent, still queued: the polynomial NO-feedback exact number
-> (position-matrix column-maxima, RESEARCH_IDEAS 1C); a rational posterior →
-> closed-form b(m); the standalone write-up (greenlit); the Clay (USC) hook (now a
-> concrete artifact).
+> found (via a rational DP). Adjacent, still queued: a richer approximate statistic
+> to close m=10's residual; the polynomial NO-feedback exact number (position-matrix
+> column-maxima, RESEARCH_IDEAS 1C); a rational posterior → closed-form b(m); the
+> standalone write-up (greenlit, folds in E36–E38); the Clay (USC) hook.
 >
 > **Pre-flight.** PyPy is the accelerator (~4×), NOT on the default PATH; the
 > pure-stdlib engine imports fine. Template:
@@ -307,7 +315,7 @@ A proof still needs the `m`-shelf transition matrix (open).
 
 ## Open questions / next steps
 
-**1. Break the n! wall — build (a) DONE (E37); build (b) + the proof road remain.**
+**1. Break the n! wall — builds (a) DONE (E37) and (b) DONE (E38); the proof road remains.**
 The exact enumeration is O(n·n!) and dies at n≈9. Because the gap is 0 (E35),
 `E_opt = E_G = Σ over prefixes of P·h`, aggregable iff the per-step hit
 `h(prefix) = max_c P(next=c|prefix)` is a function of a small Markov statistic
@@ -333,31 +341,30 @@ posterior, not just its max, is a function of σ; max Δposterior/state = 0).
   b(m); and run-composition pruning (drop rare many-descent σ, controlled
   truncation) would push exact-ish values to deck scale for larger m — but build (b)
   does the large-m job more principledly.
-- *(b) ▶ **THE NEXT BUILD (DECIDED, Matt 2026-07-20) — do this first.** The O(n³)
-  APPROXIMATE DP (assumed-density closure, the E29 doctrine): the large-m complement
-  to (a), because exact is Θ(n^{2m}) and dies for m≥5, yet m=5,10 are the DFH-real
-  machine regime.* Concrete plan:
-  - **State** σ̃ = (t, direction, rank-of-last, #descents) — the E37 exact state with
-    the run *composition* collapsed to its *count* (E36 showed #descents alone leaks
-    the placement; that leak IS the controlled approximation here). O(n·2·n·n) = O(n⁴)
-    cells, but only O(n³) alive per step → a genuine polynomial DP.
-  - **Method** — propagate the σ̃ *distribution* forward under an assumed-density
-    (moment-closure) transition: at each (t→t+1) the exact posterior would need the
-    full run composition, so approximate the per-σ̃ next-card law by the mass-weighted
-    average over the compositions folded into σ̃ (project onto the σ̃ family, exactly
-    the `AssumedDensityShelfPosterior` pattern). Then Ẽ_opt(n,m) = Σ_σ̃ P(σ̃)·h(σ̃).
-  - **Gates (the honest error bar is the whole point)** — E36 measured the per-step
-    fit already: (dir, rank, #descents) is R² ≥ 0.995, → 1 as m grows, exact ≤ n=5.
-    Gate the AGGREGATE bias against **E37's exact grid** (m=1,2 to n=52; m=3 to n≈36)
-    and the E35 MC. Report Ẽ_opt − E_opt as a table; it must → 0 as m grows (the
-    strong-mixing limit) and stay small where measurable.
-  - **Deliverable** — fast exact-ish E_opt(52, m=5,10) with a MEASURED error bar,
-    the values E35 had only as MC and E37 can't reach. Also feeds the b(m) closed
-    form (item 3) at larger m.
-  - **Files** — `guessing_theorem.approx_e_dp(n, m)` (shared core, two-layer rule)
-    + probe `data/gt_approx_dp.py` (bias table vs the E37 exact grid + E35 MC);
-    regression pins mirroring E37's. Bank as **E38**. Seeds: next free 24.07e9 (MC
-    cross-check only; the DP is seedless).
+- *(b) The APPROXIMATE DP — DONE (E38), `guessing_theorem.approx_e_dp`, WITH A
+  PIVOT from the plan below.* The spec was to key by σ̃ = (t, dir, rank, **#descents**)
+  — collapse the run composition to its COUNT. Built and measured, that FAILS at
+  deck scale: #descents is bounded ~2m while run lengths grow ~n/2m, so its per-step
+  error compounds into a WRONG asymptotic slope (E_opt(52,5) off −4.3, E_opt(52,10)
+  off −2.1 — a near-exact-looking n≤12 gate that collapses by n=52). Neither a
+  mass-weighting beam (bias flat vs beam width — the lumping is intrinsic) nor a
+  first/last-run enrichment rescues it. **The fix: key by the run-length MULTISET
+  (the *distribution* — how many runs of each length, run ORDER discarded), not the
+  count.** Same E37 transition, coarser dedup key, mode representative. Result:
+  EXACT-GRADE for m ≤ 5 at deck scale (m=5 bias vs MC +0.014 z+0.3; m=3 δ recovers
+  E37's exact b(3)) and ~0.9% low at m=10 (−0.085) — vs #descents' −2 to −4.
+  **Deliverable delivered:** fast, deterministic E_opt(52, m) = 39, 27.035, 21.158,
+  15.112, 9.214 at m=1,2,3,5,10, where E37's Θ(n^{2m}) is dead. Cost = run-length
+  PARTITIONS (≪ ordered Θ(n^{2m}), by up to (2m)!); a `max_run` cap merges the
+  long-run tail losslessly for very large m. **The finding:** it is not enough for a
+  statistic to predict the per-step hit (E36: #descents is R²≥0.995 per-step yet
+  fails in aggregate); the aggregate DP amplifies residual error, so the run-length
+  *distribution*, not its *count*, is the minimal *aggregating* summary — sharpening
+  E36. Why the multiset suffices approximately: its per-step sufficiency gap shrinks
+  with m (0.25/0.068/0.011 at m=2/3/5) — run order matters exactly but washes out as
+  mixing improves (the strong-mixing limit made concrete). Full result: EXPERIMENTS
+  E38; probe `data/gt_approx_dp.py`; 5 pins. *Still open on this build:* a richer
+  approximate statistic (a little run-order info) to close m=10's −0.085 residual.
 - *Adjacent stepping stone, still computable NOW.* The NO-feedback multi-shelf
   reward = Σ of column-maxima of the m-shelf position matrix (RESEARCH_IDEAS 1C;
   Tripathi did m=1) — a Poisson-binomial over the slot geometry, genuinely
@@ -414,7 +421,12 @@ statistic = run-length composition; no poly-exact route uniformly for m≥2; two
 constructive builds specified in §1); **E37** (build (a) — the exact
 run-composition DP `exact_e_dp`: Clay's m-shelf operator explicit and runnable,
 exact E_opt to deck scale for small m, cost measured Θ(n^{2m}) not 2ⁿ, b(1,2,3)
-pinned; probe `data/gt_exact_dp.py`, 4 pins, 331 green).
+pinned; probe `data/gt_exact_dp.py`, 4 pins, 331 green); **E38** (build (b) — the
+approximate DP `approx_e_dp`, WITH A PIVOT: the spec's #descents/run-COUNT closure
+fails at deck scale, so the working closure is the run-length MULTISET; exact-grade
+for m≤5 at deck scale, ~0.9% at m=10, fast+deterministic where (a) is Θ(n^{2m})-dead;
+the finding — the multiset, not the count, is the minimal aggregating summary;
+probe `data/gt_approx_dp.py`, 5 pins, 334 green fast / 371 full).
 
 ## File map (how to reproduce)
 
@@ -428,7 +440,9 @@ Machinery (existing `src/ridefree/`, gated in `tests/`):
 - `guessing_theorem.py` — shared core: `total_prob`, `exact_e`/`exact_e_from_perms`
   (O(n·n!) enumeration), `run_lengths`, `walk_prefixes` (E36), **`exact_e_dp` (E37 —
   the run-composition DP, Clay's m-shelf operator explicit; Θ(n^{2m}), deck-scale
-  exact for small m)**, `mc_e`.
+  exact for small m)**, **`approx_e_dp(n, m, max_run=None)` (E38 — the run-length
+  MULTISET DP; polynomial for large m, exact-grade to m≤5 at deck scale, ~1% at
+  m=10; `max_run` caps the run-length tail losslessly)**, `mc_e`.
 
 Probes (`data/`, run `uv run python data/<f>.py [args]`):
 - `gt_exact.py [n_max]` — exact `E_opt(n,m)` grid + the exact DFH-optimality gap
@@ -438,6 +452,11 @@ Probes (`data/`, run `uv run python data/<f>.py [args]`):
   wall (deck-scale for small m), and the pinned correction δ(n,m)→b(m). **Run
   under PyPy** for the heavy columns (m=3 at deck scale is ~n⁶ states):
   `PYTHONPATH=…/src /Users/mattwatts/.local/bin/pypy3.11 -u data/gt_exact_dp.py 52 1,2,3`
+- `gt_approx_dp.py [n_deck] [m1,..] [cap_M]` — E38, the run-length-MULTISET DP:
+  the #descents-vs-multiset contrast (the pivot), the bias grid vs `exact_e_dp`,
+  the deck-scale MC gate, and the fast deterministic deck-scale deliverable. **Run
+  under PyPy** (the m=5 full multiset at n=52 is ~3.6e6 states, ~2.5 min):
+  `PYTHONPATH=…/src /Users/mattwatts/.local/bin/pypy3.11 -u data/gt_approx_dp.py 52 1,2,3,5,10`
 - `gt_robustness.py` — strict-inequality check (suboptimal strategies `<` opt).
 - `gt_clay_conjecture.py` — exact `E_opt` vs Clay's `(n/2m)H_{2m}`; confirms
   `c(m)=H_{2m}/(2m)`, `m=1` exact, the regime split.

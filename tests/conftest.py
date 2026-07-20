@@ -41,6 +41,8 @@ SLOW_TESTS = {
     "test_proposition_realizes_predicted_edge",          # test_posterior.py
     "test_adf_proposition_realizes_predicted_edge",      # test_posterior.py
     "test_exact_e_dp_deck_scale_m2_matches_mc",          # test_guessing_theorem.py (E37)
+    "test_approx_e_dp_multiset_beats_run_count_at_deck_scale",  # test_guessing_theorem.py (E38)
+    "test_approx_e_dp_deck_scale_m10_matches_mc",        # test_guessing_theorem.py (E38)
     "test_coup_experiment_smoke_and_gate",               # test_coup.py
     "test_shelf_guessing_reproduces_dfh_table2",         # test_shuffle.py
     "test_two_pass_guessing_near_chance",                # test_shuffle.py
