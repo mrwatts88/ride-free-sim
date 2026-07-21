@@ -34,8 +34,15 @@ identity is machine-verified, but the limit-exchange steps are *stated* rather t
   explicit dominated-convergence / geometric-tail bound.
 - §6.4–6.6 (`offC`, `onE`, `offE`): "O(1) distinguished cards", "conditioning on all blocks
   nonempty is exact in the limit", "remaining configurations have vanishing probability" —
-  each needs a written bound (all are controlled by the same O((1−1/m)ⁿ) block-emptiness /
-  survival tail proved in §5, so the machinery is in hand; it just isn't spelled out).
+  each needs a written bound. All are controlled by geometric tails (block-emptiness is
+  O((1−1/2m)ⁿ); the dominant competing-hypothesis / survival tail is the O(n²(1−1/m)ⁿ) of §5),
+  so the machinery is in hand; it just isn't spelled out.
 
 A referee will push here. Not required for the Clay outreach draft; required before a journal
 submission. (Banked at Matt's request, 2026-07-20.)
+
+**This is DIFFERENT IN KIND from the remainder correction** (the n² fix): the remainder was a
+literal error (a false statement), now fixed; this is an under-rigor gap (true statements, not
+fully ε-managed). And per the independent review: writing these tail bounds out rigorously
+reproduces the *corrected* O(n²(1−1/m)ⁿ) remainder — so the rigor gap and the remainder fix are
+consistent, not competing.
