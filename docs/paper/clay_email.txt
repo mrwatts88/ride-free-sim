@@ -24,7 +24,11 @@ What I can't personally vouch for is the rigor of the analytic proof itself. The
 
 2. The write-up is at draft/preprint rigor: some limit steps in the intercept proof are stated rather than fully managed. A referee would push there.
 
-The 9-page draft is attached. I'd genuinely value your read: whether the argument holds, whether it's worth developing, and if so, how. If the technical back-and-forth needs more than I can provide directly, I can turn the AI and the verification code back on it. Thank you for the paper that started this.
+The 9-page draft is attached. I'd genuinely value your read: whether the argument holds, whether it's worth developing, and if so, how. If the technical back-and-forth needs more than I can provide directly, I can turn the AI and the verification code back on it.
+
+One more thing, in case it's useful. Your paper notes that the transition matrix for an arbitrary number of shelves is open. Along the way I computed what appears to be the subdominant spectrum of the complete-feedback guessing operator: its minimal recurrence, found in exact rational arithmetic, has eigenvalues {i/m}, each with multiplicity 3, together with {(2i−1)/2m}, and spectral gap 1/m. That is proven over the rationals for m = 2, 3 and validated out-of-sample for m = 4, 5, 6, and remains a conjecture for general m; it is also where the polynomial prefactor in the remainder above comes from. I'd be glad to share it separately if that question is still of interest.
+
+Thank you for the paper that started this.
 
 Best regards,
 Matt Watts

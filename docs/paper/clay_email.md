@@ -18,6 +18,11 @@
 - **Tone: outreach, not submission.** Authorship/venue undecided pending his reply (see
   `docs/GUESSING_THEOREM.md` §WRITE-UP & OUTREACH PLAN). If he's interested, a Clay
   co-authorship / arXiv endorsement is the best outcome.
+- **Spectrum teaser (added 2026-07-20).** A closing paragraph mentions the E39 subdominant
+  spectrum `{i/m}` (mult. 3) ∪ `{(2i−1)/2m}`, gap `1/m` (proven m=2,3; validated m=4–6;
+  conjecture general m) as directly relevant to Clay's stated open problem (the m-shelf
+  transition matrix), offered to share separately. Hedged honestly; tied to the remainder's
+  n² prefactor. This is Paper 2's centerpiece (Task #2), not in Paper 1.
 - **Punctuation:** no em-dashes (Matt's preference; they read as an AI tell). Math minus signs
   kept.
 - **Salutation: "Dear Alexander Clay,"** — NOT "Professor" or "Dr." Verified 2026-07-20: Clay is
