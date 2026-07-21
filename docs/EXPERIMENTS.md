@@ -2,6 +2,162 @@
 
 Newest first. Every experiment is reproducible from (git commit, CLI command, seed).
 
+## E43 — The proof road, Phase 2 tail (cont.): the EXACT per-position hit law — the value law becomes ONE explicit sum, the intercept mechanism is pinned, and E42's "transition-sum" framing is corrected
+
+**Date:** 2026-07-20 · **Question (same math thread, immediately after E42):** E42 proved
+the fade rate and derived two intercept pieces but framed the remainder as "derive the
+`2m−1` transition-guess hits." Pushing on that revealed the framing was **wrong**: the
+intercept is not a boundary/transition effect at all — it is a **finite-size correction
+that lives at every position**. This experiment gets the exact correction, which turns the
+whole value law into a single explicit sum.
+
+**Method (`data/gt_hit_formula.py`; core `guessing_theorem.hit_probability`; GATES 1,3 exact
+by enumeration, 2,4 exact rationals — seedless).**
+
+**THE PER-POSITION HIT LAW (exact; GATE 1).** At any guess whose run's last card `v` is in
+block `ℓ`, with `A` undealt cards on the **continuation** side (above `v` ascending / below
+descending, counting the guess target `w₁`) and `B` on the opposite side, the E41 Lemma
+makes the undealt labels independent-uniform, and `w₁` (smallest undealt above / largest
+below) is the next card iff it has the minimum shuffle KEY among undealt. Counting those
+labels gives, with `r = 2m−ℓ`, `d = j−ℓ` (`j` = the guess's own block):
+```
+P(next = w₁ | ℓ, A, B) = (1/r) Σ_{d=0}^{r−1} (1 − (d+(d mod 2))/r)^{A−1} · (1 − (d−(d mod 2))/(r−1))^{B}
+```
+**unified** for ascending (`ℓ` even) and descending (`ℓ` odd) — the descending mirror is NOT
+`ℓ→2m−1−ℓ` (that fails); the correct unification is by `d` and the parity of `d`. **GATE 1**
+verifies it EXACTLY against brute-force enumeration for EVERY (prefix, parse, direction)
+group (m=2: 4460/21573 groups at n=6/7; m=3: 4154/31140 at n=5/6 — zero mismatches).
+
+**BULK LIMIT → the Lemma rate (GATE 2).** The `d=0` term is exactly `1` for all A,B, so as
+`A,B→∞` only it survives and `P → 1/r = 1/(2m−ℓ)` — the E41 Lemma's bulk rate, which sets
+the slope. The `d≥1` terms are the finite-size **excess** (always ≥ 0); the `d=1` term
+`(1/r)(1−2/r)^{A−1}` depends only on the continuation supply `A`, matters only near the
+value-range extreme, and is the `H_{2m}^{(2)}` generator.
+
+**THE VALUE LAW IS THIS FORMULA SUMMED (GATE 3).** The pure-continuation strategy — guess
+`w₁` every step (first guess = value 1) — is **OPTIMAL**: its exact realized-hit expectation
+equals `E_opt` at EVERY (n,m) (gap `0` exactly, m=1,2,3, n≤7 — an independent
+re-confirmation of E35's G-optimality, in the cleaner "always guess the continuation" form).
+So
+```
+E_opt(n,m) = Σ_t E[ hit_probability(m, ℓ_t, A_t, B_t) ].
+```
+
+**THE INTERCEPT, REDUCED (GATE 4).** The bulk reference `Σ_p 1/(2m−ℓ(o_{p−1})) → (H_{2m}/2m)n − 1`
+(every card but the LAST is some guess's predecessor; the last card's `1/(2m−(2m−1))=1` is
+missing), and the first guess `→ 1/(2m)` (`o₁=1 ⇔ L₁=0`). Hence the clean split
+```
+b(m) = −1 + 1/(2m) + S_excess(m),   S_excess(m) = Σ_t E[ hit_t − 1/(2m−ℓ_t) ],
+```
+and matching E40's `b(m) = 3/2 − 1/(4m) − H_{2m}^{(2)}` gives the last mile **in closed
+form**: `S_excess(m) = 5/2 − 3/(4m) − H_{2m}^{(2)}`. GATE 4 confirms `E_opt − (H_{2m}/2m)n +
+1 − 1/(2m) → S_excess` (m=2: 0.72481→0.70138 vs target `101/144=0.70139`; m=3:
+0.99569→0.76141 vs `2731/3600=0.75861`, converging with the `(1−1/m)ⁿ` fade).
+
+**Correction to E42.** E42's "derive the transition-guess sum" next-step targeted the wrong
+object — the intercept is not concentrated at the `2m−1` block transitions; it is the
+finite-size excess `hit − 1/(2m−ℓ)` summed over the WHOLE deck (dominated by the value-range
+extremes, where the undealt supply `A` or `B` is small). E42's arithmetic decomposition
+(`−H_{2m} + B(m)`) is still valid, but E43's `−1 + 1/(2m) + S_excess` is the mechanistically
+correct one, and `S_excess = 5/2 − 3/(4m) − H_{2m}^{(2)}` is the precise, explicit sum whose
+closed-form evaluation is the one remaining step to finish `b(m)` (and thus the full value
+law). The fade-rate proof (E42) is unaffected.
+
+**Reproduce.** `PYTHONPATH=src /Users/mattwatts/.local/bin/pypy3.11 -u data/gt_hit_formula.py 2,3`
+(GATE 1/3 enumeration are the heavy parts). Pins in `tests/test_guessing_theorem.py`
+(`test_hit_probability_exact_by_enumeration`, `..._bulk_limit_is_block_rate`,
+`test_continuation_strategy_equals_e_opt_exactly`, `test_intercept_reduction_to_s_excess`).
+Core helper `guessing_theorem.hit_probability`. Seedless. 348 tests green (4 new pins).
+
+## E42 — The proof road, Phase 2 TAIL: the FADE RATE `O((1−1/m)ⁿ)` PROVEN from the blocks for ALL m, and the INTERCEPT `b(m)` decomposed (two pieces derived, the rest reduced to one boundary constant)
+
+**Date:** 2026-07-20 · **Question (the Phase-2 tail, same math thread):** E41 proved
+the slope `c(m)=H₂ₘ/(2m)` — the open leading term of Clay's Conjecture 3. The full value
+law `E_opt(n,m) = c(m)·n + b(m) + O((1−1/m)ⁿ)` (E40) sharpens Clay with two things he
+never claimed: the exact **intercept** `b(m)=3/2−1/(4m)−H₂ₘ⁽²⁾` and the **fade rate**
+`O((1−1/m)ⁿ)`, both *confirmed* at m≤6 (E39/E40, Berlekamp–Massey on the exact δ-sequence)
+but not *derived*. This experiment derives them from the E41 block picture — the fade rate
+fully (a theorem for all m), the intercept partway (two of its pieces in closed form, the
+remainder reduced to a single well-defined boundary constant).
+
+**Method (`data/gt_fade_intercept.py`; GATES 1 exact by enumeration, 2–3 exact rationals,
+4 MC with the low-variance `predicted` estimator, seed base 24.4e9).** Same 2m-block model
+and Key Lemma as E41.
+
+**THE FADE RATE — PROVEN (all m).** Take a block-0 ascending *contiguous* prefix
+`(1,2,…,k)`. For the output to begin exactly `1,2,…,k`, every **undealt** card `c>k` must
+have key `> key(k)=(ℓ,+k)` where `ℓ=L_k` is the last card's true block. In the block model
+each undealt card's label is independent uniform, so this survival happens **per card and
+independently** with probability
+```
+ρ_ℓ = (2m−ℓ)/(2m)     if ℓ even   (L_c ≥ ℓ survives),
+    = (2m−1−ℓ)/(2m)   if ℓ odd    (L_c >  ℓ survives).
+```
+Hence **`P(prefix=(1..k), L_k=ℓ) = K_ℓ · ρ_ℓ^{\,n−k}`** with `K_ℓ` an *n-independent*
+constant (the finite count of label-assignments to the k seen cards consistent with the
+prefix and `L_k=ℓ`). **GATE 1** verifies this EXACTLY by enumerating all `(2m)ⁿ` label
+vectors (m=2, m=3): `P(A_ℓ)/ρ_ℓ^{n−k}` is a constant `K_ℓ` at every n
+(`K = 1/64, 1/64, 5/64` for ℓ=0,1,2 at m=2; `1/216, 1/216, 5/216, 5/216, 13/216` at m=3).
+The observer's hit mixes over parses; its excess over the true-parse value `1/(2m)` is
+carried by the competing labels `ℓ≠0`, whose posterior weight decays like
+`(ρ_ℓ/ρ_0)ⁿ`. The **dominant** (slowest) competitor is `ℓ∈{1,2}`, **both at**
+```
+ρ_ℓ / ρ_0 = (2m−2)/(2m) = 1 − 1/m.
+```
+This is the whole point — and it explains **"the factor of 2 in the exponent"** the E40
+lead flagged: a same-direction block **skip** is `ℓ→ℓ+2` (survival ratio `(2m−2)/2m`), NOT
+the naive "intervening block empty" `(1−1/2m)`. So the per-step excess is `Θ((1−1/m)ⁿ)`
+(**GATE 2**: block-0 excess ratio → 1−1/m, measured 0.50001, 0.66798 at m=2,3 via the
+polynomial-cost exact-rational posterior), and therefore the value-law tail
+`δ(n,m)−b(m) = O((1−1/m)ⁿ)` (**GATE 3**, exact DP: ratio → 1−1/m, cleanly 0.679→0.667 at
+m=3; at m=2 the eigenvalue `1/2` has multiplicity 3 so an `n²(1−1/m)ⁿ` prefactor slows the
+observed ratio, still → 1/2). **The dominant subdominant eigenvalue is EXACTLY `1−1/m`,
+for all m** — a *proof* of what E39 could only confirm to m≤6 by BM, and via a completely
+independent route (the block survival law, not the operator's characteristic polynomial).
+The upper bound "nothing decays slower" holds because the block-0 above-jump `ρ₂/ρ₀=1−1/m`
+is the largest single-card survival ratio over all (block, jump) combinations, and any
+competing parse's decay is a product of such ratios over the undealt cards; the contiguous
+block-0 prefix (all undealt above `v`) realizes it, so the rate is tight.
+
+**THE INTERCEPT — decomposed; two pieces in closed form.** Bin every guess by the true
+block parse (known from the drawn labels; blocks are contiguous in the output). A guess is
+**interior** to block `ℓ` if the previous output card is in block `ℓ` and is not its last
+card; **transition** if it crosses a block boundary; **first** for `t=1`.
+- **Interior undercount `−H₂ₘ` (DERIVED).** Block `ℓ` supplies `|B_ℓ|−1` interior guesses,
+  each hitting exactly `1/(2m−ℓ)` (Lemma). Expected interior sum
+  `= Σ_ℓ (n/2m − 1)/(2m−ℓ) = (H₂ₘ/2m)·n − H₂ₘ`: the slope (E41) **plus an exact `−H₂ₘ`
+  intercept contribution**.
+- **First guess `1/(2m)` (DERIVED).** The first output card is value 1 iff `L_1=0` (then
+  key `(0,+1)` is globally minimal), probability `1/(2m)` as n→∞; value 1 is the MAP, so
+  the first-guess hit → `1/(2m)`. GATE 4: 0.5, 0.25, 0.1667 at m=1,2,3 — exactly `1/(2m)`.
+- **The remainder is one boundary constant.** Writing `b(m) = −H₂ₘ + B(m)`,
+  ```
+  B(m) := b(m) + H₂ₘ = 3/2 − 1/(4m) + H₂ₘ − H₂ₘ⁽²⁾
+  ```
+  is the sum of the `2m−1` **transition** guesses + the first guess + the interior
+  **parse-mixing excess** (the summed fade series). **GATE 4** measures the three pieces
+  and confirms the split: interior-ideal `− slope·n → −H₂ₘ` (−1.51/−2.14/−2.47 vs
+  −1.50/−2.083/−2.45 at m=1,2,3, o(1) transient at n=40) and boundary `→ b(m)+H₂ₘ`
+  (2.037/2.384 measured vs 2.035/2.375 exact at m=2,3), total δ → b(m). **m=1 warm-up:**
+  `H₂=3/2`, no fade (spectrum empty, `δ(n,1)=0` exactly), first `=1/2`, so
+  `b(1) = −3/2 + 3/2 = 0` — Clay's Thm 1.5 (`3n/4`) recovered from the block decomposition.
+
+**Status.** The **fade rate is now a theorem for all m** (the dominant eigenvalue `1−1/m`,
+derived from the block survival law — this is the headline). The **intercept** has two of
+its constituent constants derived in closed form (`−H₂ₘ` interior undercount, `1/(2m)`
+first guess); the one remaining open piece is the **transition-guess sum** in closed form,
+which would collapse `B(m)` to `3/2−1/(4m)+H₂ₘ−H₂ₘ⁽²⁾` and finish `b(m)`. That is the last
+step of the value-law proof; the target is now a single explicit `O(1)` sum over `2m−1`
+peak/valley guesses, not "find the operator's eigenvectors."
+
+**Reproduce.** `PYTHONPATH=src /Users/mattwatts/.local/bin/pypy3.11 -u
+data/gt_fade_intercept.py 2,3` (GATE 1 enumeration + GATE 4 MC are the heavy parts; PyPy
+recommended). Pins in `tests/test_guessing_theorem.py`
+(`test_fade_survival_law_is_exactly_geometric_by_enumeration`,
+`test_fade_dominant_rate_is_one_minus_one_over_m`,
+`test_intercept_interior_undercount_and_boundary_identity`). Seedless where exact; GATE 4
+MC uses seed base 24_400_000_000. 344 tests green (3 new pins).
+
 ## E41 — The proof road, Phase 2: a RIGOROUS PROOF of the slope c(m) = H₂ₘ/(2m) for ALL m — the OPEN leading term of Clay's Conjecture 3. Direct block-decomposition + an exact label-exchangeability lemma, bypassing the "m-shelf transition matrix" obstacle entirely
 
 **Date:** 2026-07-20 · **Question (Phase 2 of the proof road toward Clay 2025

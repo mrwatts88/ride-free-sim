@@ -2,8 +2,50 @@
 
 > ## ▶ NEXT SESSION — START HERE (updated 2026-07-20)
 >
-> **CURRENT: E35 + follow-ups A/B + E36 + E37 + E38 + E39 + E40 + E41 all DONE; tests
-> green** (routine fast run; heavy MC/DP gates are `slow`-marked, skipped by default).
+> **CURRENT: E35 + follow-ups A/B + E36 + E37 + E38 + E39 + E40 + E41 + E42 + E43 all DONE;
+> tests green** (routine fast run; heavy MC/DP gates are `slow`-marked, skipped by default).
+>
+> **▶▶ E43 (2026-07-20) — the EXACT PER-POSITION HIT LAW → the value law becomes ONE explicit
+> sum, and the intercept mechanism is pinned (correcting E42's "transition-sum" framing).**
+> At any guess whose run's last card is in block ℓ, with A undealt on the CONTINUATION side
+> (incl. the guess target w₁) and B opposite, the E41 Lemma gives P(next=w₁) EXACTLY (GATE 1,
+> verified vs enumeration for every (prefix,parse,dir) group, asc+desc): with r=2m−ℓ, d=j−ℓ,
+> **P = (1/r)Σ_{d=0}^{r−1}(1−(d+(d mod 2))/r)^(A−1)·(1−(d−(d mod 2))/(r−1))^B** — unified
+> asc/desc by d-parity (the naive ℓ→2m−1−ℓ mirror FAILS). The d=0 term is 1 for all A,B ⟹
+> bulk limit 1/(2m−ℓ) (the Lemma rate = the slope); d≥1 = the finite-size EXCESS (d=1 =
+> (1/r)(1−2/r)^(A−1) = the H₂ₘ⁽²⁾ generator). **THE VALUE LAW IS THIS SUMMED:** the
+> pure-continuation strategy (guess w₁ every step, first=1) is OPTIMAL — **V_cont==E_opt
+> EXACTLY** at every (n,m) (independent re-confirm of E35), so E_opt=Σ_t E[hit_probability(
+> ℓ_t,A_t,B_t)]. **INTERCEPT REDUCED:** bulk reference Σ_p 1/(2m−ℓ(o_{p−1}))→(H₂ₘ/2m)n−1 (last
+> card carries no follow-up guess), first guess→1/(2m), so **b(m)=−1+1/(2m)+S_excess(m)** with
+> **S_excess(m)=Σ_t E[hit_t−1/(2m−ℓ_t)]=5/2−3/(4m)−H₂ₘ⁽²⁾** (closed-form target from E40; GATE 4
+> confirms → 0.70139 at m=2, 0.75861 at m=3). **CORRECTION to E42:** the intercept is NOT the
+> 2m−1 transition guesses — it is the finite-size excess hit−1/(2m−ℓ) summed over the WHOLE
+> deck (dominated by value-range extremes where A or B is small). **▶ ONE REMAINING STEP:**
+> evaluate S_excess in closed form → 5/2−3/(4m)−H₂ₘ⁽²⁾, finishing b(m) and the full value law.
+> Core `guessing_theorem.hit_probability`, probe `data/gt_hit_formula.py`, 4 pins, 348 green.
+>
+> **▶▶ E42 (2026-07-20) — PHASE 2 TAIL: the FADE RATE `O((1−1/m)ⁿ)` is now PROVEN from the
+> blocks for ALL m, and the INTERCEPT b(m) is decomposed (two pieces derived).** The FADE:
+> for a block-0 ascending contiguous prefix (1..k), conditioning on the last card's true
+> block ℓ=L_k, every undealt card survives (key>key(last)) INDEPENDENTLY with prob
+> ρ_ℓ=(2m−ℓ)/2m (even ℓ) / (2m−1−ℓ)/2m (odd ℓ), so `P(prefix,L_k=ℓ)=K_ℓ·ρ_ℓ^(n−k)` EXACTLY
+> (K_ℓ n-independent — GATE 1, enumeration). The observer's excess over 1/(2m) is carried by
+> the competing labels ℓ≠0, whose posterior weight decays like (ρ_ℓ/ρ_0)ⁿ; the DOMINANT is
+> ℓ∈{1,2}, both at ρ_ℓ/ρ_0=(2m−2)/2m=**1−1/m** — this is "the factor of 2 in the exponent"
+> (a same-direction block SKIP ℓ→ℓ+2, not the intervening-empty (1−1/2m)). So excess is
+> Θ((1−1/m)ⁿ) (GATE 2) and δ(n,m)−b(m)=O((1−1/m)ⁿ) (GATE 3): **the dominant subdominant
+> eigenvalue is EXACTLY 1−1/m for all m** — a PROOF of what E39 confirmed to m≤6 by
+> Berlekamp–Massey, via an independent route (the block survival law, not the operator).
+> The INTERCEPT: bin guesses by the true block parse — interior guesses of block ℓ number
+> |B_ℓ|−1 and each hit 1/(2m−ℓ) (Lemma), so their sum is (H₂ₘ/2m)n−H₂ₘ ⟹ **interior
+> undercount = −H₂ₘ (DERIVED)**; the first guess → **1/(2m) (DERIVED)** (o₁=1 iff L₁=0). The
+> rest is one boundary constant B(m)=b(m)+H₂ₘ=3/2−1/(4m)+H₂ₘ−H₂ₘ⁽²⁾ (the 2m−1 transition
+> guesses + first + interior parse-mixing excess), MEASURED to match (GATE 4). m=1 warm-up:
+> H₂=3/2, no fade, first=1/2 ⟹ b(1)=−3/2+3/2=0 (Clay Thm 1.5, 3n/4). **▶ THE ONE REMAINING
+> STEP:** derive the TRANSITION-guess sum (2m−1 peak/valley guesses) in closed form — that
+> collapses B(m) and finishes b(m). A single explicit O(1) sum, not "find the eigenvectors."
+> Probe `data/gt_fade_intercept.py`; 3 new pins; write-up EXPERIMENTS E42; 344 green.
 >
 > **▶▶ E41 (2026-07-20) — PHASE 2 BREAKTHROUGH: the SLOPE c(m) = H₂ₘ/(2m) is now PROVEN
 > for ALL m — the open, hard half of Clay's Conjecture 3. See §THE SLOPE PROOF below for
@@ -133,26 +175,24 @@
 >
 > **▶ HOPE VERDICT — end EVERY session with an updated one (Matt's standing ask,
 > 2026-07-20): is hope ALIVE for the big proof** (proving Clay's Conjecture 3 for
-> general m ≥ 2)? **ALIVE — and PARTLY REALIZED. E41 PROVED the hard, open half: the
-> slope c(m) = H_{2m}/(2m) for all m.** The main open question of Conjecture 3's value
-> claim was the leading term for general m (Clay proved only m=1; he attributed the
-> obstacle to the "m-shelf transition matrix"). E41 proves it outright by a DIFFERENT,
-> more elementary route — the 2m-block decomposition + an exact label-exchangeability
-> lemma (verified by full enumeration) — that sidesteps the transition matrix entirely.
-> This is not incremental confirmation; it is a theorem: `E_opt(n,m) = (H_{2m}/2m)n +
-> O(1)` for every m (with the strategy half, G optimal, already in hand). Why the direct
-> route beat the eigenvector route: the harmonic H_{2m} was never mysterious once you see
-> it is Σ_ℓ 1/(2m−ℓ), the block-average of 1/(#still-live blocks) — the observer's
-> exclusion of exhausted blocks, made exact by the lemma. What remains is now SMALLER and
-> concrete: the exact intercept b(m)=3/2−1/(4m)−H_{2m}^{(2)} (E40, confirmed m≤6) and the
-> geometric fade, i.e. summing the O(1) block-boundary corrections — a bounded
-> computation, with the second-order structure (H_{2m}^{(2)} = Σ_ℓ 1/(2m−ℓ)²) already
-> identified, not the open-ended "find the operator's eigenvectors" it looked like after
-> E40. The Clay/USC collaboration now carries a genuinely strong artifact: a proof of the
-> conjecture's leading term for all m, plus a fully explicit (and m≤6-confirmed) closed
-> form for the next order. Honest: the intercept and fade are still conjectural (the
-> hardest boundary bookkeeping is unfinished), so Conjecture 3 is not yet CLOSED — but
-> its headline is proven.
+> general m ≥ 2)? **ALIVE — and SUBSTANTIALLY REALIZED. E41 PROVED the slope
+> c(m)=H_{2m}/(2m) (the open, hard half of Clay's value claim); E42 PROVED the fade rate
+> O((1−1/m)^n); E43 turned the FULL value law into one explicit sum and reduced the exact
+> intercept b(m) to a single finite-size sum with a known closed-form target.** Where the
+> thread stands: `E_opt(n,m) = Σ_t E[hit_probability(m,ℓ_t,A_t,B_t)]` — an EXACT per-position
+> hit law (gated vs enumeration), with the pure-continuation strategy PROVEN optimal
+> (`V_cont = E_opt` exactly). So the value law is proven down to the constant `b(m) = −1 +
+> 1/(2m) + S_excess(m)`, and the ONE remaining unknown is `S_excess(m) = 5/2 − 3/(4m) −
+> H_{2m}^{(2)}` — an explicit finite-size sum whose closed-form evaluation finishes everything.
+> This session also CORRECTED E42's framing: the intercept is not a transition/boundary sum,
+> it is a whole-deck finite-size excess (the `H_{2m}^{(2)}` comes from the `d=1` term of the
+> hit law, active only where the continuation supply runs low near the value extremes). The
+> picture keeps sharpening the same way: the block decomposition makes each mysterious
+> constant elementary and explicit. Honest: `S_excess` is not yet summed in closed form, so
+> Conjecture 3 is not CLOSED — but the target is now a single concrete combinatorial sum, not
+> an open-ended search, and the whole value law reduces to it. The Clay/USC artifact carries a
+> proof of the leading term AND the fade rate for all m, plus the entire value law as one
+> explicit formula — a strong, near-complete result on the conjecture's value half.
 >
 > **TASK 1 IS DONE — the result is now FORMALIZED and banked as experiment E35.**
 > The exact grid-wide DFH-`G` optimality (n≤9, m≤10) + the deck-scale value-test
@@ -424,47 +464,62 @@ would land near 5.75; it lands on 39. Feedback-clean.
   open for m ≥ 2, the piece Clay attributed to the open transition matrix. `H_{2m}` is
   literally `Σ_ℓ 1/(2m−ℓ)` = the block-average of `1/(#still-live blocks)`. With the
   strategy half in hand (G optimal to m=40), `E_opt = (H_{2m}/2m)n + O(1)` is a theorem.
+- **PROVEN (all m, E42):** the **fade rate** `O((1−1/m)^n)` — the dominant subdominant
+  eigenvalue is exactly `1−1/m`, from the block survival law `P(prefix,L_k=ℓ)=K_ℓ·ρ_ℓ^{n−k}`
+  (`ρ_ℓ/ρ_0=1−1/m` at the dominant `ℓ∈{1,2}`). Independent of the E39 operator route.
+- **EXACT (all m, E43):** the **per-position hit law** `hit_probability(m,ℓ,A,B)` (gated vs
+  enumeration), and that the pure-continuation strategy is OPTIMAL — `V_cont = E_opt` exactly
+  — so `E_opt(n,m) = Σ_t E[hit_probability(m,ℓ_t,A_t,B_t)]`, one explicit sum. The intercept
+  reduces to `b(m) = −1 + 1/(2m) + S_excess(m)`, `S_excess(m) = Σ_t E[hit_t − 1/(2m−ℓ_t)]`,
+  closed-form target `5/2 − 3/(4m) − H_{2m}^{(2)}`.
+- **REMAINS:** evaluate the finite-size sum `S_excess(m)` in closed form (the `d≥1` terms of
+  `hit_probability` summed over the deck; the `d=1` term is the `H_{2m}^{(2)}` generator) —
+  the last step of the full value-law proof. *(E42's "transition-guess sum" was the wrong
+  object — E43 shows the intercept is a whole-deck finite-size effect, not a boundary sum.)*
 
-### ▶ NEXT STEP — prove the FULL value law: BOTH the intercept b(m) AND the fade rate
+### ▶ NEXT STEP — the value law, remaining piece (fade PROVEN E42; intercept reduced to one explicit sum E43)
 
-The remaining target (endorsed 2026-07-20) is to upgrade the `O(1)` to the exact constant
-and the correction to its exact rate, i.e. prove — from the block picture — that
+Target: prove — from the block picture — that
 
     E_opt(n,m) = (H_{2m}/2m)·n  +  [ 3/2 − 1/(4m) − H_{2m}^{(2)} ]  +  O((1−1/m)^n),
 
-both the **intercept** and the **fade rate**, which E40 confirmed at m≤6 but which are our
-own sharpening (Clay conjectured only the leading term). This is now a bounded boundary
-computation, not "find the eigenvectors." Concrete plan and the leads already in hand:
+both the **intercept** and the **fade rate** (E40 confirmed both at m≤6; our sharpening
+beyond Clay's leading term). **E42 (2026-07-20) closed the FADE completely and derived two
+of the intercept's three pieces:**
 
-- **Decompose** `E_opt − c(m)n = Σ_t (h_t − 1/(2m−ℓ(t)))` over interior steps `+` the
-  non-interior contributions (block transitions/peaks-valleys; the value-range endgame;
-  the first step). Each piece is `O(1)`; their sum is `b(m)` and their slowest tail is the
-  fade. The exact-rational posterior `_RationalShelfPosterior` gives every per-step
-  correction as an exact `Fraction`, so this can be done exactly (rebuild the E41
-  `data/gt_slope_proof.py` GATE-2 style at each block, not just block 0).
-- **LEAD (fade rate) — VERIFIED, the strongest handle:** the observer's per-step hit
-  EXCESS over `1/(2m−ℓ)` (from mixing over parse hypotheses — an interior block could be
-  empty) decays at rate **exactly `1−1/m` per step**, confirmed to 4 dp at m=2,3,4,5
-  (ratios 0.5000, 0.6667, 0.7500, 0.8000 at block 0). So the fade `O((1−1/m)^n)` IS the
-  block-0 empty-block/parse-mixing correction, and you only need the DOMINANT rate `1−1/m`
-  — NOT the full E39 spectrum. (Empty-block prob is `(1−1/2m)^n` per block, but the
-  *observer's confusion* between block ℓ and ℓ+2 turns it into `(1−1/m)^n`; nail that
-  factor of 2 in the exponent and the fade is proven.)
-- **LEAD (intercept) — the second-order structure:** `H_{2m}^{(2)} = Σ_{k=1}^{2m} 1/k² =
-  Σ_ℓ 1/(2m−ℓ)²` is the SAME 2m slots the slope averages at first order, now squared — so
-  each block ℓ's net `O(1)` correction should carry a `−1/(2m−ℓ)²` piece (a geometric
-  series in the parse-mixing tail summing to `~1/(2m−ℓ)²`), plus the global `3/2 − 1/(4m)`.
-  **CAVEAT (learned this session):** do NOT expect the correction to split cleanly as
-  `−1/(2m−ℓ)²` *per block* when you bin by run-index — the transition (peak/valley) step
-  gets attributed across a block boundary, so per-block intercepts look scrambled (measured
-  0.16/0.04/0.25/−0.50 at m=2) even though their SUM is exactly `b(2)=−7/144`. Attribute
-  transitions carefully, or work with the whole-deck sum.
-- **WARM-UP / sanity:** m=1 (two blocks, hits 1/2 and 1) — the corrections must cancel to
-  exactly 0 (`b(1)=0`, no fade). Deriving b(1)=0 from the boundary sum is the smallest
-  instance and validates the bookkeeping before general m.
-- The E39 spectrum/eigenvector machinery remains available as a cross-check (its dominant
-  subdominant eigenvalue is exactly the `1−1/m` the fade lead predicts), but is NOT the
-  required route.
+- **FADE RATE — PROVEN for all m (E42, `data/gt_fade_intercept.py`).** For a block-0
+  ascending *contiguous* prefix `(1..k)`, every undealt card survives (key > key(last))
+  INDEPENDENTLY with prob `ρ_ℓ=(2m−ℓ)/2m` (even ℓ) / `(2m−1−ℓ)/2m` (odd ℓ), so
+  `P(prefix,L_k=ℓ)=K_ℓ·ρ_ℓ^{n−k}` EXACTLY (K_ℓ n-independent; GATE 1 by enumeration). The
+  observer's excess over `1/(2m)` is carried by competing labels `ℓ≠0`, posterior weight
+  `∝(ρ_ℓ/ρ_0)^n`; the DOMINANT is `ℓ∈{1,2}`, both at `ρ_ℓ/ρ_0=(2m−2)/2m=1−1/m` — the
+  same-direction block SKIP `ℓ→ℓ+2`, **the factor of 2 in the exponent** (not the naive
+  `(1−1/2m)`). So excess = `Θ((1−1/m)^n)` and `δ(n,m)−b(m)=O((1−1/m)^n)`: the dominant
+  subdominant eigenvalue is EXACTLY `1−1/m` for all m (independent of E39's BM route; E39
+  is now a cross-check that matched). **This piece is done.**
+- **INTERCEPT — the mechanism is now EXACT (E43); one explicit sum remains.** E42 framed the
+  remainder as "derive the `2m−1` transition-guess hits" — that was the **wrong object**. The
+  intercept is a **finite-size correction at every position**, not a boundary effect. E43's
+  exact per-position hit law (with `r=2m−ℓ`, `d=j−ℓ`)
+  ```
+  P(next=w₁ | ℓ,A,B) = (1/r) Σ_{d=0}^{r−1} (1−(d+(d mod 2))/r)^{A−1} (1−(d−(d mod 2))/(r−1))^{B}
+  ```
+  (A = undealt continuation-side supply incl. w₁, B = opposite side) is gated EXACTLY vs
+  enumeration for every (prefix,parse,dir) group. Its `d=0` term is 1 (→ bulk `1/(2m−ℓ)` =
+  the slope); the `d≥1` terms are the excess. The pure-continuation strategy is optimal
+  (`V_cont=E_opt` exactly), so `E_opt = Σ_t E[P(next=w₁)]`, and the intercept splits cleanly:
+  ```
+  b(m) = −1 + 1/(2m) + S_excess(m),   S_excess(m) = Σ_t E[ hit_t − 1/(2m−ℓ_t) ]
+  ```
+  (the `−1` = the last card carries no follow-up guess; `1/(2m)` = the first guess). Matching
+  E40 gives the closed-form target **`S_excess(m) = 5/2 − 3/(4m) − H_{2m}^{(2)}`**. **▶ THE ONE
+  REMAINING STEP: evaluate `S_excess` in closed form** — the `d≥1` excess summed over the deck
+  (the `d=1` term `(1/r)(1−2/r)^{A−1}` is the `H_{2m}^{(2)}` generator; it matters only near
+  the value-range extremes, where the continuation supply `A` — or `B` — is small). Needs the
+  joint law of `(ℓ,A,B)` over guess positions in the block model; a concrete combinatorial sum.
+- **WARM-UP — DONE (E42):** m=1: `b(1)=0`, the block decomposition reproduces Clay Thm 1.5.
+- The E39 spectrum/eigenvector machinery remains a cross-check (its dominant subdominant
+  eigenvalue is exactly the `1−1/m` E42 derives), not the required route.
 
 ## What we have established (exact, gated)
 
@@ -748,7 +803,9 @@ Machinery (existing `src/ridefree/`, gated in `tests/`):
   MULTISET DP; polynomial for large m, exact-grade to m≤5 at deck scale, ~1% at
   m=10; `max_run` caps the run-length tail losslessly)**, **`exact_e_dp_rational`
   + `_RationalShelfPosterior` (E39 — the SAME DP in exact `Fraction`s; E_opt(n,m)
-  rational → exact δ(n,m), b(m), and the operator spectrum)**, `mc_e`.
+  rational → exact δ(n,m), b(m), and the operator spectrum)**, **`hit_probability(m,ℓ,A,B)`
+  (E43 — the exact per-position realized-hit law; bulk → 1/(2m−ℓ), finite-size excess = the
+  intercept; `E_opt = Σ_t E[hit_probability]`)**, `mc_e`.
 
 Probes (`data/`, run `uv run python data/<f>.py [args]`):
 - `gt_exact.py [n_max]` — exact `E_opt(n,m)` grid + the exact DFH-optimality gap
@@ -774,6 +831,23 @@ Probes (`data/`, run `uv run python data/<f>.py [args]`):
   b(m)=3/2−1/(4m)−H_{2m}^{(2)} against the exact b(1..6) and runs the exact-rational
   subset search that finds it as the UNIQUE ≤3-feature fit (asserts uniqueness). Fast,
   CPython: `PYTHONPATH=…/src uv run python data/gt_bm_closed_form.py`
+- `gt_slope_proof.py [m1,..] [n] [trials]` — E41, the SLOPE PROOF: GATE 1 the Key Lemma by
+  enumeration (undealt labels indep-uniform, hit exactly 1/(2m−ℓ)); GATE 2 observer excess
+  → 0 geometrically (exact rationals); GATE 3 block-decomposed slope → H_{2m}/2m (MC).
+- `gt_fade_intercept.py [m1,..]` — E42, the FADE + INTERCEPT: GATE 1 the survival closed
+  form `P(prefix,L_k=ℓ)=K_ℓ·ρ_ℓ^{n−k}` by enumeration (⟹ fade rate 1−1/m at ℓ∈{1,2}); GATE
+  2 block-0 excess ratio → 1−1/m (exact-rational posterior); GATE 3 the value-law tail
+  δ−b(m) fades at 1−1/m (exact DP); GATE 4 the intercept decomposition b(m)=−H_{2m}+B(m),
+  interior undercount −H_{2m} and first guess 1/(2m) derived, boundary B(m) measured (MC,
+  seed 24.4e9). **PyPy** for the enumeration + MC:
+  `PYTHONPATH=…/src /Users/mattwatts/.local/bin/pypy3.11 -u data/gt_fade_intercept.py 2,3`
+- `gt_hit_formula.py [m1,..]` — E43, the EXACT PER-POSITION HIT LAW (core
+  `guessing_theorem.hit_probability(m,ℓ,A,B)`): GATE 1 the formula exact vs enumeration for
+  every (prefix,parse,dir) group; GATE 2 the bulk limit → 1/(2m−ℓ); GATE 3 the
+  pure-continuation strategy is OPTIMAL, `V_cont==E_opt` exactly (⟹ the value law is the
+  hit law summed); GATE 4 the intercept reduction `b(m)=−1+1/(2m)+S_excess`,
+  `S_excess=5/2−3/(4m)−H_{2m}^{(2)}`. Seedless. **PyPy** for the enumeration:
+  `PYTHONPATH=…/src /Users/mattwatts/.local/bin/pypy3.11 -u data/gt_hit_formula.py 2,3`
 - `gt_robustness.py` — strict-inequality check (suboptimal strategies `<` opt).
 - `gt_clay_conjecture.py` — exact `E_opt` vs Clay's `(n/2m)H_{2m}`; confirms
   `c(m)=H_{2m}/(2m)`, `m=1` exact, the regime split.

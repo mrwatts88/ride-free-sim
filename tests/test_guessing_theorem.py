@@ -34,6 +34,7 @@ from ridefree.guessing_theorem import (
     exact_e_dp,
     exact_e_dp_rational,
     exact_e_from_perms,
+    hit_probability,
     mc_e,
     run_lengths,
     total_prob,
@@ -668,3 +669,179 @@ def test_slope_proof_block_hit_law_exact_rational():
     for c in (1, 2, 3, 40, 39, 38, 4, 5, 6):
         p2.observe(c)
     assert abs(float(max(p2.next_probs().values())) - 1 / 2) < 1e-2  # 1/(4-2)
+
+
+# --- E42: the FADE RATE proven from blocks + the INTERCEPT decomposition --------
+# Pin the Phase-2 tail (data/gt_fade_intercept.py, docs/GUESSING_THEOREM.md §THE
+# SLOPE PROOF -> NEXT STEP; EXPERIMENTS E42). For a block-0 ascending contiguous
+# prefix (1..k), conditioning on the last card's true block L_k=ell, every undealt
+# card survives (key > key(last)) INDEPENDENTLY with probability rho_ell, so
+#     P(prefix, L_k=ell) = K_ell * rho_ell^(n-k),   rho_ell = (2m-ell)/2m  (even)
+#                                                          = (2m-1-ell)/2m (odd),
+# with K_ell n-independent. The dominant competitor to the true parse (ell=0) is
+# ell in {1,2}, both at rho/rho_0 = (2m-2)/2m = 1-1/m — so the fade is O((1-1/m)^n)
+# for ALL m (upgrading E39's m<=6 Berlekamp-Massey spectrum to a PROVEN dominant
+# rate). The intercept splits as b(m) = -H_2m (interior undercount, DERIVED) + B(m)
+# with B(m) = b(m)+H_2m = 3/2 - 1/(4m) + H_2m - H_2m^(2) (the boundary constant).
+
+
+def _rho(m, ell):
+    """Per-undealt-card survival probability P(key(c) > key(last)) at a block-0
+    ascending prefix whose last card is in block ell."""
+    lanes = 2 * m
+    return Fraction(lanes - ell if ell % 2 == 0 else lanes - 1 - ell, lanes)
+
+
+def test_fade_survival_law_is_exactly_geometric_by_enumeration():
+    """THE FADE-RATE CORE, exact: P(output prefix==(1..k) AND L_k=ell) is EXACTLY
+    K_ell * rho_ell^(n-k). Enumerate every (2m)^n label vector and verify the joint
+    probability scales by exactly rho_ell when n grows by 1 (so K_ell is constant),
+    which is what makes the observer's block-confusion — and hence the value-law
+    fade — geometric at rate rho_ell/rho_0."""
+    from collections import defaultdict
+    from itertools import product
+
+    for m, k in [(2, 3), (3, 3)]:
+        lanes = 2 * m
+        prefix = tuple(range(1, k + 1))
+        prev = None  # P(A_ell) at the previous n
+        for n in range(k + 1, k + 5):
+            cnt = defaultdict(int)
+            for labels in product(range(lanes), repeat=n):
+                if tuple(_output_from_labels(labels)[:k]) == prefix:
+                    cnt[labels[k - 1]] += 1
+            tot = lanes ** n
+            cur = {ell: Fraction(c, tot) for ell, c in cnt.items()}
+            if prev is not None:
+                for ell, p in cur.items():
+                    if prev.get(ell, 0) != 0:  # exact geometric step by rho_ell
+                        assert p == prev[ell] * _rho(m, ell), (m, n, ell)
+            prev = cur
+
+
+def test_fade_dominant_rate_is_one_minus_one_over_m():
+    """The dominant block-confusion rate (the largest subdominant eigenvalue of the
+    value law) is EXACTLY 1-1/m, realized by ell in {1,2} — a same-direction block
+    SKIP ell->ell+2 (ratio (2m-2)/2m), NOT the intervening-empty-block (1-1/2m).
+    This is 'the factor of 2 in the exponent'. Pure arithmetic, all m."""
+    for m in range(2, 8):
+        rho0 = _rho(m, 0)
+        assert rho0 == 1
+        ratios = {ell: _rho(m, ell) / rho0 for ell in range(1, 2 * m)
+                  if _rho(m, ell) != 0}
+        dominant = max(ratios.values())
+        assert dominant == Fraction(m - 1, m), (m, dominant)
+        winners = {ell for ell, r in ratios.items() if r == dominant}
+        assert {1, 2} <= winners, (m, winners)
+
+
+def test_intercept_interior_undercount_and_boundary_identity():
+    """The intercept b(m) = -H_2m + B(m): interior guesses of block ell number
+    |B_ell|-1 and each hit exactly 1/(2m-ell), contributing (H_2m/2m)*n - H_2m — so
+    the interior undercount is exactly -H_2m. The boundary constant B(m) := b(m)+H_2m
+    equals the E40 closed-form rearrangement 3/2 - 1/(4m) + H_2m - H_2m^(2). Pins the
+    decomposition identity against the exact b(m) (E39/E40)."""
+    for m, b in _BM_EXACT.items():
+        h2m = sum((Fraction(1, j) for j in range(1, 2 * m + 1)), Fraction(0))
+        boundary = b + h2m
+        assert boundary == Fraction(3, 2) - Fraction(1, 4 * m) + h2m - _H2(2 * m)
+        # and b = -H_2m + B(m) is a tautology check on the split
+        assert b == -h2m + boundary
+
+
+# --- E43: the EXACT per-position hit law -> the value law as one explicit sum ----
+# Pin the intercept mechanism (data/gt_hit_formula.py, EXPERIMENTS E43). The realized
+# hit at a position whose run's last card is in block ell, with A undealt on the
+# continuation side and B on the opposite side, is `hit_probability(m,ell,A,B)` — exact
+# vs enumeration, bulk-limit 1/(2m-ell). The pure-continuation strategy (guess w1 every
+# step) equals E_opt exactly, so E_opt = sum_t E[hit], and the intercept reduces to
+# b(m) = -1 + 1/(2m) + S_excess(m), S_excess(m) = 5/2 - 3/(4m) - H_2m^(2).
+
+
+def test_hit_probability_exact_by_enumeration():
+    """The per-position hit law equals the brute-force shuffle probability for EVERY
+    (prefix, parse, direction) group — ascending AND descending. A single mismatch
+    would break the value-law reduction."""
+    from collections import defaultdict
+    from itertools import product
+
+    for m, n in [(2, 6), (3, 5)]:
+        lanes = 2 * m
+        grp = defaultdict(lambda: [0, 0])
+        meta = {}
+        for labels in product(range(lanes), repeat=n):
+            out = _output_from_labels(labels)
+            pos = {c: i for i, c in enumerate(out)}
+            for t in range(1, n):
+                v = out[t - 1]; ell = labels[v - 1]
+                undealt = [c for c in range(1, n + 1) if pos[c] >= t]
+                above = [c for c in undealt if c > v]
+                below = [c for c in undealt if c < v]
+                if ell % 2 == 0:
+                    if not above:
+                        continue
+                    w1, A, B, dirn = min(above), len(above), len(below), 0
+                else:
+                    if not below:
+                        continue
+                    w1, A, B, dirn = max(below), len(below), len(above), 1
+                key = (tuple(out[:t]), tuple(labels[c - 1] for c in out[:t]), dirn)
+                grp[key][0] += 1
+                grp[key][1] += 1 if out[t] == w1 else 0
+                meta[key] = (ell, A, B)
+        for key, (c, h) in grp.items():
+            ell, A, B = meta[key]
+            assert Fraction(h, c) == hit_probability(m, ell, A, B), (m, key)
+        assert len(grp) > 100, (m, len(grp))
+
+
+def test_hit_probability_bulk_limit_is_block_rate():
+    """The d=0 term is exactly 1 for all A,B, so hit_probability -> 1/(2m-ell) as the
+    undealt supply grows — the E41 Lemma bulk rate that sets the value-law slope."""
+    for m in (2, 3, 4):
+        for ell in range(2 * m - 1):
+            assert hit_probability(m, ell, 200, 200) - Fraction(1, 2 * m - ell) < Fraction(1, 10**6)
+            # and it is >= the bulk rate at finite supply (finite-size EXCESS >= 0)
+            assert hit_probability(m, ell, 5, 5) >= Fraction(1, 2 * m - ell)
+
+
+def test_continuation_strategy_equals_e_opt_exactly():
+    """The pure-continuation strategy (guess w1 = smallest undealt above v on an
+    ascending run / largest below on descending; first guess = value 1) is OPTIMAL: its
+    exact realized-hit expectation equals E_opt at every (n,m) — so the value law is
+    exactly the per-position hit law summed. (An independent re-confirmation of E35.)"""
+    from itertools import product
+
+    for m, n in [(2, 5), (3, 4)]:
+        lanes = 2 * m
+        hits = 0
+        for labels in product(range(lanes), repeat=n):
+            out = _output_from_labels(labels)
+            remaining = set(range(1, n + 1))
+            for t in range(n):
+                if t == 0:
+                    guess = 1
+                else:
+                    v = out[t - 1]
+                    asc = (t == 1) or (out[t - 1] > out[t - 2])
+                    above = [c for c in remaining if c > v]
+                    below = [c for c in remaining if c < v]
+                    if asc:
+                        guess = min(above) if above else (max(below) if below else v)
+                    else:
+                        guess = max(below) if below else (min(above) if above else v)
+                if guess == out[t]:
+                    hits += 1
+                remaining.discard(out[t])
+        v_cont = Fraction(hits, lanes ** n)
+        e_opt, _ = exact_e_dp_rational(n, m)
+        assert v_cont == e_opt, (m, n, v_cont, e_opt)
+
+
+def test_intercept_reduction_to_s_excess():
+    """The clean intercept split b(m) = -1 + 1/(2m) + S_excess(m), with the last mile in
+    closed form S_excess(m) = 5/2 - 3/(4m) - H_2m^(2) (matching E40's b(m))."""
+    for m, b in _BM_EXACT.items():
+        s_excess = Fraction(5, 2) - Fraction(3, 4 * m) - _H2(2 * m)
+        assert b == -1 + Fraction(1, 2 * m) + s_excess
+        assert b == Fraction(3, 2) - Fraction(1, 4 * m) - _H2(2 * m)

@@ -109,6 +109,39 @@ def exact_e(n: int, m: int) -> tuple[Fraction, Fraction]:
     return exact_e_from_perms(n, m, build_perms(n))
 
 
+def hit_probability(m: int, ell: int, A: int, B: int) -> Fraction:
+    """Exact realized probability that the optimal continuation guess is correct at a
+    position whose run's last card is in block ``ell``, with ``A`` undealt cards on the
+    CONTINUATION side (above the last card for an ascending run / below for descending,
+    counting the guess target w1 itself) and ``B`` on the opposite side — E43, the
+    per-position hit law behind the value law's intercept.
+
+    From the E41 label-exchangeability Lemma, the undealt labels are independent-uniform
+    (continuation side on ``{ell..2m-1}``, opposite side on ``{ell+1..2m-1}``); the guess
+    w1 (smallest undealt above / largest below) is correct iff it has the minimum shuffle
+    KEY among undealt cards. Counting those labels gives, with ``r = 2m - ell`` and
+    ``d = j - ell`` (``j`` the guess's own block):
+
+        P = (1/r) Σ_{d=0}^{r-1} (1 - (d + (d mod 2))/r)^{A-1} · (1 - (d - (d mod 2))/(r-1))^{B}
+
+    unified for ascending (``ell`` even) and descending (``ell`` odd). The ``d=0`` term is
+    1 for all A,B, so in the BULK (A,B → ∞) the hit → ``1/r = 1/(2m-ell)`` (the Lemma's
+    bulk rate, which sets the value-law slope); the ``d ≥ 1`` terms are the finite-size
+    EXCESS whose deck-sum is the intercept ``b(m)`` (the ``d=1`` term, ``(1/r)(1-2/r)^{A-1}``,
+    is the ``H_{2m}^{(2)}`` generator). Gated EXACTLY against brute-force enumeration of the
+    physical shuffle (`data/gt_hit_formula.py`, `tests/test_guessing_theorem.py`), and the
+    pure-continuation strategy that guesses w1 every step is verified to equal ``E_opt``
+    exactly, so ``E_opt(n,m) = Σ_t E[hit_probability(m, ell_t, A_t, B_t)]``.
+    """
+    r = 2 * m - ell
+    total = Fraction(0)
+    for d in range(r):  # d = (guess's block) - ell
+        p_cont = Fraction(d + (d & 1), r)
+        p_opp = Fraction(d - (d & 1), r - 1) if r - 1 else Fraction(0)
+        total += (1 - p_cont) ** (A - 1) * (1 - p_opp) ** B
+    return total / r
+
+
 def run_lengths(prefix) -> tuple[int, ...]:
     """Ascending-run-length composition of a revealed prefix — the descent
     structure. Each descent (prefix[i] > prefix[i+1]) ends a run; under the

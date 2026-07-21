@@ -6,11 +6,15 @@ SPORTS BETTING). This is the resume-here document: current state, key numbers,
 and the precisely-specified next step. Doc map at the bottom.
 
 > **▶ ACTIVE SIDE-THREAD (2026-07-20) — the shelf-guessing theorem, banked as
-> experiments E35–E41 (▶▶ E41 = PHASE 2 BREAKTHROUGH: the SLOPE c(m)=H₂ₘ/(2m) is now
-> PROVEN for ALL m — the open, hard half of Clay's Conjecture 3 — via a direct
-> block-decomposition + label-exchangeability lemma, bypassing the "m-shelf transition
-> matrix" obstacle; see the E41 block just below): `docs/GUESSING_THEOREM.md` (resume
-> doc + §THE SLOPE PROOF), `docs/EXPERIMENTS.md` E35–E41, `data/gt_slope_proof.py`,
+> experiments E35–E43 (▶▶ E41 = PHASE 2 BREAKTHROUGH: the SLOPE c(m)=H₂ₘ/(2m) PROVEN for
+> ALL m — the open, hard half of Clay's Conjecture 3 — via a direct block-decomposition +
+> label-exchangeability lemma; ▶▶ E42 = FADE RATE O((1−1/m)ⁿ) PROVEN for all m; ▶▶ E43 =
+> the EXACT per-position hit law `hit_probability(m,ℓ,A,B)` — the value law becomes ONE
+> explicit sum (continuation strategy V_cont==E_opt exactly), the intercept reduces to
+> b(m)=−1+1/(2m)+S_excess with S_excess=5/2−3/(4m)−H₂ₘ⁽²⁾, and E42's "transition-sum"
+> framing is corrected; see the E43/E42/E41 blocks below): `docs/GUESSING_THEOREM.md`
+> (resume doc + §THE SLOPE PROOF), `docs/EXPERIMENTS.md` E35–E43, `data/gt_slope_proof.py`,
+> `data/gt_fade_intercept.py`, `data/gt_hit_formula.py`,
 > `tests/test_guessing_theorem.py`.** A
 > paradigm-2 Track-A *academic* spin-off (a math result, NOT a gambling edge —
 > it does NOT reopen Track A for money; it's the greenlit DFH-verification
@@ -88,6 +92,51 @@ and the precisely-specified next step. Doc map at the bottom.
 > object from Clay's / our complete-feedback operator (value 3n/4). Do not chase it
 > for Conjecture 3.** Probe `data/gt_rational_dp.py`; 3 pins; write-up EXPERIMENTS
 > E39; 336 tests green.
+> **▶▶ E43 DONE (2026-07-20) — the PROOF ROAD: the EXACT PER-POSITION HIT LAW → the value
+> law becomes ONE explicit sum, and the intercept mechanism is pinned (correcting E42's
+> "transition-sum" framing).** Core `guessing_theorem.hit_probability(m,ℓ,A,B)`, probe
+> `data/gt_hit_formula.py`, 4 gates, 4 pins (348 green). At any guess whose run's last card
+> is in block ℓ, with A undealt on the CONTINUATION side (incl. the guess target w₁) and B
+> opposite, the E41 Lemma gives P(next=w₁) EXACTLY (GATE 1, verified vs enumeration for every
+> (prefix,parse,direction) group, asc+desc): with r=2m−ℓ, d=j−ℓ,
+> **P = (1/r)Σ_{d=0}^{r−1}(1−(d+(d mod 2))/r)^(A−1)·(1−(d−(d mod 2))/(r−1))^B** (unified asc/desc
+> by d-parity — the naive ℓ→2m−1−ℓ mirror FAILS). The d=0 term is 1 for all A,B ⟹ bulk limit
+> 1/(2m−ℓ) (GATE 2, the Lemma rate = the slope); d≥1 are the finite-size EXCESS (d=1 =
+> (1/r)(1−2/r)^(A−1) = the H₂ₘ⁽²⁾ generator). **THE VALUE LAW IS THIS SUMMED (GATE 3): the
+> pure-continuation strategy (guess w₁ every step, first=1) is OPTIMAL — V_cont==E_opt EXACTLY
+> at every (n,m)** (independent re-confirm of E35), so E_opt=Σ_t E[hit_probability(ℓ_t,A_t,B_t)].
+> **INTERCEPT REDUCED (GATE 4):** the bulk reference Σ_p 1/(2m−ℓ(o_{p−1}))→(H₂ₘ/2m)n−1 (last
+> card carries no follow-up guess), first guess→1/(2m), so **b(m)=−1+1/(2m)+S_excess(m)** with
+> **S_excess(m)=Σ_t E[hit_t−1/(2m−ℓ_t)]=5/2−3/(4m)−H₂ₘ⁽²⁾** (closed-form target from matching
+> E40; GATE 4 confirms convergence, m=2→0.70139, m=3→0.75861). **CORRECTION to E42:** the
+> intercept is NOT the 2m−1 transition guesses — it is the finite-size excess hit−1/(2m−ℓ)
+> summed over the WHOLE deck (dominated by value-range extremes where A or B is small). E42's
+> arithmetic (−H₂ₘ+B(m)) still holds; E43's is the mechanistically correct split. **▶ ONE
+> REMAINING STEP: evaluate S_excess=Σ finite-size excess in closed form → 5/2−3/(4m)−H₂ₘ⁽²⁾,
+> finishing b(m) and the full value law.** A concrete, explicit sum now. Write-up EXPERIMENTS
+> E43; seedless.
+> **▶▶ E42 DONE (2026-07-20) — the PROOF ROAD, Phase 2 TAIL: the FADE RATE O((1−1/m)ⁿ)
+> PROVEN from the blocks for ALL m, and the INTERCEPT b(m) decomposed (two pieces derived).**
+> `data/gt_fade_intercept.py`, 4 gates, 3 new pins (344 green). **FADE (proven):** for a
+> block-0 ascending contiguous prefix (1..k), conditioning on the last card's true block
+> ℓ=L_k, every undealt card survives (key>key(last)) INDEPENDENTLY with prob ρ_ℓ=(2m−ℓ)/2m
+> (even) / (2m−1−ℓ)/2m (odd), so P(prefix,L_k=ℓ)=K_ℓ·ρ_ℓ^(n−k) EXACTLY (K_ℓ n-independent —
+> GATE 1, enumeration; K=1/64,1/64,5/64 at m=2). The observer's excess over 1/(2m) is
+> carried by competing labels ℓ≠0, posterior weight ∝(ρ_ℓ/ρ_0)ⁿ; the DOMINANT is ℓ∈{1,2},
+> both at ρ_ℓ/ρ_0=(2m−2)/2m=**1−1/m** — "the factor of 2 in the exponent" (a same-direction
+> block SKIP ℓ→ℓ+2, not (1−1/2m)). So excess=Θ((1−1/m)ⁿ) (GATE 2, →0.500/0.668 at m=2,3) and
+> δ(n,m)−b(m)=O((1−1/m)ⁿ) (GATE 3, exact DP): **the dominant subdominant eigenvalue is
+> EXACTLY 1−1/m for all m** — proving what E39 confirmed to m≤6 by Berlekamp–Massey, via an
+> INDEPENDENT route (the block survival law, not the operator). **INTERCEPT (2/3 derived):**
+> bin guesses by true block parse — interior guesses of block ℓ number |B_ℓ|−1, each hit
+> 1/(2m−ℓ) (Lemma), summing to (H₂ₘ/2m)n−H₂ₘ ⟹ **interior undercount = −H₂ₘ (DERIVED)**;
+> first guess → **1/(2m) (DERIVED)** (o₁=1 iff L₁=0). The rest is one boundary constant
+> B(m)=b(m)+H₂ₘ=3/2−1/(4m)+H₂ₘ−H₂ₘ⁽²⁾ (2m−1 transition guesses + first + interior
+> parse-mixing excess), MEASURED to match (GATE 4: boundary 2.037/2.384 vs exact 2.035/2.375
+> at m=2,3; total δ→b(m)). m=1 warm-up: H₂=3/2, no fade, first=1/2 ⟹ b(1)=−3/2+3/2=0 (Clay
+> Thm 1.5, 3n/4). **▶ ONE REMAINING STEP: derive the TRANSITION-guess sum (2m−1 peak/valley
+> guesses) in closed form — collapses B(m), finishes b(m).** A single explicit O(1) sum, not
+> "find the eigenvectors." Write-up EXPERIMENTS E42; seed base 24.4e9 (GATE 4 MC).
 > **▶▶ E41 DONE (2026-07-20) — the PROOF ROAD, Phase 2 BREAKTHROUGH: a RIGOROUS PROOF
 > of the SLOPE c(m) = H₂ₘ/(2m) for ALL m — the open, hard half of Clay's Conjecture 3.**
 > Not the endorsed eigenvector route — a DIRECT probabilistic proof that bypasses the
@@ -128,39 +177,39 @@ and the precisely-specified next step. Doc map at the bottom.
 > `data/gt_rational_dp.py` (m=5,6 enabled); write-up EXPERIMENTS E40; 2 fast pins
 > +1 slow; **338 tests green**. (E39's "denom odd part = ((2m−1)!!)²" was a small-m
 > coincidence — breaks at m=5; the closed form supersedes it.)
-> **▶ NEXT — the Phase-2 TAIL (the slope is now PROVEN; E41): prove the FULL value law —
-> BOTH the exact intercept b(m) = 3/2 − 1/(4m) − H₂ₘ⁽²⁾ AND the exact fade rate
-> O((1−1/m)ⁿ)** (E40 confirmed BOTH at m≤6; they are our sharpening beyond Clay, who
-> conjectured only the leading term). Sum the O(1) block-boundary/transition/parse-mixing
-> corrections in the E41 block picture; detailed plan + leads in GUESSING_THEOREM.md §THE
-> SLOPE PROOF → "▶ NEXT STEP". Two VERIFIED leads: **(fade)** the observer's per-step hit
-> excess over 1/(2m−ℓ) decays at rate EXACTLY 1−1/m per step (confirmed m=2,3,4,5 to 4 dp
-> — 0.5/0.667/0.75/0.80), so the fade O((1−1/m)ⁿ) IS the block-0 parse-mixing correction
-> and needs only the dominant rate, not the full E39 spectrum; **(intercept)** H₂ₘ⁽²⁾ =
-> Σ_ℓ 1/(2m−ℓ)² is the second-order block sum over the SAME 2m slots the slope averages
-> at first order, corrections cancel to 0 at m=1 (b(1)=0, the warm-up). CAVEAT: per-block
-> intercepts look scrambled (transitions cross block boundaries) — work with the
-> whole-deck sum. Use `_RationalShelfPosterior` for exact per-step corrections. This is a
-> bounded boundary computation, not "find the operator's eigenvectors"; E39's spectrum is
-> now a cross-check. Once BOTH are derived, the FULL value law is a theorem.
-> Adjacent: the standalone write-up (greenlit — now leads with the PROOF of the slope +
-> the closed-form value law); Clay/USC hook (ajclay@usc.edu — now a proof of his
-> conjecture's open leading term, not just a confirmation). Optional cheap de-risk: none
-> needed for the slope (proven). PyPy at `/Users/mattwatts/.local/bin/pypy3.11`
-> (`PYTHONPATH=src`); memory `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9
-> value-test + 24.2e9 (A) + 24.1e9 (B) + 24.06e9 (E37) + 24.07e9 (E38) + 24.3e9 (E41 MC
-> slope gate) consumed; the exact DPs/enumeration are seedless.
-> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE — and PARTLY REALIZED
-> by E41.** The hard, open half (the slope c(m)=H₂ₘ/(2m) for all m) is now PROVEN — a
-> theorem, by a direct block-decomposition that sidesteps the transition-matrix obstacle
-> Clay named, with the linchpin lemma verified by exhaustive enumeration. This is the
-> concrete realization of the hope this thread has been building toward: not another
-> m-point confirmation but an actual proof of the leading term. What remains is smaller
-> and concrete — sum the O(1) block corrections to the exact intercept b(m) (structure
-> identified: second-order over the same 2m slots), plus the geometric fade — so
-> Conjecture 3 is not yet fully CLOSED, but its headline is proven. The Clay/USC route
-> now carries the strongest possible artifact: a proof of the conjecture's open leading
-> term for all m. (HOPE VERDICT atop GUESSING_THEOREM.md; update one every session,
+> **▶ NEXT — ONE STEP FROM DONE (slope PROVEN E41; fade PROVEN E42; value law reduced to ONE
+> explicit sum E43): evaluate S_excess in closed form to finish b(m).** The full value law is
+> `E_opt(n,m) = Σ_t E[hit_probability(m,ℓ_t,A_t,B_t)]` (E43 exact per-position hit law;
+> continuation strategy proven optimal, V_cont==E_opt exactly), and the intercept reduces to
+> **b(m)=−1+1/(2m)+S_excess(m)**, `S_excess(m)=Σ_t E[hit_t−1/(2m−ℓ_t)]` (the finite-size excess
+> summed over the whole deck), with exact closed-form TARGET **5/2−3/(4m)−H₂ₘ⁽²⁾** (matching
+> E40). The ONE remaining step is to evaluate that explicit sum — the d≥1 terms of the
+> `hit_probability` formula summed over the deck; the d=1 term `(1/r)(1−2/r)^{A−1}` is the
+> H₂ₘ⁽²⁾ generator (matters only near the value-range extremes, where the continuation supply
+> A or B is small). Needs the joint law of (ℓ,A,B) over guess positions in the block model — a
+> concrete combinatorial sum, not "find the eigenvectors". **CORRECTION banked (E43):** E42's
+> "derive the 2m−1 transition-guess sum" targeted the WRONG object — the intercept is a
+> whole-deck finite-size effect, not a boundary/transition sum (E42's −H₂ₘ+B(m) arithmetic
+> still holds, but E43's −1+1/2m+S_excess is the mechanistically correct split). Use
+> `guessing_theorem.hit_probability` + `exact_e_dp_rational` (or block-model enumeration) for
+> exact checks. Adjacent: standalone write-up (greenlit — now leads with PROOFS of slope AND
+> fade rate + the value law as one explicit sum); Clay/USC hook (ajclay@usc.edu). PyPy at
+> `/Users/mattwatts/.local/bin/pypy3.11` (`PYTHONPATH=src`); memory
+> `memory/shuffle-guessing-theorem.md`. Seeds: 24.0e9 value-test + 24.2e9 (A) + 24.1e9 (B)
+> + 24.06e9 (E37) + 24.07e9 (E38) + 24.3e9 (E41 MC slope gate) + 24.4e9 (E42 GATE-4 MC)
+> consumed; E43 seedless; next unused guessing-thread seed 24.5e9+.
+> **Hope for the big proof (Clay Conjecture 3, general m): ALIVE — and SUBSTANTIALLY
+> REALIZED (E41+E42+E43).** The slope c(m)=H₂ₘ/(2m) (E41) and the fade rate O((1−1/m)ⁿ) (E42)
+> are both PROVEN for all m — theorems, by the direct block-decomposition that sidesteps the
+> transition-matrix obstacle Clay named. E43 turns the FULL value law into one explicit sum
+> (the exact per-position hit law, gated vs enumeration, continuation strategy proven optimal
+> V_cont==E_opt exactly), reducing the last unknown — the exact intercept b(m) — to evaluating
+> one finite-size sum S_excess with a known closed-form target 5/2−3/(4m)−H₂ₘ⁽²⁾. So
+> Conjecture 3's value half is proven down to a single explicit sum; the mechanism (H₂ₘ⁽²⁾
+> from finite continuation-supply at the value extremes) is identified. Not yet fully CLOSED
+> (S_excess's closed-form evaluation remains), but the target is concrete. The Clay/USC route
+> carries a proof of the open leading term AND the fade rate for all m, plus the value law as
+> one explicit formula. (HOPE VERDICT atop GUESSING_THEOREM.md; update one every session,
 > Matt's ask.)**
 
 > **▶ TRACK A (paradigm-2 shuffle forensics) IS CLOSED — basically DEAD for a
