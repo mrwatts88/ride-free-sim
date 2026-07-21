@@ -4,7 +4,7 @@ Attach: main.pdf
 
 ======= paste everything below this line into the email body =======
 
-Dear Professor Clay,
+Dear Alexander Clay,
 
 I should be upfront about who's writing: I'm a software developer, not a mathematician. Statistics isn't my field. I build simulators, and one of them (a deterministic model of casino shelf shuffles) led me into the card-guessing problem your 2025 paper studies. Working with an AI system (Anthropic's Claude), I've arrived at what appears to be a proof of the value half of your Conjecture 3 for general m, and I'm bringing it to you because you're the person who can actually judge whether the mathematics is sound.
 

@@ -20,6 +20,11 @@
   co-authorship / arXiv endorsement is the best outcome.
 - **Punctuation:** no em-dashes (Matt's preference; they read as an AI tell). Math minus signs
   kept.
+- **Salutation: "Dear Alexander Clay,"** — NOT "Professor" or "Dr." Verified 2026-07-20: Clay is
+  a PhD *candidate* at USC (started Fall 2022; advisor Jason Fulman, the "F" in DFH; BA Notre
+  Dame 2022), not faculty and not yet a doctor. Full-name salutation avoids any wrong title or
+  gender assumption; "Dear Alexander," (first name) is an acceptable warmer alternative.
+  Homepage: sites.google.com/usc.edu/alexanderclay/.
 
 ### If he asks for the verification code
 The probes are `data/gt_*.py` and the test pins in `tests/test_guessing_theorem.py`; we can
