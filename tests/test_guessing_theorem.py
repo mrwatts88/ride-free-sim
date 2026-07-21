@@ -845,3 +845,76 @@ def test_intercept_reduction_to_s_excess():
         s_excess = Fraction(5, 2) - Fraction(3, 4 * m) - _H2(2 * m)
         assert b == -1 + Fraction(1, 2 * m) + s_excess
         assert b == Fraction(3, 2) - Fraction(1, 4 * m) - _H2(2 * m)
+
+
+# --- E44: S_excess in CLOSED FORM -> the exact intercept b(m) is PROVEN -----------
+# The DFH-G value law's intercept splits into four boundary bins (data/gt_s_excess.py,
+# EXPERIMENTS E44); only the on-foot continuation bin is O(n), the rest are O(1):
+#     onC  = (H_2m - 1)/2         # interior finite-size excess (d=1 term telescopes)
+#     offC = 1 - 1/(4m) - H_2m/2  # off-foot transition misses (hit -> 0)
+#     onE  = 2 - 1/(2m) - H_2m^(2)  # peak/valley flips
+#     offE -> 0
+# and onC + offC + onE = 5/2 - 3/(4m) - H_2m^(2) = S_excess, closing b(m).
+
+def _H(k):
+    return sum((Fraction(1, i) for i in range(1, k + 1)), Fraction(0))
+
+
+def test_s_excess_pieces_sum_to_intercept_closed_form():
+    """The four boundary-piece closed forms sum to S_excess(m), and hence to the E40
+    intercept b(m) = 3/2 - 1/(4m) - H_2m^(2), for every m (exact rationals)."""
+    for m in range(1, 9):
+        onC = (_H(2 * m) - 1) / 2
+        offC = 1 - Fraction(1, 4 * m) - _H(2 * m) / 2
+        onE = 2 - Fraction(1, 2 * m) - _H2(2 * m)
+        s_excess = onC + offC + onE
+        assert s_excess == Fraction(5, 2) - Fraction(3, 4 * m) - _H2(2 * m), m
+        assert -1 + Fraction(1, 2 * m) + s_excess == \
+            Fraction(3, 2) - Fraction(1, 4 * m) - _H2(2 * m), m
+    # onE as the explicit peak/valley sum over slot sizes r = 2..2m
+    for m in range(1, 7):
+        onE_sum = sum((Fraction(1, r * (r - 1)) - Fraction(1, r * r)
+                       for r in range(2, 2 * m + 1)), Fraction(0))
+        assert onE_sum == 2 - Fraction(1, 2 * m) - _H2(2 * m), m
+
+
+def test_s_excess_boundary_identities_exact_by_enumeration():
+    """The two block-label exchangeability identities behind offC and onE, exact by
+    enumerating all (2m)^n label vectors:
+      (1) the argmax-value card among labels >= ell has label ell w.p. 1/(2m-ell)
+          (the peak probability 1/(2m-ell) and, at ell+1, the flip-hit 1/(2m-ell-1));
+      (2) conditioned on all 2m blocks present, DFH-G goes off-foot with a live
+          continuation at boundary ell w.p. 1/2 - 1/(2m+1-ell)."""
+    from itertools import product
+
+    for m, n in [(2, 7), (3, 6)]:
+        lanes = 2 * m
+        maxlab = {ell: [0, 0] for ell in range(lanes)}
+        offsc = {ell: [0, 0] for ell in range(1, lanes)}
+        for labels in product(range(lanes), repeat=n):
+            for ell in range(lanes):
+                top = next((labels[v - 1] for v in range(n, 0, -1)
+                            if labels[v - 1] >= ell), None)
+                if top is not None:
+                    maxlab[ell][1] += 1
+                    maxlab[ell][0] += 1 if top == ell else 0
+            if len(set(labels)) != lanes:
+                continue
+            for ell in range(1, lanes):
+                first, saw_high = None, False
+                for v in range(n, 0, -1):
+                    L = labels[v - 1]
+                    if L == ell or L == ell - 1:
+                        first = L
+                        break
+                    if L > ell:
+                        saw_high = True
+                offsc[ell][1] += 1
+                offsc[ell][0] += 1 if (first == ell and saw_high) else 0
+        for ell in range(lanes):
+            h, p = maxlab[ell]
+            assert Fraction(h, p) == Fraction(1, lanes - ell), (m, "maxlab", ell)
+        for ell in range(1, lanes):
+            e, tot = offsc[ell]
+            assert Fraction(e, tot) == Fraction(1, 2) - Fraction(1, 2 * m + 1 - ell), \
+                (m, "offfoot", ell)

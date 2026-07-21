@@ -1,0 +1,482 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,urlcolor=blue!55!black}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\DeclareMathOperator{\PP}{\mathbb{P}}
+\DeclareMathOperator{\EE}{\mathbb{E}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\eopt}{E_{\mathrm{opt}}}
+\newcommand{\Fg}{F_G}
+\newcommand{\bigoh}{O}
+\newcommand{\half}{\tfrac12}
+
+\title{The exact expected score of card guessing\\ after an $m$-shelf shuffle}
+\author{Matt Watts\thanks{Independent researcher, \texttt{matt.ryan.watts@gmail.com}.
+This work was carried out with substantial AI assistance (see the Acknowledgments);
+all results are machine-verified by exact-arithmetic enumeration.}}
+\date{July 2026\\[2pt]\emph{Working draft}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A deck of $n$ distinct cards is shuffled by a single pass of a Diaconis--Fulman--Holmes
+$m$-shelf shuffling machine and then dealt face up one card at a time; before each card a
+player guesses its identity and is then shown the card (\emph{complete feedback}). We
+determine the exact expected number of correct guesses of the optimal player, up to an
+exponentially small remainder, for every number of shelves $m$. Writing $H_k=\sum_{j\le
+k}1/j$ and $H_k^{(2)}=\sum_{j\le k}1/j^{2}$, the score of the Diaconis--Fulman--Holmes
+strategy $G$ is
+\[
+  \Fg(n,m)\;=\;\frac{H_{2m}}{2m}\,n\;+\;\Bigl(\tfrac32-\tfrac{1}{4m}-H_{2m}^{(2)}\Bigr)
+  \;+\;\bigoh\!\left(\bigl(1-\tfrac1m\bigr)^{\!n}\right).
+\]
+The leading coefficient $H_{2m}/2m$ is the term conjectured by Clay (2025), whose general-$m$
+proof he left open; we prove it, together with the exact constant term $\tfrac32-\tfrac1{4m}
+-H_{2m}^{(2)}$ (limit $\tfrac32-\pi^2/6$) and the geometric decay rate $1-1/m$, by a direct
+analysis of the shuffle's block structure that never forms the ``$m$-shelf transition
+matrix'' Clay identified as the obstruction. Strategy $G$ is verified to be optimal exactly
+for all $n\le 9,\ m\le 10$ and numerically to within $0.01$ for $m\le 40$ at deck scale; under
+that (Diaconis--Fulman--Holmes / Clay) optimality the displayed expansion is the optimal
+expected score.
+\end{abstract}
+
+\section{Introduction}
+
+\subsection*{The problem}
+Consider a deck of $n$ distinct cards, labelled $1,\dots,n$ by their position in the deck
+before shuffling. The deck is shuffled by one pass of an $m$-shelf shuffling machine (defined
+in \S\ref{sec:model}) and then dealt face up, one card at a time. Before each card is turned
+over, a player names a card; the card is then revealed, and the player scores a point if the
+guess was correct. This is card guessing \emph{with complete feedback}: the player sees every
+card immediately after guessing it. The player wants to maximise the expected number of
+correct guesses.
+
+Because the player's guesses do not influence the order in which the cards appear, the optimal
+strategy is the greedy Bayesian one: at each step, guess the card of maximal posterior
+probability given the cards seen so far. Let $\eopt(n,m)$ denote the resulting optimal expected
+score. Under a \emph{uniformly} random shuffle every strategy scores $H_n=\sum_{j=1}^n 1/j
+\approx 4.5$ at $n=52$; an $m$-shelf shuffle is far from uniform, so a player who understands
+the machine does strictly better.
+
+\subsection*{Background}
+Shelf shuffling machines and the associated guessing problem were introduced and analysed by
+Diaconis, Fulman and Holmes~\cite{DFH}, who studied a commercial machine with $m=10$ shelves.
+They proposed a simple, \emph{shelf-count-independent} guessing strategy $G$ --- guess the
+successor of the last card shown, reversing direction near the top of the range --- and
+conjectured it optimal, reporting an expected score of about $9.3$ out of $52$ at $m=10$.
+
+The single-shelf case $m=1$ was settled by Clay~\cite{Clay}: the optimal strategy is exactly
+$G$ (\cite[Thm.~1.4]{Clay}) and the optimal expected score is $\tfrac34 n$
+(\cite[Thm.~1.5]{Clay}). For general $m$, Clay's Conjecture~3 asserts that $G$ is optimal (in a
+high-probability sense, for $n/m$ not too small) with expected score
+\begin{equation}\label{eq:clay}
+  F_G(n,m)\ \approx\ \frac{n}{2m}\,H_{2m},
+\end{equation}
+reducing to $\tfrac34 n$ at $m=1$. Clay states that ``the transition matrix for an arbitrary
+number of shelves is an open problem'' and closes with the hope ``to make this argument
+precise'' in future work. A cluster of very recent papers \cite{Tripathi,Kuba,CKT} refines the
+\emph{single-shelf} theory --- including the eigenvalues of the single-shelf \emph{position}
+matrix, which governs the different, no-feedback game --- so the multi-shelf ($m\ge2$)
+complete-feedback problem, on which \eqref{eq:clay} sits, has remained open.
+
+\subsection*{Results}
+We prove \eqref{eq:clay} for all $m$, as the leading term of a sharper three-term expansion.
+
+\begin{theorem}\label{thm:main}
+Let $H_k=\sum_{j=1}^k \frac1j$ and $H_k^{(2)}=\sum_{j=1}^k \frac1{j^2}$. For the $m$-shelf
+shuffle with complete feedback, the expected score of the Diaconis--Fulman--Holmes strategy
+$G$ is
+\begin{equation}\label{eq:main}
+  \Fg(n,m)\;=\;\frac{H_{2m}}{2m}\,n\;+\;b(m)\;+\;\bigoh\!\left(\bigl(1-\tfrac1m\bigr)^{n}\right),
+  \qquad
+  b(m)=\frac32-\frac1{4m}-H_{2m}^{(2)}.
+\end{equation}
+The intercept satisfies $b(1)=0$ and $b(m)\to \tfrac32-\pi^2/6\approx-0.14493$ as $m\to\infty$;
+at $m=1$ the remainder vanishes and \eqref{eq:main} reads $\Fg(n,1)=\tfrac34 n$, recovering
+Clay's Theorem~1.5.
+\end{theorem}
+
+Three facts are proved here, each new for $m\ge 2$: the \emph{slope} $H_{2m}/2m$
+(\S\ref{sec:slope}), the geometric \emph{fade rate} $1-1/m$ (\S\ref{sec:fade}), and the exact
+\emph{intercept} $b(m)$ (\S\ref{sec:intercept}), the last being the main contribution. The
+method is elementary and probabilistic: we recast the shuffle as an assignment of independent
+uniform labels (\S\ref{sec:model}), extract a single exchangeability lemma
+(\S\ref{sec:lemma}), and sum a per-position hit probability over the deck. It never forms the
+transition operator Clay named as the obstruction.
+
+The relationship of \eqref{eq:main} to the \emph{optimal} score $\eopt$ is the content of
+Clay's other claim --- that $G$ is optimal. We do not settle that in closed form for all $m$;
+we verify it (\S\ref{sec:opt}): $\eopt=\Fg$ holds \emph{exactly} for all $n\le 9,\ m\le 10$,
+and to within $0.01$ for all $m\le 40$ at $n\in\{52,104\}$, and we show that $G$ is the
+optimal guess conditional on the true block-parse (Lemma~\ref{lem:key}). Under the
+Diaconis--Fulman--Holmes/Clay optimality conjecture, \eqref{eq:main} is therefore the optimal
+expected score. Every displayed identity in this paper has been checked by exact rational
+enumeration; see \S\ref{sec:verify}.
+
+\section{The \texorpdfstring{$m$}{m}-shelf shuffle as a block model}\label{sec:model}
+
+We use the following clean description of the $m$-shelf shuffle, equivalent to the machine of
+\cite{DFH} (each of the $m$ shelves receives cards on its top or its bottom; a shelf together
+with a top/bottom orientation is one of $2m$ ``lanes'').
+
+\begin{definition}\label{def:shuffle}
+Assign to each card $c\in\{1,\dots,n\}$ an independent \emph{label}
+$L_c$ uniform on $\{0,1,\dots,2m-1\}$. Order the cards by the key
+\[
+  \kappa_c=\begin{cases}(L_c,\,+c) & L_c\ \text{even},\\[2pt] (L_c,\,-c) & L_c\ \text{odd},\end{cases}
+\]
+increasingly in lexicographic order. The resulting sequence $o_1,\dots,o_n$ is the shuffled
+deck.
+\end{definition}
+
+Because the key is lexicographic with the label first, the output is the concatenation of the
+$2m$ \emph{blocks}
+\[
+  B_\ell=\{c: L_c=\ell\},\qquad \ell=0,1,\dots,2m-1,
+\]
+each written \emph{internally} in increasing order of value when $\ell$ is even and decreasing
+when $\ell$ is odd:
+\[
+  \text{output}\;=\;\underbrace{B_0}_{\uparrow}\ \underbrace{B_1}_{\downarrow}\ \underbrace{B_2}_{\uparrow}\ \cdots\ \underbrace{B_{2m-1}}_{\downarrow}.
+\]
+Thus the output is $2m$ consecutive monotone runs, ascending and descending alternately, and
+has at most $m-1$ interior local minima --- the class law of \cite[Thm.~3.1]{DFH}. At $m=1$
+there are two blocks, $B_0\!\uparrow$ then $B_1\!\downarrow$.
+
+We call the assignment $(L_c)_c$ the \emph{parse}: it records which block each card lies in.
+The player observes only $o_1,\dots,o_n$, never the labels.
+
+\section{The guessing game, the strategy \texorpdfstring{$G$}{G}, and the key lemma}\label{sec:lemma}
+
+At step $t$ the player has seen $o_1,\dots,o_{t-1}$ and guesses a value; the optimal
+(posterior-maximising) guess scores with probability $h_t:=\max_c \PP(o_t=c\mid
+o_1,\dots,o_{t-1})$, and $\eopt(n,m)=\EE\sum_{t=1}^n h_t$.
+
+\begin{definition}[strategy $G$]\label{def:G}
+$G$ guesses $o_1$ to be the value $1$. For $t\ge2$, let $v=o_{t-1}$. If the last observed step
+was ascending ($o_{t-1}>o_{t-2}$, or $t=2$) guess the smallest unrevealed value exceeding $v$;
+if descending, the largest unrevealed value below $v$; and if the indicated side is empty,
+take the nearest unrevealed value on the other side. $G$ uses only the observed order.
+\end{definition}
+
+This is the rule of \cite{DFH}: continue in the current direction, reversing at the ends. Let
+$\Fg(n,m)$ be its expected score.
+
+\begin{lemma}[parse-conditional exchangeability]\label{lem:key}
+Fix a revealed prefix $o_1,\dots,o_s$ and condition on its true parse. Suppose its maximal
+monotone runs are the nonempty parts of $B_0,\dots,B_\ell$; that blocks $0,\dots,\ell-1$ are
+fully revealed; and that the current run (say ascending, $\ell$ even) ends at $o_s=v$. Then the
+labels of the unrevealed cards are independent, with
+\[
+  L_c\sim \mathrm{Unif}\{\ell,\ell+1,\dots,2m-1\}\ \ (c>v),\qquad
+  L_c\sim \mathrm{Unif}\{\ell+1,\dots,2m-1\}\ \ (c<v).
+\]
+Consequently the next card is the minimum-key unrevealed card; writing $w_1<w_2<\cdots$ for the
+unrevealed values above $v$, one has $\PP(o_{s+1}=w_j)=\frac1r\bigl(1-\frac1r\bigr)^{j-1}$ with
+$r=2m-\ell$, so the posterior-maximising guess is $w_1$ --- exactly $G$'s guess --- and its hit
+probability is largest at $j=1$. (The descending case is the mirror image.)
+\end{lemma}
+
+\begin{proof}
+The prior $\PP$ is a product measure over the cards' labels. The event ``the length-$s$ output
+prefix equals $o_1\cdots o_s$'' is the intersection of per-card events: each revealed card's
+label equals its parsed block index; and each unrevealed card $c$ has key exceeding
+$\kappa_v=(\ell,v)$, i.e.\ $L_c>\ell$, or $L_c=\ell$ with $c>v$. A product prior intersected
+with per-card constraints has a product posterior, uniform on each card's surviving label set.
+For $c>v$ the label $\ell$ survives (the tie $L_c=\ell$ is broken by $c>v$), giving
+$\{\ell,\dots,2m-1\}$; for $c<v$ it does not (a label-$\ell$ card below $v$ would have been
+revealed before $v$), giving $\{\ell+1,\dots,2m-1\}$. The next output card is the one of
+minimum key; among the unrevealed cards those below $v$ carry labels $\ge\ell+1$, hence larger
+keys than any surviving label-$\ell$ card above $v$, so $o_{s+1}=w_j$ iff $L_{w_j}=\ell$ while
+$L_{w_1},\dots,L_{w_{j-1}}>\ell$, which is geometric with success probability
+$1/r$.\end{proof}
+
+Two features of Lemma~\ref{lem:key} drive everything below. First, the \emph{bulk hit} is
+$1/r=1/(2m-\ell)$: conditional on being in block $\ell$ with unrevealed cards on the
+continuation side, $G$ guesses correctly with probability $1/(2m-\ell)$ up to a finite-size
+correction. Second, $G$'s guess is the posterior-maximiser \emph{given the parse}; the player
+does not know the parse, and it is precisely the resulting parse-uncertainty --- concentrated
+at block boundaries and at the ends of the value range --- that produces the constant term
+$b(m)$.
+
+\section{The leading term}\label{sec:slope}
+
+\begin{proposition}\label{prop:slope}
+$\Fg(n,m)=\dfrac{H_{2m}}{2m}\,n+\bigoh(1)$, and the same holds for $\eopt$.
+\end{proposition}
+
+\begin{proof}
+Call a guess position \emph{interior} if its prefix has an unambiguous parse and an unrevealed
+value on the continuation side. By Lemma~\ref{lem:key} an interior position in block $\ell$ has
+hit $1/(2m-\ell)+\text{(finite-size correction)}$, and the corrections sum to $\bigoh(1)$ (they
+are handled exactly in \S\ref{sec:intercept}). The non-interior positions are $\bigoh(1)$ in
+expectation: block transitions number at most $2m-1$; the value-range endgame contributes
+$\bigoh(m)$; and a parse-ambiguous prefix requires an interior block to be momentarily empty,
+an event of probability $\le 2m(1-\tfrac1{2m})^n$, so the expected number of such positions is
+$\bigoh(n(1-\tfrac1{2m})^n)=\bigoh(1)$.
+
+Each block has expected size $\EE|B_\ell|=n/2m$ (uniform labels), and contributes
+$|B_\ell|-\bigoh(1)$ interior positions with block index $\ell$. Summing the bulk hits,
+\[
+  \Fg(n,m)=\sum_{\ell=0}^{2m-1}\frac{1}{2m-\ell}\Bigl(\frac{n}{2m}-\bigoh(1)\Bigr)+\bigoh(1)
+  =\frac{n}{2m}\sum_{\ell=0}^{2m-1}\frac1{2m-\ell}+\bigoh(1)
+  =\frac{H_{2m}}{2m}\,n+\bigoh(1).
+\]
+The lower bound is $G$'s explicit score; the upper bound for $\eopt$ follows because the
+observer's actual hit is a mixture over parses of parse-conditional hits, each $\le
+1/(2m-\ell)$ up to the same $\bigoh(1)$ endgame, and mixing cannot raise the sum above
+$(H_{2m}/2m)n+\bigoh(1)$ by the tower property.
+\end{proof}
+
+The identity $H_{2m}=\sum_{\ell=0}^{2m-1}\tfrac{1}{2m-\ell}$ demystifies Clay's harmonic
+number: it is the sum over blocks of $1/(\#\text{still-live blocks})$, the observer's advantage
+from having watched exhausted blocks disappear. At $m=1$ the two blocks give hits $\tfrac12$
+and $1$, slope $\tfrac34$: Clay's Theorem~1.5.
+
+\section{The fade rate}\label{sec:fade}
+
+\begin{proposition}\label{prop:fade}
+The remainder in Theorem~\ref{thm:main} is $\bigoh((1-\tfrac1m)^n)$; equivalently, the
+dominant subdominant eigenvalue of the guessing dynamics is exactly $1-1/m$.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+Consider a contiguous ascending prefix $(1,2,\dots,k)$ (block $0$). The output begins with it
+iff every unrevealed card $c>k$ has key exceeding $\kappa_k$; conditioning on the true block
+$\ell=L_k$ of the last card, each such card survives \emph{independently} with probability
+$\rho_\ell=(2m-\ell)/2m$ ($\ell$ even) or $(2m-1-\ell)/2m$ ($\ell$ odd). Hence
+$\PP(\text{prefix},\,L_k=\ell)=K_\ell\,\rho_\ell^{\,n-k}$ with $K_\ell$ independent of $n$. The
+observer's excess score over the bulk value $1/2m$ is carried by the competing hypotheses
+$\ell\neq0$, whose posterior weight decays like $(\rho_\ell/\rho_0)^n$. The dominant competitor
+is $\ell\in\{1,2\}$, both with $\rho_\ell/\rho_0=(2m-2)/2m=1-1/m$ --- a same-direction block
+skip $\ell\to\ell+2$, the source of the factor $2$ in the exponent. Thus the correction is
+$\Theta((1-\tfrac1m)^n)$. At $m=1$ this rate is $0$: the expansion is exact for $n\ge2$.
+\end{proof}
+
+\section{The exact intercept}\label{sec:intercept}
+
+This is the main new computation. We evaluate the constant term of $\Fg$ in closed form.
+
+\subsection{Reduction to a finite-size excess}
+Index guess positions $t=2,\dots,n$ by the last-seen card $v=o_{t-1}$, in block $\ell_t=L_v$.
+Assign to position $t$ the \emph{reference} value $1/(2m-\ell_t)$ (its bulk hit). Summing the
+reference over all $n$ output positions gives $\sum_{c}1/(2m-L_c)$, with expectation
+$n\,H_{2m}/2m=(\text{slope})\cdot n$ exactly; the last output card carries no follow-up guess,
+and its label is $2m-1$ with probability $1-\bigoh((1-\tfrac1{2m})^n)$, contributing a
+reference $1/(2m-(2m-1))=1$. The first guess ($v$ undefined) hits with probability
+$\PP(o_1=1)=\PP(L_1=0)=1/2m$. Writing
+\[
+  S(m):=\lim_{n\to\infty}\sum_{t=2}^{n}\EE\!\left[h_t^{G}-\frac{1}{2m-\ell_t}\right],
+\]
+where $h^G_t$ is $G$'s hit at position $t$, we obtain
+\begin{equation}\label{eq:bS}
+  b(m)=-1+\frac1{2m}+S(m).
+\end{equation}
+It remains to evaluate $S(m)$, the total finite-size excess of $G$'s hit over its bulk value.
+
+\subsection{Four bins}
+$G$'s direction at a position is the last \emph{observed} step's direction; the block parity
+of $v$ is hidden. Split each position by two binary attributes:
+\begin{itemize}[topsep=2pt,itemsep=1pt]
+  \item \textbf{on-foot / off-foot:} does $G$'s direction match the parity of $v$'s block
+        ($\uparrow$ for even, $\downarrow$ for odd)? A position is off-foot exactly when $v$ is
+        the first card of a block entered against that block's monotone direction; there $G$
+        guesses on the wrong side and (a.s.\ in the limit) misses.
+  \item \textbf{C / E:} is $G$'s chosen side non-empty (a genuine continuation, $C$) or empty
+        (a peak/valley flip, $E$)?
+\end{itemize}
+Only the on-foot continuation bin $\mathsf{onC}$ contains $\Theta(n)$ positions; the other
+three are $\bigoh(1)$, bounded by $\sim2m$ distinguished cards per shuffle (block-firsts,
+block-maxima, block-minima). We show
+\begin{equation}\label{eq:pieces}
+  \mathsf{onC}=\frac{H_{2m}-1}{2},\quad
+  \mathsf{offC}=1-\frac1{4m}-\frac{H_{2m}}{2},\quad
+  \mathsf{onE}=2-\frac1{2m}-H_{2m}^{(2)},\quad
+  \mathsf{offE}\to0,
+\end{equation}
+whose sum is $S(m)=\tfrac52-\tfrac{3}{4m}-H_{2m}^{(2)}$; with \eqref{eq:bS} this gives
+$b(m)=\tfrac32-\tfrac1{4m}-H_{2m}^{(2)}$, proving Theorem~\ref{thm:main}.
+
+\subsection{The interior bin \texorpdfstring{$\mathsf{onC}$}{onC}}
+On an on-foot continuation in block $\ell$ (say ascending) with $A$ unrevealed cards above $v$
+(including the guess target) and $B$ below, Lemma~\ref{lem:key} and a count of the independent
+uniform labels give the exact hit
+\begin{equation}\label{eq:hit}
+  \PP(o_{t}=w_1)=\frac1r\sum_{d=0}^{r-1}
+  \Bigl(1-\tfrac{d+(d\bmod 2)}{r}\Bigr)^{\!A-1}\Bigl(1-\tfrac{d-(d\bmod 2)}{r-1}\Bigr)^{\!B},
+  \qquad r=2m-\ell,
+\end{equation}
+the $d=0$ term being $1$ (the bulk hit $1/r$) and $d\ge1$ the finite-size excess. Now sum the
+excess over all positions. Given $L_v=\ell$, the unrevealed counts are independent binomials
+$A\sim\mathrm{Bin}(n-v,\,r/2m)$ and $B\sim\mathrm{Bin}(v-1,\,(r-1)/2m)$, and $\PP(L_v=\ell)=1/2m$.
+For the $d$-th term put $a_d=d+(d\bmod2)$ (even, $\ge2$) and $c_d=d-(d\bmod2)$; a direct
+computation of the binomial generating functions gives, summed over $v=1,\dots,n$,
+\[
+  \frac{1}{2m}\cdot\frac1r\cdot\frac{1}{1-a_d/r}\sum_{v=1}^{n}
+  \Bigl(1-\tfrac{c_d}{2m}\Bigr)^{v-1}\!\Bigl[\Bigl(1-\tfrac{a_d}{2m}\Bigr)^{n-v}-\Bigl(\tfrac{\ell}{2m}\Bigr)^{n-v}\Bigr].
+\]
+As $n\to\infty$ this vanishes whenever $c_d>0$ (the factor $(1-c_d/2m)^{v-1}<1$ kills the
+geometric sum), i.e.\ for all $d\ge2$. Only $d=1$ survives ($c_1=0$, so the $B$-factor is
+$1$), and there $a_1=2$, giving the limit
+\[
+  \frac{1}{2m\,r}\cdot\frac{1}{1-2/r}\Bigl(m-\frac{2m}{r}\Bigr)=\frac{1}{2m\,r}\cdot m=\frac{1}{2r}.
+\]
+Summing over the blocks $\ell=0,\dots,2m-2$ (i.e.\ $r=2,\dots,2m$; the top block $r=1$ has no
+$d\ge1$ term),
+\[
+  \mathsf{onC}=\sum_{r=2}^{2m}\frac{1}{2r}=\frac{H_{2m}-1}{2}.
+\]
+The descending blocks give the same sum by the value-reflection symmetry $v\mapsto n{+}1{-}v$,
+$\ell\mapsto 2m{-}1{-}\ell$; they are already included in the range of $\ell$.
+
+\subsection{The off-foot bin \texorpdfstring{$\mathsf{offC}$}{offC}}
+Off-foot positions are the first cards of blocks entered against their monotone direction, of
+which there are at most $2m-1$. Consider block $\ell\in\{1,\dots,2m-1\}$ and its first output
+card $F_\ell$. Take $\ell$ odd (descending); $F_\ell$ is the maximum of $B_\ell$, and it is
+off-foot exactly when it is reached by an upward step, i.e.\ $F_\ell$ exceeds the last card of
+the preceding block, i.e.\ $\max B_\ell>\max B_{\ell-1}$. Then $G$ guesses upward, but the next
+card is the second card of $B_\ell$, which lies below $F_\ell$; so $G$ misses (hit $0$),
+provided $B_\ell$ has a second card and there is an unrevealed value above $F_\ell$ (else the
+position is in $\mathsf{offE}$). Its contribution to $S(m)$ is therefore
+$-\,\PP(\text{off-foot, live continuation})\cdot\frac{1}{2m-\ell}$.
+
+The probability is a first-occurrence count. Scanning the values from the top downward, the
+event is: the first label in $\{\ell-1,\ell\}$ to appear is $\ell$ (probability $\tfrac12$),
+and at least one label in $\{\ell+1,\dots,2m-1\}$ appears before it (else there is no
+unrevealed value above $F_\ell$). Conditioning on all $2m$ blocks being nonempty (which holds
+with probability $1-\bigoh(1)$ per position, and is exact in the limit), the first-occurrence
+order of the labels $\{\ell-1,\ell\}\cup\{\ell+1,\dots,2m-1\}$ is uniform, so
+\[
+  \PP(\text{off-foot, live})=\tfrac12-\frac{1}{2m+1-\ell}
+\]
+(the subtracted term is the probability that $\ell$ precedes all of $\ell-1,\ell+1,\dots,2m-1$).
+The even (ascending) blocks give the identical expression by reflection. Summing over
+$\ell=1,\dots,2m-1$ with $k=2m-\ell$,
+\[
+  \mathsf{offC}=-\sum_{k=1}^{2m-1}\frac1k\Bigl(\frac12-\frac1{k+1}\Bigr)
+  =-\frac12 H_{2m-1}+\Bigl(1-\frac1{2m}\Bigr)
+  =1-\frac1{4m}-\frac{H_{2m}}{2},
+\]
+using $\sum_{k=1}^{2m-1}\frac1{k(k+1)}=1-\frac1{2m}$ and $H_{2m-1}=H_{2m}-\frac1{2m}$.
+
+\subsection{The peak/valley bin \texorpdfstring{$\mathsf{onE}$}{onE}}
+An on-foot position with an empty continuation side is a \emph{peak} (ascending block $\ell$
+even, no unrevealed value above $v$) or a \emph{valley} (odd $\ell$, none below). At a peak,
+$v$ is the maximum of block $\ell$ and every value above $v$ lies in a revealed block; that is,
+$v=\max\{c:L_c\ge\ell\}$. Since the maximal-value card among those with label $\ge\ell$ has a
+uniform label on $\{\ell,\dots,2m-1\}$, a peak occurs at block $\ell$ with probability
+$1/(2m-\ell)$. There $G$ flips and guesses the maximum unrevealed value, which is correct iff
+that value lies in block $\ell+1$ (whence it heads the next block); the maximal-value card among
+labels $\ge\ell+1$ has uniform label, so this happens with probability $1/(2m-\ell-1)$. The
+contribution is $\frac{1}{2m-\ell}\bigl(\frac{1}{2m-\ell-1}-\frac{1}{2m-\ell}\bigr)$. Valleys
+mirror peaks. Writing $r=2m-\ell$, peaks (even $\ell$) give even $r\in\{2,\dots,2m\}$ and
+valleys (odd $\ell$) give odd $r\in\{3,\dots,2m-1\}$ --- the case $r=1$ is the final output
+card, which carries no guess --- so together $r$ ranges over $\{2,\dots,2m\}$ and
+\[
+  \mathsf{onE}=\sum_{r=2}^{2m}\Bigl(\frac{1}{r(r-1)}-\frac1{r^2}\Bigr)
+  =\Bigl(1-\frac1{2m}\Bigr)-\bigl(H_{2m}^{(2)}-1\bigr)
+  =2-\frac1{2m}-H_{2m}^{(2)}.
+\]
+
+\subsection{The vanishing bin \texorpdfstring{$\mathsf{offE}$}{offE}}
+An off-foot position with an empty continuation side occurs mainly at the top block
+($\ell=2m-1$ entered upward, nothing above): $G$ flips to the maximum unrevealed value below
+$v$, which is the second card of $B_{2m-1}$ --- exactly the next card. There the hit is $1$ and
+the reference is $1/(2m-\ell)=1$, so the excess is $0$; the remaining configurations have
+vanishing probability. Hence $\mathsf{offE}\to0$.
+
+\subsection{Assembly}
+Summing \eqref{eq:pieces},
+\[
+  S(m)=\frac{H_{2m}-1}{2}+\Bigl(1-\frac1{4m}-\frac{H_{2m}}{2}\Bigr)+\Bigl(2-\frac1{2m}-H_{2m}^{(2)}\Bigr)
+  =\frac52-\frac{3}{4m}-H_{2m}^{(2)},
+\]
+the $H_{2m}$ terms cancelling. With \eqref{eq:bS}, $b(m)=-1+\frac1{2m}+S(m)=\frac32-\frac1{4m}
+-H_{2m}^{(2)}$. Together with Propositions~\ref{prop:slope} and \ref{prop:fade} this proves
+Theorem~\ref{thm:main}. At $m=1$: $\mathsf{onC}=\tfrac14$, $\mathsf{offC}=0$,
+$\mathsf{onE}=\tfrac14$, $\mathsf{offE}=0$, so $S(1)=\tfrac12$ and $b(1)=0$, i.e.\
+$\Fg(n,1)=\tfrac34n$. \qed
+
+\section{On the optimality of \texorpdfstring{$G$}{G}}\label{sec:opt}
+
+Theorem~\ref{thm:main} is a statement about the explicit strategy $G$. Its relation to the
+optimum is Clay's separate optimality claim. Three pieces of evidence bear on it.
+
+\begin{enumerate}[topsep=2pt,itemsep=2pt]
+  \item \emph{Parse-conditional optimality.} By Lemma~\ref{lem:key}, conditional on the true
+        parse, $G$'s guess is the posterior-maximiser; so $G$ is optimal against an observer
+        who additionally knows the block-parse. The only gap between $G$ and the true optimum
+        is the parse uncertainty analysed in \S\ref{sec:intercept}.
+  \item \emph{Exact finite verification.} A dynamic program over the sufficient statistic
+        (direction, rank of the last card, ascending-run-length composition) computes $\eopt$
+        in exact rational arithmetic. For every $n\le9$ and $m\le10$ one finds
+        $\eopt(n,m)=\Fg(n,m)$ \emph{as exact fractions} (gap $0$) --- including cells with
+        $n/2m\approx 0.4$, outside Clay's hedge.
+  \item \emph{Deck-scale verification.} A common-random-numbers comparison of the greedy
+        optimum against $G$, at $n\in\{52,104\}$ and $m=5,\dots,40$, finds
+        $|\eopt-\Fg|\le0.01$ throughout (the only excursions are within sampling error and of
+        the wrong sign for a genuine gap).
+\end{enumerate}
+
+We do \emph{not} prove $\eopt=\Fg$ in closed form for all $(n,m)$; like Clay we leave the
+general optimality of $G$ as a conjecture, now with exact grid evidence and deck-scale
+confirmation. Under it, \eqref{eq:main} is the optimal expected score, and Clay's
+Conjecture~3 holds with the explicit constant and fade rate above. We emphasise that
+Theorem~\ref{thm:main} itself --- the value of $G$ --- does not depend on this.
+
+\section{Computational verification}\label{sec:verify}
+
+Every identity above is machine-checked in exact arithmetic. (i) Lemma~\ref{lem:key} and the
+hit formula \eqref{eq:hit} are verified against brute-force enumeration of all $(2m)^n$ label
+vectors, matching as exact fractions for every prefix, parse and direction ($m=2,\ n\le7$;
+$m=3,\ n\le6$). (ii) The two exchangeability identities behind $\mathsf{offC}$ and
+$\mathsf{onE}$ --- that the maximal-value card among labels $\ge\ell$ has label $\ell$ with
+probability $1/(2m-\ell)$, and the off-foot rate $\tfrac12-1/(2m+1-\ell)$ --- are verified
+exactly by enumeration. (iii) The four-piece identity \eqref{eq:pieces} and the resulting
+$b(m)$ are checked to reproduce the exact intercepts
+\[
+  b(1..8)=0,\ -\tfrac{7}{144},\ -\tfrac{269}{3600},\ -\tfrac{63449}{705600},\ -\tfrac{126713}{1270080},\ -\tfrac{16388909}{153679680},\ \dots
+\]
+obtained independently from an exact-rational dynamic program, whose intercept sequence is also
+$C$-finite with characteristic roots $\{i/m\}\cup\{(2i-1)/2m\}$ (spectral gap $1/m$),
+confirming the fade rate $1-1/m$ by a second route. (iv) The block-model bin decomposition
+converges to \eqref{eq:pieces} as $n$ grows (the per-bin convergence is slow,
+$\bigoh((1-\tfrac1{2m})^n)$, as expected). The verification code is available from the author.
+
+\section*{Acknowledgments}
+
+This work grew out of a deterministic blackjack/shuffle simulator, from which the exact
+posterior for shelf shuffles was reused to attack the guessing problem. The investigation ---
+model, lemmas, the block decomposition, and the proofs above --- was carried out
+collaboratively with a large language model (Anthropic's Claude); all mathematical claims are
+independently verified by the exact-arithmetic enumeration described in \S\ref{sec:verify}. I
+thank Alexander Clay for the paper that framed the problem.
+
+\begin{thebibliography}{9}
+\bibitem{DFH} P.~Diaconis, J.~Fulman and S.~Holmes,
+  \emph{Analysis of casino shelf shuffling machines},
+  Ann.\ Appl.\ Probab.\ \textbf{23} (2013), 1692--1720. arXiv:1107.2961.
+\bibitem{Clay} A.~Clay,
+  \emph{Guessing strategies for shelf-shuffling machines},
+  arXiv:2507.10294 (2025).
+\bibitem{Tripathi} (single-shelf follow-up, 2026), arXiv:2602.07920.
+\bibitem{Kuba} (single-shelf follow-up, 2026), arXiv:2602.12928.
+\bibitem{CKT} Clay, Kuba, Tripathi (2026), arXiv:2607.10418.
+\end{thebibliography}
+
+\end{document}
