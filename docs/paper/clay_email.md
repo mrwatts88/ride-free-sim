@@ -1,5 +1,8 @@
 # Cover email to Alexander Clay (draft)
 
+> **SEND VERSION → `clay_email.txt`** (plain text for Gmail; Markdown doesn't render there).
+> This `.md` is the annotated reference — keep the two in sync if the wording changes.
+
 **To:** ajclay@usc.edu
 **Subject:** A possible proof of your Conjecture 3 (m-shelf card guessing)
 
