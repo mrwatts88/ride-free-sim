@@ -6,25 +6,25 @@ Attach: main.pdf
 
 Dear Professor Clay,
 
-I should be upfront about who's writing: I'm a software developer, not a mathematician — statistics isn't my field. I build simulators, and one of them (a deterministic model of casino shelf shuffles) led me into the card-guessing problem your 2025 paper studies. Working with an AI system (Anthropic's Claude), I've arrived at what appears to be a proof of the value half of your Conjecture 3 for general m, and I'm bringing it to you because you're the person who can actually judge whether the mathematics is sound.
+I should be upfront about who's writing: I'm a software developer, not a mathematician. Statistics isn't my field. I build simulators, and one of them (a deterministic model of casino shelf shuffles) led me into the card-guessing problem your 2025 paper studies. Working with an AI system (Anthropic's Claude), I've arrived at what appears to be a proof of the value half of your Conjecture 3 for general m, and I'm bringing it to you because you're the person who can actually judge whether the mathematics is sound.
 
 Here is the claim, followed by an honest account of what I can and can't personally vouch for.
 
-The result: for the m-shelf shuffle with complete feedback, the expected score of the Diaconis–Fulman–Holmes strategy G is
+The result: for the m-shelf shuffle with complete feedback, the expected score of the Diaconis-Fulman-Holmes strategy G is
 
     F_G(n, m) = (H₂ₘ / 2m)·n + [ 3/2 − 1/(4m) − H₂ₘ⁽²⁾ ] + O(n²(1 − 1/m)ⁿ).
 
 The leading term is your conjectured (n/2m)·H₂ₘ; beyond it there is an exact constant term (limit 3/2 − π²/6 ≈ −0.145) and a remainder that decays at exponential rate 1 − 1/m (with a degree-2 polynomial prefactor, from the multiplicity-3 subdominant eigenvalue). At m = 1 it reduces to your 3n/4 (Theorem 1.5). The argument recasts the shuffle as 2m blocks of independent uniform-label cards and sums a per-position hit probability over the deck; notably it never forms the "m-shelf transition matrix" you identified as the open obstruction.
 
-What I can stand behind — the computational verification: every identity is checked in exact rational arithmetic by brute-force enumeration, and the intercept is confirmed two independent ways — an exact-rational dynamic program pins b(m) as exact fractions for m = 1..6 (0, −7/144, −269/3600, …), and the block-decomposition proof sums to those same fractions. That part I built and can walk you through in detail.
+What I can stand behind is the computational verification: every identity is checked in exact rational arithmetic by brute-force enumeration, and the intercept is confirmed two independent ways. An exact-rational dynamic program pins b(m) as exact fractions for m = 1..6 (0, −7/144, −269/3600, …), and the block-decomposition proof sums to those same fractions. That part I built and can walk you through in detail.
 
-What I can't personally vouch for — the rigor of the analytic proof itself: the AI developed the argument; I understand its shape but I'm not equipped to defend, for example, the limit-exchange steps to a referee's standard. That is precisely why I'm writing to you rather than posting it anywhere. Two honest caveats travel with the result:
+What I can't personally vouch for is the rigor of the analytic proof itself. The AI developed the argument; I understand its shape but I'm not equipped to defend, for example, the limit-exchange steps to a referee's standard. That is precisely why I'm writing to you rather than posting it anywhere. Two honest caveats travel with the result:
 
-1. What is proved is the value of G, not that G is optimal. G-optimality I only verify — exactly for all n ≤ 9, m ≤ 10, and to within 0.01 at deck scale through m = 40, and G is the posterior-maximizing guess conditional on the true block-parse — but in full generality it stays, as in your paper, a conjecture. The value expansion doesn't depend on it.
+1. What is proved is the value of G, not that G is optimal. G-optimality I only verify (exactly for all n ≤ 9, m ≤ 10, and to within 0.01 at deck scale through m = 40, and G is the posterior-maximizing guess conditional on the true block-parse), but in full generality it stays, as in your paper, a conjecture. The value expansion doesn't depend on it.
 
 2. The write-up is at draft/preprint rigor: some limit steps in the intercept proof are stated rather than fully managed. A referee would push there.
 
-The 9-page draft is attached. I'd genuinely value your read — whether the argument holds, whether it's worth developing, and if so, how. If the technical back-and-forth needs more than I can provide directly, I can turn the AI and the verification code back on it. Thank you for the paper that started this.
+The 9-page draft is attached. I'd genuinely value your read: whether the argument holds, whether it's worth developing, and if so, how. If the technical back-and-forth needs more than I can provide directly, I can turn the AI and the verification code back on it. Thank you for the paper that started this.
 
 Best regards,
 Matt Watts
