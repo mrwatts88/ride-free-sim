@@ -12,7 +12,10 @@ close the proof.
 
 **Result — `S_excess(m) = 5/2 − 3/(4m) − H₂ₘ⁽²⁾`, DERIVED; hence `b(m) = 3/2 − 1/(4m) −
 H₂ₘ⁽²⁾`, the exact intercept, is PROVEN for all m.** The whole value law is now a theorem:
-`E_opt(n,m) = (H₂ₘ/2m)·n + [3/2 − 1/(4m) − H₂ₘ⁽²⁾] + O((1−1/m)ⁿ)`.
+`E_opt(n,m) = (H₂ₘ/2m)·n + [3/2 − 1/(4m) − H₂ₘ⁽²⁾] + O(n²(1−1/m)ⁿ)`. *(Post-review correction
+2026-07-20: the remainder is `O(n²(1−1/m)ⁿ)`, not `O((1−1/m)ⁿ)` — the `n²` is the Jordan
+prefactor of the multiplicity-3 subdominant eigenvalue `1−1/m` from E39; the rate `1−1/m`,
+slope, and intercept are unaffected. See GUESSING_THEOREM.md §CORRECTION.)*
 
 **A correction banked first (the strategy is realizable, the parse is not).** E43's
 `hit_probability(m,ℓ,A,B)` is a **parse-conditional** quantity — it assumes the direction

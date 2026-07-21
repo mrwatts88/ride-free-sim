@@ -7,6 +7,22 @@
 > default). **▶▶ THE VALUE HALF OF CLAY'S CONJECTURE 3 IS NOW A THEOREM FOR ALL m** — slope
 > (E41) + fade rate (E42) + exact intercept (E44), all by the direct block decomposition.
 >
+> **▶ CORRECTION (2026-07-20, post-review) — the fade REMAINDER carries an n² prefactor; the
+> value-law one-liner is imprecise as usually written.** Many places write `E_opt =
+> (H₂ₘ/2m)n + b(m) + O((1−1/m)ⁿ)`, but the correct remainder is **`O(n²(1−1/m)ⁿ)`**
+> (equivalently `Θ(n²(1−1/m)ⁿ)` for m≥2; exactly 0 at m=1). The `n²` is the Jordan prefactor of
+> the **multiplicity-3** subdominant eigenvalue `1−1/m` that E39 ALREADY established (`(x−i/m)³`
+> in the char poly) and E42's GATE 3 noted ("m=2 mult-3 n² prefactor") — it was dropped when the
+> one-liner was first written (E40) and then propagated through the docs and into the paper's
+> first draft. VERIFIED 2026-07-20 (`data/` scratch): for m=2, `R(n)·2ⁿ = (E_opt−c·n−b)·2ⁿ` is an
+> exact degree-2 polynomial (2nd finite difference → −1/4, 3rd → 0), so `R(n) ≈ −(1/8)n²(1/2)ⁿ`.
+> The exponential **rate `1−1/m` was always correct**; only the polynomial prefactor was missing,
+> and this does NOT affect the slope or the intercept `b(m)` (both re-verified correct). The
+> paper `docs/paper/main.tex` is FIXED (Prop 6 now `Θ(n²(1−1/m)ⁿ)` with the mult-3 explanation;
+> §8 states the multiplicity) and the Clay email is fixed. **When writing the value law, use
+> `O(n²(1−1/m)ⁿ)`.** Caught by an independent proof-review agent + Matt — a good catch on a
+> self-inconsistency (the one-liner contradicted our own E39 spectrum).
+>
 > **▶▶ E44 (2026-07-20) — THE PROOF IS COMPLETE: `S_excess(m)` in CLOSED FORM ⟹ the exact
 > intercept `b(m) = 3/2 − 1/(4m) − H₂ₘ⁽²⁾` is PROVEN for all m.** E43's remaining sum
 > `S_excess = Σ_t E[hit_t − 1/(2m−ℓ_t)]` is derived from the block model to equal

@@ -43,11 +43,11 @@ k}1/j$ and $H_k^{(2)}=\sum_{j\le k}1/j^{2}$, the score of the Diaconis--Fulman--
 strategy $G$ is
 \[
   \Fg(n,m)\;=\;\frac{H_{2m}}{2m}\,n\;+\;\Bigl(\tfrac32-\tfrac{1}{4m}-H_{2m}^{(2)}\Bigr)
-  \;+\;\bigoh\!\left(\bigl(1-\tfrac1m\bigr)^{\!n}\right).
+  \;+\;\bigoh\!\left(n^2\bigl(1-\tfrac1m\bigr)^{\!n}\right).
 \]
 The leading coefficient $H_{2m}/2m$ is the term conjectured by Clay (2025), whose general-$m$
 proof he left open; we prove it, together with the exact constant term $\tfrac32-\tfrac1{4m}
--H_{2m}^{(2)}$ (limit $\tfrac32-\pi^2/6$) and the geometric decay rate $1-1/m$, by a direct
+-H_{2m}^{(2)}$ (limit $\tfrac32-\pi^2/6$) and the exponential decay rate $1-1/m$, by a direct
 analysis of the shuffle's block structure that never forms the ``$m$-shelf transition
 matrix'' Clay identified as the obstruction. Strategy $G$ is verified to be optimal exactly
 for all $n\le 9,\ m\le 10$ and numerically to within $0.01$ for $m\le 40$ at deck scale; under
@@ -102,7 +102,7 @@ Let $H_k=\sum_{j=1}^k \frac1j$ and $H_k^{(2)}=\sum_{j=1}^k \frac1{j^2}$. For the
 shuffle with complete feedback, the expected score of the Diaconis--Fulman--Holmes strategy
 $G$ is
 \begin{equation}\label{eq:main}
-  \Fg(n,m)\;=\;\frac{H_{2m}}{2m}\,n\;+\;b(m)\;+\;\bigoh\!\left(\bigl(1-\tfrac1m\bigr)^{n}\right),
+  \Fg(n,m)\;=\;\frac{H_{2m}}{2m}\,n\;+\;b(m)\;+\;\bigoh\!\left(n^2\bigl(1-\tfrac1m\bigr)^{n}\right),
   \qquad
   b(m)=\frac32-\frac1{4m}-H_{2m}^{(2)}.
 \end{equation}
@@ -112,7 +112,7 @@ Clay's Theorem~1.5.
 \end{theorem}
 
 Three facts are proved here, each new for $m\ge 2$: the \emph{slope} $H_{2m}/2m$
-(\S\ref{sec:slope}), the geometric \emph{fade rate} $1-1/m$ (\S\ref{sec:fade}), and the exact
+(\S\ref{sec:slope}), the \emph{fade rate} $1-1/m$ (\S\ref{sec:fade}), and the exact
 \emph{intercept} $b(m)$ (\S\ref{sec:intercept}), the last being the main contribution. The
 method is elementary and probabilistic: we recast the shuffle as an assignment of independent
 uniform labels (\S\ref{sec:model}), extract a single exchangeability lemma
@@ -251,8 +251,9 @@ and $1$, slope $\tfrac34$: Clay's Theorem~1.5.
 \section{The fade rate}\label{sec:fade}
 
 \begin{proposition}\label{prop:fade}
-The remainder in Theorem~\ref{thm:main} is $\bigoh((1-\tfrac1m)^n)$; equivalently, the
-dominant subdominant eigenvalue of the guessing dynamics is exactly $1-1/m$.
+The remainder in Theorem~\ref{thm:main} is $\Theta\!\left(n^2(1-\tfrac1m)^n\right)$: the
+dominant subdominant eigenvalue of the guessing dynamics is exactly $1-1/m$, with algebraic
+multiplicity $3$, so its Jordan structure carries a degree-$2$ polynomial prefactor.
 \end{proposition}
 
 \begin{proof}[Proof sketch]
@@ -264,8 +265,12 @@ $\PP(\text{prefix},\,L_k=\ell)=K_\ell\,\rho_\ell^{\,n-k}$ with $K_\ell$ independ
 observer's excess score over the bulk value $1/2m$ is carried by the competing hypotheses
 $\ell\neq0$, whose posterior weight decays like $(\rho_\ell/\rho_0)^n$. The dominant competitor
 is $\ell\in\{1,2\}$, both with $\rho_\ell/\rho_0=(2m-2)/2m=1-1/m$ --- a same-direction block
-skip $\ell\to\ell+2$, the source of the factor $2$ in the exponent. Thus the correction is
-$\Theta((1-\tfrac1m)^n)$. At $m=1$ this rate is $0$: the expansion is exact for $n\ge2$.
+skip $\ell\to\ell+2$, the source of the factor $2$ in the exponent, giving the exponential
+rate $1-1/m$. This rate is attained with algebraic multiplicity $3$ --- an exact property of
+the guessing operator's spectrum, read off the exact-rational recurrence in
+\S\ref{sec:verify} --- whose Jordan structure multiplies the geometric by a degree-$2$
+polynomial, so the correction is $\Theta(n^2(1-\tfrac1m)^n)$. At $m=1$ there is no competing
+hypothesis and the remainder is exactly $0$: the expansion is exact for $n\ge2$.
 \end{proof}
 
 \section{The exact intercept}\label{sec:intercept}
@@ -359,7 +364,7 @@ The probability is a first-occurrence count. Scanning the values from the top do
 event is: the first label in $\{\ell-1,\ell\}$ to appear is $\ell$ (probability $\tfrac12$),
 and at least one label in $\{\ell+1,\dots,2m-1\}$ appears before it (else there is no
 unrevealed value above $F_\ell$). Conditioning on all $2m$ blocks being nonempty (which holds
-with probability $1-\bigoh(1)$ per position, and is exact in the limit), the first-occurrence
+with probability $1-\bigoh((1-\tfrac1{2m})^n)$, and is exact in the limit), the first-occurrence
 order of the labels $\{\ell-1,\ell\}\cup\{\ell+1,\dots,2m-1\}$ is uniform, so
 \[
   \PP(\text{off-foot, live})=\tfrac12-\frac{1}{2m+1-\ell}
@@ -453,8 +458,11 @@ $b(m)$ are checked to reproduce the exact intercepts
   b(1..8)=0,\ -\tfrac{7}{144},\ -\tfrac{269}{3600},\ -\tfrac{63449}{705600},\ -\tfrac{126713}{1270080},\ -\tfrac{16388909}{153679680},\ \dots
 \]
 obtained independently from an exact-rational dynamic program, whose intercept sequence is also
-$C$-finite with characteristic roots $\{i/m\}\cup\{(2i-1)/2m\}$ (spectral gap $1/m$),
-confirming the fade rate $1-1/m$ by a second route. (iv) The block-model bin decomposition
+$C$-finite; its minimal recurrence factors over $\mathbb{Q}$ with characteristic roots
+$\{i/m\}$, \emph{each of multiplicity $3$}, and $\{(2i-1)/2m\}$ (spectral gap $1/m$). The
+dominant subdominant root $1-1/m$ and its multiplicity $3$ confirm, by a second route, both the
+fade rate and the $n^2$ prefactor of Proposition~\ref{prop:fade}. (iv) The block-model bin
+decomposition
 converges to \eqref{eq:pieces} as $n$ grows (the per-bin convergence is slow,
 $\bigoh((1-\tfrac1{2m})^n)$, as expected). The verification code is available from the author.
 

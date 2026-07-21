@@ -22,8 +22,9 @@ Diaconis–Fulman–Holmes strategy G is
   F_G(n, m) = (H₂ₘ / 2m)·n + [ 3/2 − 1/(4m) − H₂ₘ⁽²⁾ ] + O((1 − 1/m)ⁿ).
 
 The leading term is your conjectured (n/2m)·H₂ₘ; beyond it there is an **exact constant term**
-(limit 3/2 − π²/6 ≈ −0.145) and a **geometric fade rate 1 − 1/m**. At m = 1 it reduces to
-your 3n/4 (Theorem 1.5). The argument recasts the shuffle as 2m blocks of independent
+(limit 3/2 − π²/6 ≈ −0.145) and a remainder that **decays at exponential rate 1 − 1/m** (with
+a degree-2 polynomial prefactor, from the multiplicity-3 subdominant eigenvalue). At m = 1 it
+reduces to your 3n/4 (Theorem 1.5). The argument recasts the shuffle as 2m blocks of independent
 uniform-label cards and sums a per-position hit probability over the deck; notably it **never
 forms the "m-shelf transition matrix" you identified as the open obstruction.**
 
